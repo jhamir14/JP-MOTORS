@@ -21,6 +21,13 @@ export const metadata: Metadata = {
   }
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // Opcional, para dar un feel más App-Like
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <head>
+      <body className={outfit.variable}>
         {/* Google Analytics Tag */}
         <Script
           strategy="afterInteractive"
@@ -46,8 +53,7 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className={outfit.variable}>
+
         {/* Componente Navbar Global inyectado en todas las páginas */}
         <Navbar />
         
