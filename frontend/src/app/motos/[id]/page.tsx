@@ -37,7 +37,7 @@ export default function MotoDetailsPage() {
         </Link>
       </div>
 
-      <div className="container" style={{ padding: "40px 0 100px 0", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 450px), 1fr))", gap: "60px", alignItems: "center" }}>
+      <div className="container" style={{ paddingTop: "40px", paddingBottom: "100px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 450px), 1fr))", gap: "60px", alignItems: "center" }}>
         
         {/* Lado Izquierdo: Exhibición Visual Inmersiva */}
         <div style={{ 
@@ -108,7 +108,7 @@ export default function MotoDetailsPage() {
              </div>
 
              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-               <Link href="/financiamiento" className="btn btn-primary" style={{ flex: 2, textAlign: "center", padding: "16px", fontSize: "1.1rem", textTransform: "uppercase", fontWeight: 900, boxShadow: "0 10px 20px rgba(0,255,200,0.2)" }}>
+               <Link href="/financiamiento" className="btn btn-primary" style={{ flex: 2, textAlign: "center", padding: "16px", fontSize: "1.1rem", textTransform: "uppercase", fontWeight: 900, boxShadow: "0 10px 20px rgba(0,255,200,0.2)", minWidth: "200px" }}>
                  Cotizar Crédito
                </Link>
                
@@ -117,7 +117,7 @@ export default function MotoDetailsPage() {
                  href={`https://wa.me/51902423015?text=Hola,%20tengo%20interés%20en%20comprar%20la%20moto%20${moto.name}%20que%20vi%20en%20la%20plataforma.`} 
                  target="_blank" 
                  rel="noopener noreferrer" 
-                 style={{ flex: 1, textAlign: "center", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", padding: "16px", border: "2px solid #25D366", color: "#25D366", borderRadius: "6px", fontSize: "1rem", fontWeight: 800, textDecoration: "none", transition: "all 0.3s" }}
+                 style={{ flex: 1, textAlign: "center", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", padding: "16px", border: "2px solid #25D366", color: "#25D366", borderRadius: "6px", fontSize: "1rem", fontWeight: 800, textDecoration: "none", transition: "all 0.3s", minWidth: "160px" }}
                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#25D366'; e.currentTarget.style.color = 'white'; }}
                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#25D366'; }}
                >

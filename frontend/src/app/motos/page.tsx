@@ -124,7 +124,7 @@ export default function MotosPage() {
               </select>
             </div>
 
-            {/* Cuadrícula (Grid) de Productos en 2 columnas exactas */}
+            {/* Cuadrícula (Grid) de Productos Responsiva */}
             {filteredMotos.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "80px 0", color: "var(--text-secondary)" }}>
                   <h2 style={{ fontSize: "2rem", marginBottom: "16px" }}>No se encontraron modelos</h2>
@@ -132,7 +132,7 @@ export default function MotosPage() {
                   <button onClick={() => { setSearchTerm(""); setCategoryFilter("Todas"); setMaxPrice(30000); }} style={{ marginTop: "24px", padding: "10px 24px", background: "var(--accent-primary)", color: "black", borderRadius: "6px", fontWeight: 800, border: "none", cursor: "pointer" }}>Limpiar Filtros</button>
                 </div>
             ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "24px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
                   {filteredMotos.map((moto) => (
                     <div key={moto.id} className="card" style={{ display: "flex", flexDirection: "column", padding: "0", overflow: "hidden", border: "1px solid rgba(255,255,255,0.05)", transition: "transform 0.2s, box-shadow 0.2s", cursor: "pointer" }}
                       onMouseOver={(e) => {
