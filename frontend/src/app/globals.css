@@ -190,10 +190,28 @@ p {
 .mobile-menu-btn { display: none !important; }
 .mobile-drawer { display: none; }
 
+.desktop-only { display: grid; }
+.mobile-only { display: none !important; }
+
 @media (max-width: 768px) {
-  /* Navbar Responsivo */
+  /* Ocultar elementos de escritorio */
   .desktop-menu { display: none !important; }
-  .mobile-menu-btn { display: flex !important; }
+  .desktop-only { display: none !important; }
+  .mobile-only { display: flex !important; flex-direction: column; gap: 16px; }
+  
+  /* Ya no necesitamos el menú hamburguesa porque usamos BottomNav estilo App */
+  .mobile-menu-btn { display: none !important; }
+  
+  /* Mostrar Bottom Navigation Bar */
+  .bottom-nav { display: flex !important; }
+  
+  /* Dar espacio al final de la página para que el BottomNav no tape contenido */
+  body { padding-bottom: 70px; }
+
+  /* Ajuste para el botón flotante de WhatsApp (subirlo un poco para que no choque con BottomNav) */
+  a[href*="wa.me"] {
+    bottom: 80px !important;
+  }
   
   .mobile-drawer.open {
     display: flex !important; 

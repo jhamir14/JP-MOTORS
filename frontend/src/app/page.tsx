@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <main>
       {/* Hero Section */}
-      <section style={{ 
+      <section className="hero-section" style={{ 
         padding: "160px 0 120px 0", 
         position: "relative",
         backgroundImage: "linear-gradient(to bottom, rgba(15, 17, 21, 0.4) 0%, rgba(15, 17, 21, 0.7) 60%, rgba(15, 17, 21, 1) 100%), url('/hero_bg.png')",
@@ -35,8 +35,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Panel de Filtros */}
-          <div style={{ background: "rgba(15, 17, 21, 0.4)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "40px 20px", maxWidth: "1000px", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "48px" }}>
+          {/* Panel de Filtros (Solo Escritorio) */}
+          <div className="desktop-only" style={{ background: "rgba(15, 17, 21, 0.4)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "40px 20px", maxWidth: "1000px", margin: "0 auto", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "48px" }}>
             
             {/* Columna Izquierda: Filtros Completos */}
             <div>
@@ -97,6 +97,23 @@ export default function Home() {
 
           </div>
         </div>
+        </div>
+      </section>
+
+      {/* Botones de Acción (Solo Móvil) */}
+      <section className="mobile-only" style={{ padding: "0 20px 40px 20px" }}>
+        <Link href="/motos" className="btn btn-primary" style={{ display: "flex", justifyContent: "space-between", fontSize: "1.1rem", padding: "16px", borderRadius: "12px", width: "100%" }}>
+          Ver Catálogo de Motos 
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </Link>
+        <Link href="/repuestos" className="btn btn-secondary" style={{ display: "flex", justifyContent: "space-between", fontSize: "1.1rem", padding: "16px", borderRadius: "12px", width: "100%", backgroundColor: "rgba(255,255,255,0.05)" }}>
+          Tienda de Repuestos
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </Link>
+        <Link href="/financiamiento" className="btn btn-secondary" style={{ display: "flex", justifyContent: "space-between", fontSize: "1.1rem", padding: "16px", borderRadius: "12px", width: "100%", backgroundColor: "rgba(255,255,255,0.05)" }}>
+          Quiero un Crédito
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </Link>
       </section>
 
       {/* Motos Destacadas */}

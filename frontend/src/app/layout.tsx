@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import BottomNav from "@/components/BottomNav";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -34,6 +35,9 @@ export default function RootLayout({
         
         {/* Componente Footer Global inyectado en todas las páginas */}
         <Footer />
+        
+        {/* Barra Inferior para Mobile */}
+        <BottomNav />
         
         {/* WhatsApp Floating Button Global */}
         <a 
