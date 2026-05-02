@@ -58,7 +58,7 @@ export default function FinanciamientoPage() {
             "Correo": formData.correo,
             "Fecha de Nacimiento": formData.fechaNacimiento,
             "Estado Civil": formData.estadoCivil,
-            "Educación": formData.educacion,
+            "Educación": formData.nivelEducacion,
             "Contacto Preferido": formData.preferenciaContacto,
             "Ubicación": `${formData.distrito}, ${formData.provincia}, ${formData.departamento}`,
             "Vehículo de Interés": `${formData.marcaMoto} - ${formData.modeloMoto}`,
