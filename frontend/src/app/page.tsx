@@ -123,9 +123,9 @@ export default function Home() {
             <Link href="/motos" style={{ color: "var(--accent-primary)", fontWeight: 600 }}>Ver Todas →</Link>
           </div>
           
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "24px" }}>
             {featuredMotos.map((moto) => (
-              <div key={moto.id} className="card" style={{ display: "flex", flexDirection: "column", padding: "0", overflow: "hidden", border: "1px solid rgba(255,255,255,0.05)", transition: "transform 0.2s, box-shadow 0.2s", cursor: "pointer" }}
+              <div key={moto.id} className="card" style={{ flex: "1 1 300px", maxWidth: "380px", display: "flex", flexDirection: "column", padding: "0", overflow: "hidden", border: "1px solid rgba(255,255,255,0.05)", transition: "transform 0.2s, box-shadow 0.2s", cursor: "pointer" }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.transform = 'translateY(-5px)';
                   e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,255,200,0.1)';
