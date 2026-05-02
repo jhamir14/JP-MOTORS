@@ -7,30 +7,32 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
     <nav style={{ padding: "16px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(10, 12, 16, 0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 1000, transition: "all 0.3s ease" }}>
-      <div className="container flex items-center space-between">
-        <div className="flex items-center" style={{ gap: "32px" }}>
-          {/* Logo estilo transparente y totalmente blanco con inversion */}
+      <div className="container flex items-center" style={{ justifyContent: "space-between" }}>
+        
+        {/* Bloque Izquierdo: Logo */}
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
           <Link href="/">
             <Image
               src="/premium_logo.png"
               alt="Multimarca JP Logo"
-              width={180}
-              height={80}
+              width={160}
+              height={70}
               style={{ objectFit: "contain", mixBlendMode: "screen", opacity: 0.95 }}
               priority
             />
           </Link>
-
-          {/* Menú de navegación Desktop */}
-          <div className="desktop-menu flex gap-6 items-center" style={{ marginLeft: "16px" }}>
-            <Link href="/motos" style={{ color: "#fff", fontWeight: 700, fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.5px", transition: "color 0.3s" }}>Catálogo de Motos</Link>
-            <Link href="/repuestos" style={{ color: "#fff", fontWeight: 700, fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.5px", transition: "color 0.3s" }}>Repuestos</Link>
-            <Link href="/financiamiento" style={{ color: "#fff", fontWeight: 700, fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.5px", transition: "color 0.3s" }}>Financiamiento</Link>
-          </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Link href="/financiamiento" className="btn btn-primary desktop-menu" style={{ padding: "8px 24px", fontSize: "0.85rem", textTransform: "uppercase", fontWeight: 800 }}>Cotizar Crédito</Link>
+        {/* Bloque Central: Menú de navegación Desktop */}
+        <div className="desktop-menu flex items-center" style={{ gap: "40px", flex: 2, justifyContent: "center" }}>
+          <Link href="/motos" style={{ color: "#fff", fontWeight: 700, fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "1px", transition: "color 0.3s" }} onMouseOver={e=>e.currentTarget.style.color="var(--accent-primary)"} onMouseOut={e=>e.currentTarget.style.color="#fff"}>Catálogo de Motos</Link>
+          <Link href="/repuestos" style={{ color: "#fff", fontWeight: 700, fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "1px", transition: "color 0.3s" }} onMouseOver={e=>e.currentTarget.style.color="var(--accent-primary)"} onMouseOut={e=>e.currentTarget.style.color="#fff"}>Repuestos</Link>
+          <Link href="/financiamiento" style={{ color: "#fff", fontWeight: 700, fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "1px", transition: "color 0.3s" }} onMouseOver={e=>e.currentTarget.style.color="var(--accent-primary)"} onMouseOut={e=>e.currentTarget.style.color="#fff"}>Financiamiento</Link>
+        </div>
+
+        {/* Bloque Derecho: Botón de Acción */}
+        <div className="flex items-center" style={{ flex: 1, justifyContent: "flex-end", gap: "16px" }}>
+          <Link href="/financiamiento" className="btn btn-primary desktop-menu" style={{ padding: "10px 28px", fontSize: "0.85rem", textTransform: "uppercase", fontWeight: 900, letterSpacing: "1px" }}>Cotizar Crédito</Link>
           
           {/* Botón Hamburguesa para Mobile */}
           <button 
