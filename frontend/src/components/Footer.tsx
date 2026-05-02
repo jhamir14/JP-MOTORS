@@ -4,23 +4,23 @@ import React from "react";
 
 const Footer = () => {
   return (
-    <footer style={{ backgroundColor: "var(--bg-secondary)", padding: "80px 0 60px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+    <footer className="footer-padding" style={{ backgroundColor: "var(--bg-secondary)", padding: "80px 0 60px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
       <div className="container">
         
         {/* Confianza Top Bar */}
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "32px", color: "white", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", marginBottom: "60px", paddingBottom: "40px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <div className="footer-text" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "32px", color: "white", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", marginBottom: "60px", paddingBottom: "40px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
           <span className="flex items-center" style={{ gap: "8px" }}><span style={{ color: "var(--accent-primary)" }}>✓</span> FÁCIL Y RÁPIDO</span>
           <span className="flex items-center" style={{ gap: "8px" }}><span style={{ color: "var(--accent-primary)" }}>✓</span> 100% CONFIABLE</span>
           <span className="flex items-center" style={{ gap: "8px" }}><span style={{ color: "var(--accent-primary)" }}>✓</span> DISTRIBUIDOR EXCLUSIVO HONDA</span>
         </div>
 
         {/* Bottom Footer: 4 Grid Columns */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "48px" }}>
+        <div className="footer-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "48px" }}>
           
           {/* Col 1: Marca y Redes */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
             <img src="/premium_logo.png" alt="JP Motors Logo" style={{ height: "60px", marginBottom: "20px", mixBlendMode: "screen", opacity: 0.95 }} />
-            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.6", marginBottom: "24px" }}>
+            <p className="footer-text" style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.6", marginBottom: "24px" }}>
               Tu mejor aliado comercial especializado en venta de motos Honda y accesorios con financiamiento en todo el Perú.
             </p>
             <div style={{ display: "flex", gap: "16px" }}>
@@ -32,8 +32,8 @@ const Footer = () => {
 
           {/* Col 2: Enlaces Rápidos */}
           <div>
-            <h4 style={{ fontSize: "0.85rem", textTransform: "uppercase", fontWeight: 800, marginBottom: "24px", color: "white", letterSpacing: "1px" }}>Explorar</h4>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "16px", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+            <h4 className="footer-col-gap" style={{ fontSize: "0.85rem", textTransform: "uppercase", fontWeight: 800, marginBottom: "24px", color: "white", letterSpacing: "1px" }}>Explorar</h4>
+            <ul className="footer-list-gap" style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "16px", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
               <li><Link href="/motos" style={{ transition: "color 0.3s" }} onMouseOver={e=>e.currentTarget.style.color="white"} onMouseOut={e=>e.currentTarget.style.color="var(--text-secondary)"}>Catálogo de Motos</Link></li>
               <li><Link href="/repuestos" style={{ transition: "color 0.3s" }} onMouseOver={e=>e.currentTarget.style.color="white"} onMouseOut={e=>e.currentTarget.style.color="var(--text-secondary)"}>Tienda de Repuestos</Link></li>
               <li><Link href="/financiamiento" style={{ transition: "color 0.3s" }} onMouseOver={e=>e.currentTarget.style.color="white"} onMouseOut={e=>e.currentTarget.style.color="var(--text-secondary)"}>Créditos y Financiamiento</Link></li>
@@ -43,8 +43,8 @@ const Footer = () => {
 
           {/* Col 3: Soporte */}
           <div>
-            <h4 style={{ fontSize: "0.85rem", textTransform: "uppercase", fontWeight: 800, marginBottom: "24px", color: "white", letterSpacing: "1px" }}>Soporte</h4>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "16px", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+            <h4 className="footer-col-gap" style={{ fontSize: "0.85rem", textTransform: "uppercase", fontWeight: 800, marginBottom: "24px", color: "white", letterSpacing: "1px" }}>Soporte</h4>
+            <ul className="footer-list-gap" style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "16px", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
               <li><Link href="#" style={{ transition: "color 0.3s" }} onMouseOver={e=>e.currentTarget.style.color="white"} onMouseOut={e=>e.currentTarget.style.color="var(--text-secondary)"}>Políticas de Privacidad</Link></li>
               <li><Link href="#" style={{ transition: "color 0.3s" }} onMouseOver={e=>e.currentTarget.style.color="white"} onMouseOut={e=>e.currentTarget.style.color="var(--text-secondary)"}>Términos y Condiciones</Link></li>
               <li><Link href="#" style={{ transition: "color 0.3s" }} onMouseOver={e=>e.currentTarget.style.color="white"} onMouseOut={e=>e.currentTarget.style.color="var(--text-secondary)"}>Libro de Reclamaciones</Link></li>
@@ -54,8 +54,8 @@ const Footer = () => {
 
           {/* Col 4: Contacto */}
           <div>
-            <h4 style={{ fontSize: "0.85rem", textTransform: "uppercase", fontWeight: 800, marginBottom: "24px", color: "white", letterSpacing: "1px" }}>Contacto</h4>
-            <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.6", marginBottom: "24px" }}>
+            <h4 className="footer-col-gap" style={{ fontSize: "0.85rem", textTransform: "uppercase", fontWeight: 800, marginBottom: "24px", color: "white", letterSpacing: "1px" }}>Contacto</h4>
+            <div className="footer-col-gap" style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.6", marginBottom: "24px" }}>
               <strong>Tienda Central</strong><br />
               Av. Los Motores 1234,<br />
               Distrito Financiero, Perú.<br />

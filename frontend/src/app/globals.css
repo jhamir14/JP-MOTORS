@@ -212,6 +212,13 @@ p {
   a[href*="wa.me"] {
     bottom: 80px !important;
   }
+
+  /* Compactar Footer en Móvil */
+  .footer-padding { padding: 40px 0 30px 0 !important; }
+  .footer-grid { gap: 24px !important; }
+  .footer-col-gap { margin-bottom: 12px !important; }
+  .footer-list-gap { gap: 8px !important; }
+  .footer-text { display: none !important; }
   
   .mobile-drawer.open {
     display: flex !important; 
