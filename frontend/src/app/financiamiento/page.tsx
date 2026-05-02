@@ -86,7 +86,6 @@ export default function FinanciamientoPage() {
   // Estilos reutilizables para el formulario (Diseño Premium)
   const labelStyle = { fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 700, display: "block", marginBottom: "6px" };
   const inputStyle = { width: "100%", padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "white", outline: "none", transition: "border 0.2s" };
-  const cardStyle = { backgroundColor: "rgba(15,17,21,0.7)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px", padding: "32px", marginBottom: "32px", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" };
   const cardTitleStyle = { fontSize: "1.4rem", fontWeight: 800, textTransform: "uppercase" as const, marginBottom: "24px", color: "white", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "12px", display: "flex", alignItems: "center", gap: "10px" };
 
   if (submitted) {
@@ -134,11 +133,11 @@ export default function FinanciamientoPage() {
         <form onSubmit={handleSubmit}>
 
           {/* TARJETA 1: DATOS PERSONALES */}
-          <div style={cardStyle}>
+          <div className="form-card">
             <h2 style={cardTitleStyle}>
               <span style={{ color: "var(--accent-primary)" }}>1.</span> Ficha Personal
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
+            <div className="form-grid">
               <div>
                 <label style={labelStyle}>Nombres</label>
                 <input type="text" name="nombres" value={formData.nombres} onChange={handleChange} required style={inputStyle} onFocus={(e) => e.target.style.borderColor="var(--accent-primary)"} onBlur={(e) => e.target.style.borderColor="rgba(255,255,255,0.1)"} />
@@ -184,11 +183,11 @@ export default function FinanciamientoPage() {
           </div>
 
           {/* TARJETA 2: CONTACTO Y UBICACIÓN */}
-          <div style={cardStyle}>
+          <div className="form-card">
             <h2 style={cardTitleStyle}>
               <span style={{ color: "var(--accent-primary)" }}>2.</span> Domicilio y Contacto
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
+            <div className="form-grid">
               <div>
                 <label style={labelStyle}>Teléfono / Celular</label>
                 <input type="tel" name="celular" value={formData.celular} onChange={handleChange} required pattern="[0-9]{9,15}" title="Ingrese un número telefónico válido (solo números, mínimo 9 dígitos)." style={inputStyle} onFocus={(e) => e.target.style.borderColor="var(--accent-primary)"} onBlur={(e) => e.target.style.borderColor="rgba(255,255,255,0.1)"}/>
@@ -223,11 +222,11 @@ export default function FinanciamientoPage() {
           </div>
 
           {/* TARJETA 3: VEHÍCULO */}
-          <div style={cardStyle}>
+          <div className="form-card">
             <h2 style={cardTitleStyle}>
                <span style={{ color: "var(--accent-primary)" }}>3.</span> La Motocicleta
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
+            <div className="form-grid">
               <div>
                 <label style={labelStyle}>Marca de la Moto</label>
                 <select name="marcaMoto" value={formData.marcaMoto} onChange={handleChange} style={{...inputStyle, cursor: "pointer"}}>
@@ -253,11 +252,11 @@ export default function FinanciamientoPage() {
           </div>
 
           {/* TARJETA 4: CRÉDITO */}
-          <div style={cardStyle}>
+          <div className="form-card">
             <h2 style={cardTitleStyle}>
                <span style={{ color: "var(--accent-primary)" }}>4.</span> Perfil Crediticio
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
+            <div className="form-grid">
               <div style={{ gridColumn: "1 / -1", backgroundColor: "rgba(0,255,200,0.05)", padding: "20px", borderRadius: "8px", border: "1px dashed rgba(0,255,200,0.2)", marginBottom: "8px" }}>
                 <p style={{ color: "var(--accent-primary)", fontSize: "0.9rem", margin: 0 }}>
                   💡 <strong>Tip Financiero:</strong> Mientras mayor sea el monto inicial con el que cuentas, mayores serán las posibilidades de aprobación y menores tus cuotas.
