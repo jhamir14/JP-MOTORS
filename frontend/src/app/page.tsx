@@ -28,7 +28,7 @@ export default function Home() {
             <p style={{ fontSize: "1.3rem", color: "var(--text-secondary)", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>
               Conócela, cómprala o finánciala aquí.
             </p>
-            <div style={{ display: "flex", justifyContent: "center", gap: "32px", marginTop: "24px", color: "white", fontSize: "0.9rem", fontWeight: 700 }}>
+            <div style={{ display: "flex", justifyContent: "center", gap: "32px", marginTop: "24px", color: "white", fontSize: "0.9rem", fontWeight: 700, flexWrap: "wrap" }}>
               <span className="flex items-center" style={{ gap: "8px" }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg> FÁCIL Y RÁPIDO</span>
               <span className="flex items-center" style={{ gap: "8px" }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg> 100% SEGURO</span>
               <span className="flex items-center" style={{ gap: "8px" }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg> ASESORÍA PERSONALIZADA</span>
@@ -36,7 +36,7 @@ export default function Home() {
           </div>
 
           {/* Panel de Filtros */}
-          <div style={{ background: "rgba(15, 17, 21, 0.4)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "40px", maxWidth: "1000px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px" }}>
+          <div style={{ background: "rgba(15, 17, 21, 0.4)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "40px 20px", maxWidth: "1000px", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "48px" }}>
             
             {/* Columna Izquierda: Filtros Completos */}
             <div>

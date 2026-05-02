@@ -181,3 +181,48 @@ p {
 .gap-8 {
   gap: 2rem;
 }
+
+/* ========================================= */
+/* RESPONSIVE OPTIMIZATIONS                  */
+/* ========================================= */
+
+.desktop-menu { display: flex; }
+.mobile-menu-btn { display: none !important; }
+.mobile-drawer { display: none; }
+
+@media (max-width: 768px) {
+  /* Navbar Responsivo */
+  .desktop-menu { display: none !important; }
+  .mobile-menu-btn { display: flex !important; }
+  
+  .mobile-drawer.open {
+    display: flex !important; 
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: rgba(10, 12, 16, 0.98);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 999;
+  }
+
+  /* Tipografía Fluida */
+  h1 {
+    font-size: 2.2rem !important; /* Más pequeño para celular */
+  }
+  
+  h2 {
+    font-size: 1.8rem !important;
+  }
+
+  /* Botones adaptables */
+  .btn {
+    width: 100%; /* Botones de ancho completo en móvil son más fáciles de presionar */
+  }
+}
+
