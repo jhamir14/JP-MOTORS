@@ -17,10 +17,10 @@ export const mockMotos = [
       potencia: "16.6 HP / 8,000RPM"
     },
     gallery: [
-      "/motos/gallery/cb190r-1.jpg",
-      "/motos/gallery/cb190r-2.jpg",
-      "/motos/gallery/cb190r-3.jpg",
-      "/motos/gallery/cb190r-4.jpg"
+      "/motos/gallery/gallery-1.png",
+      "/motos/gallery/gallery-2.png",
+      "/motos/gallery/gallery-3.png",
+      "/motos/gallery/gallery-4.png"
     ]
   },
   { 
@@ -41,10 +41,10 @@ export const mockMotos = [
       potencia: "8.38 HP / 7,500 RPM"
     },
     gallery: [
-      "/motos/gallery/cb125f-1.jpg",
-      "/motos/gallery/cb125f-2.jpg",
-      "/motos/gallery/cb125f-3.jpg",
-      "/motos/gallery/cb125f-4.jpg"
+      "/motos/gallery/gallery-1.png",
+      "/motos/gallery/gallery-2.png",
+      "/motos/gallery/gallery-3.png",
+      "/motos/gallery/gallery-4.png"
     ]
   },
   { 
@@ -65,10 +65,10 @@ export const mockMotos = [
       potencia: "7.09 HP / 7,500 RPM"
     },
     gallery: [
-      "/motos/gallery/navi-1.jpg",
-      "/motos/gallery/navi-2.jpg",
-      "/motos/gallery/navi-3.jpg",
-      "/motos/gallery/navi-4.jpg"
+      "/motos/gallery/gallery-1.png",
+      "/motos/gallery/gallery-2.png",
+      "/motos/gallery/gallery-3.png",
+      "/motos/gallery/gallery-4.png"
     ]
   },
   { 
@@ -89,10 +89,10 @@ export const mockMotos = [
       potencia: "16.6 HP / 8,000RPM"
     },
     gallery: [
-      "/motos/gallery/cb190r-old-1.jpg",
-      "/motos/gallery/cb190r-old-2.jpg",
-      "/motos/gallery/cb190r-old-3.jpg",
-      "/motos/gallery/cb190r-old-4.jpg"
+      "/motos/gallery/gallery-1.png",
+      "/motos/gallery/gallery-2.png",
+      "/motos/gallery/gallery-3.png",
+      "/motos/gallery/gallery-4.png"
     ]
   }
 ];

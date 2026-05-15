@@ -146,9 +146,9 @@ export default function MotoDetailsPage() {
             <h2 style={{ fontSize: "2rem", fontWeight: 900, textAlign: "center", marginBottom: "40px", textTransform: "uppercase" }}>Conócela más de <span style={{ color: "var(--accent-primary)" }}>cerca</span></h2>
             
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "16px" }}>
-              {/* Fallback de galería temporal usando la imagen principal con filtros si no hay imágenes reales */}
-              {[1, 2, 3, 4].map((item, index) => (
-                <div key={item} style={{ 
+              {/* Renderizando galería real con imágenes lifestyle */}
+              {moto.gallery && moto.gallery.map((imgSrc, index) => (
+                <div key={index} style={{ 
                   backgroundColor: "rgba(255,255,255,0.02)", 
                   borderRadius: "16px", 
                   overflow: "hidden", 
@@ -157,25 +157,17 @@ export default function MotoDetailsPage() {
                   justifyContent: "center",
                   alignItems: "center",
                   position: "relative",
-                  border: "1px solid rgba(255,255,255,0.05)"
-                }}>
-                  {/* Simulando una foto lifestyle usando la foto principal ampliada y filtrada */}
-                  <img src={moto.image} alt="Gallery" style={{ 
-                    position: "absolute", 
-                    width: "150%", 
-                    height: "150%", 
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  cursor: "pointer"
+                }}
+                onMouseOver={(e) => { e.currentTarget.children[0].setAttribute("style", "width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; transform: scale(1.1);"); }}
+                onMouseOut={(e) => { e.currentTarget.children[0].setAttribute("style", "width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; transform: scale(1);"); }}
+                >
+                  <img src={imgSrc} alt={`Gallery ${index + 1}`} style={{ 
+                    width: "100%", 
+                    height: "100%", 
                     objectFit: "cover", 
-                    opacity: 0.3, 
-                    filter: `blur(5px) grayscale(${index * 20}%)` 
-                  }} />
-                  <img src={moto.image} alt="Moto detail" style={{ 
-                    position: "relative", 
-                    width: "80%", 
-                    height: "80%", 
-                    objectFit: "contain", 
-                    zIndex: 1,
-                    transform: `scale(${1 + index * 0.2})`,
-                    filter: "drop-shadow(0 10px 10px rgba(0,0,0,0.5))"
+                    transition: "transform 0.5s" 
                   }} />
                 </div>
               ))}
