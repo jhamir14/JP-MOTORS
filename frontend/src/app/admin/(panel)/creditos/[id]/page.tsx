@@ -3,11 +3,14 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { AdminForm, BotonEnviar } from "@/components/admin/AdminForm";
 import { BotonImprimir } from "@/components/admin/BotonImprimir";
-import { CampoArea, Encabezado, Estado, Panel, Tabla, fechaCorta } from "@/components/admin/ui";
+import { CampoArea, CampoSelect, CampoTexto, Encabezado, Estado, Panel, Tabla, fechaCorta } from "@/components/admin/ui";
 import { ETIQUETA_SERVICIO, legible } from "@/lib/admin/constantes";
-import { puedeGestionarCreditos } from "@/lib/creditos";
+import { ESTADOS_CREDITO_ACTIVO, puedeGestionarCreditos } from "@/lib/creditos";
 import { ETIQUETA_FRECUENCIA, type Frecuencia } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
+import { ACCIONES_BLOQUEO, ETIQUETA_METODO, ROLES_BLOQUEO, type MetodoPago } from "@/lib/pagos";
+import { buttonClasses } from "@/components/ui/Button";
+import { registrarEventoBloqueo } from "../../pagos/actions";
 import { requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { anularCredito } from "../actions";
@@ -22,6 +25,7 @@ interface Credito {
   penalidad_diaria: number; tea_porcentaje: number | null; fecha_desembolso: string; fecha_primer_vencimiento: string;
   fecha_cancelacion: string | null; motivo_anulacion: string | null; anulado_at: Date | null; anulado_por: string | null;
   creado_por: string | null; created_at: Date; notas: string | null; legado_origen: string | null;
+  estado_unidad_bloqueo: string | null;
 }
 interface Cuota { numero: number; fecha_vencimiento: string; monto_cuota: number; capital: number; interes: number; mora: number; monto_pagado: number; saldo_capital: number | null; estado: string; fecha_pago: string | null }
 
@@ -52,7 +56,7 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
            coalesce(uv.marca || ' ' || uv.modelo || coalesce(' ' || uv.anio, '') || coalesce(' · ' || uv.color, ''),
                     uc.marca || ' ' || uc.modelo || coalesce(' ' || uc.almacenamiento, '')) as bien,
            coalesce('Motor ' || uv.numero_motor || ' · Chasis ' || uv.numero_chasis || coalesce(' · Placa ' || uv.placa, ''), 'IMEI ' || uc.imei1) as bien_id,
-           pl.nombre as plan,
+           pl.nombre as plan, coalesce(uc.estado_bloqueo::text, uv.estado_gps::text) as estado_unidad_bloqueo,
            cr.monto_total::float8, cr.cuota_inicial::float8, cr.monto_financiado::float8, cr.tasa_porcentaje::float8, cr.tipo_calculo,
            cr.total_intereses::float8, cr.monto_total_pagar::float8, cr.frecuencia, cr.numero_cuotas, cr.valor_cuota::float8,
            cr.penalidad_diaria::float8, cr.tea_porcentaje::float8,
@@ -74,10 +78,25 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
     select numero, to_char(fecha_vencimiento, 'YYYY-MM-DD') as fecha_vencimiento, monto_cuota::float8, capital::float8, interes::float8,
            mora::float8, monto_pagado::float8, saldo_capital::float8, estado, to_char(fecha_pago, 'YYYY-MM-DD') as fecha_pago
     from public.cuota where credito_id = ${id} order by numero`;
-  const pagado = cuotas.reduce((s, c) => s + Math.min(c.monto_pagado, c.monto_cuota), 0);
+  const [pagos, eventos] = await Promise.all([
+    db<{ id: string; numero_recibo: string; fecha_pago: string; monto: number; metodo: MetodoPago; anulado: boolean; registrado_por: string | null }[]>`
+      select p.id, p.numero_recibo::text, to_char(p.fecha_pago, 'YYYY-MM-DD') as fecha_pago, p.monto::float8, p.metodo, p.anulado,
+             ${nombre("u")} as registrado_por
+      from public.pago p left join public.perfil_usuario u on u.id = p.registrado_por
+      where p.credito_id = ${id} order by p.fecha_pago desc, p.created_at desc`,
+    db<{ id: string; accion: string; motivo: string; created_at: Date; por: string | null }[]>`
+      select e.id, e.accion, e.motivo, e.created_at, ${nombre("u")} as por
+      from public.evento_bloqueo e left join public.perfil_usuario u on u.id = e.realizado_por
+      where e.credito_id = ${id} order by e.created_at desc`,
+  ]);
+  const pagado = pagos.filter((p) => !p.anulado).reduce((s, p) => s + p.monto, 0);
   const pagadas = cuotas.filter((c) => c.estado === "PAGADA").length;
-  const saldo = Math.max(cr.monto_total_pagar - pagado, 0);
+  const saldo = cuotas.filter((c) => c.estado !== "PAGADA").reduce((s, c) => s + Math.max(c.monto_cuota + c.mora - c.monto_pagado, 0), 0);
+  const moraPendiente = cuotas.filter((c) => c.estado !== "PAGADA").reduce((s, c) => s + c.mora, 0);
+  const activo = (ESTADOS_CREDITO_ACTIVO as readonly string[]).includes(cr.estado);
   const anulable = puedeGestionarCreditos(sesion.rol) && !["ANULADO", "FINALIZADO_LIQUIDADO"].includes(cr.estado) && pagado === 0;
+  const acciones = cr.tipo === "CREDITO_CELULAR" ? ACCIONES_BLOQUEO.CREDITO_CELULAR : cr.tipo === "CREDITO_VEHICULAR" ? ACCIONES_BLOQUEO.CREDITO_VEHICULAR : [];
+  const puedeBloquear = (ROLES_BLOQUEO as readonly string[]).includes(sesion.rol) && cr.bien && acciones.length > 0 && cr.estado !== "ANULADO";
   const f = ETIQUETA_FRECUENCIA[cr.frecuencia];
 
   return (
@@ -86,7 +105,12 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
         <Link href="/admin/creditos" className="text-sm font-medium text-muted hover:text-brand">← Créditos</Link>
         <Link href={`/admin/clientes/${cr.cliente_id}`} className="text-sm font-semibold text-brand">Ficha del cliente →</Link>
       </div>
-      <Encabezado titulo={`Crédito ${cr.codigo}`} acciones={<BotonImprimir />}>
+      <Encabezado titulo={`Crédito ${cr.codigo}`} acciones={
+        <>
+          {activo && <Link href={`/admin/creditos/${cr.id}/pagar`} className={buttonClasses({ variant: "primary", size: "sm" }, "print:hidden")}>Registrar pago</Link>}
+          <BotonImprimir />
+        </>
+      }>
         {ETIQUETA_SERVICIO[cr.tipo]} · {cr.cliente} ({cr.documento}) · entregado el {fecha(cr.fecha_desembolso)}
       </Encabezado>
 
@@ -105,7 +129,10 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
 
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <Estado valor={cr.estado} />
-        <span className="text-sm text-muted tabular">{pagadas}/{cr.numero_cuotas} cuotas pagadas · saldo {formatSoles(saldo, true)}</span>
+        <span className="text-sm text-muted tabular">
+          {pagadas}/{cr.numero_cuotas} cuotas pagadas · cobrado {formatSoles(pagado, true)} · saldo {formatSoles(saldo, true)}
+          {moraPendiente > 0 && <> (incluye mora {formatSoles(moraPendiente, true)})</>}
+        </span>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
@@ -167,8 +194,60 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
             </tr>
           </tfoot>
         </Tabla>
-        <p className="mt-2 text-xs text-muted print:hidden">Domingos y feriados no se cobran. Los pagos se registran desde Cobranzas (Fase 5).</p>
+        <p className="mt-2 text-xs text-muted print:hidden">
+          Domingos y feriados no se cobran. La mora es la penalidad diaria por cada día de atraso que pasa los días de gracia.
+        </p>
       </Panel>
+
+      <Panel className="mt-6 print:hidden" titulo="Pagos" acciones={activo ? <Link href={`/admin/creditos/${cr.id}/pagar`} className="text-sm font-semibold text-brand">+ Registrar pago</Link> : undefined}>
+        {pagos.length === 0 ? (
+          <p className="text-sm text-muted">Sin pagos registrados.</p>
+        ) : (
+          <Tabla className="shadow-none">
+            <thead><tr><th>Recibo</th><th>Fecha</th><th className="text-right">Monto</th><th>Método</th><th>Registrado por</th></tr></thead>
+            <tbody>
+              {pagos.map((p) => (
+                <tr key={p.id} className={p.anulado ? "opacity-60" : undefined}>
+                  <td><Link href={`/admin/pagos/${p.id}`} className="font-mono text-xs font-semibold text-brand hover:underline">{p.numero_recibo.padStart(6, "0")}</Link></td>
+                  <td className="whitespace-nowrap">{fecha(p.fecha_pago)}</td>
+                  <td className={`text-right font-semibold tabular ${p.anulado ? "line-through" : ""}`}>{formatSoles(p.monto, true)}</td>
+                  <td>{ETIQUETA_METODO[p.metodo]}{p.anulado && <span className="ml-1 text-xs text-danger">anulado</span>}</td>
+                  <td className="text-xs text-muted">{p.registrado_por ?? "Sistema anterior"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Tabla>
+        )}
+      </Panel>
+
+      {(puedeBloquear || eventos.length > 0) && (
+        <Panel className="mt-6 print:hidden" titulo={cr.tipo === "CREDITO_CELULAR" ? "Bloqueo del celular" : "GPS y corta-corriente"}>
+          {cr.estado_unidad_bloqueo && (
+            <p className="mb-3 text-sm">Estado actual: <Estado valor={cr.estado_unidad_bloqueo} /></p>
+          )}
+          {puedeBloquear && (
+            <AdminForm action={registrarEventoBloqueo} resetOnSuccess className="mb-4 grid gap-3 sm:grid-cols-[1fr_1.5fr_auto] sm:items-end">
+              <input type="hidden" name="creditoId" value={cr.id} />
+              <CampoSelect label="Acción realizada" name="accion" opciones={acciones} />
+              <CampoTexto label="Motivo" name="motivo" required minLength={5} maxLength={500} placeholder="Ej. 12 días de atraso, sin respuesta" />
+              <BotonEnviar variant="outline" size="sm">Registrar</BotonEnviar>
+              <p className="text-xs text-muted sm:col-span-3">
+                Haz la acción en la plataforma del proveedor (PayJoy, Knox, GPS) y regístrala aquí: queda quién, cuándo y por qué.
+              </p>
+            </AdminForm>
+          )}
+          {eventos.length > 0 && (
+            <ul className="divide-y divide-line-soft text-sm">
+              {eventos.map((e) => (
+                <li key={e.id} className="py-2">
+                  <strong>{legible(e.accion)}</strong> · {e.motivo}
+                  <span className="block text-xs text-muted">{fechaCorta(e.created_at)}{e.por ? ` · ${e.por}` : ""}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      )}
 
       {anulable && (
         <Panel className="mt-6 print:hidden" titulo="Anular crédito">
@@ -184,7 +263,7 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
         </Panel>
       )}
       {cr.estado !== "ANULADO" && !anulable && puedeGestionarCreditos(sesion.rol) && pagado > 0 && (
-        <p className="mt-4 text-xs text-muted print:hidden">Este crédito tiene pagos aplicados: no se puede anular.</p>
+        <p className="mt-4 text-xs text-muted print:hidden">Este crédito tiene pagos vigentes: para anularlo, primero anula sus pagos.</p>
       )}
       <p className="mt-6 hidden text-xs print:block">Tipo: {legible(cr.tipo_calculo)} · Documento referencial generado por el panel de Inversiones JP.</p>
     </>

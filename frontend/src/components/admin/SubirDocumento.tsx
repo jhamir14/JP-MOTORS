@@ -11,7 +11,7 @@ const UMBRAL_BYTES = 1.5 * 1024 * 1024;
  * Reduce en el navegador las fotos grandes tomadas con el celular (JPEG, lado máximo 2000 px) antes de subirlas:
  * menos datos móviles para el asesor y menos espacio en la base. Los PDF se suben tal cual.
  */
-async function comprimir(file: File): Promise<File> {
+export async function comprimir(file: File): Promise<File> {
   if (!file.type.startsWith("image/") || file.size <= UMBRAL_BYTES) return file;
   try {
     const bitmap = await createImageBitmap(file);

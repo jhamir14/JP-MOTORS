@@ -176,12 +176,16 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 - Estados del crédito, anulación con motivo y auditoría.
 - **Cobertura de tests alta** en todas las combinaciones de cálculo.
 
+**Estado (2026-11-25): implementada y en producción.** Detalle en [`FASE_4_CREDITOS.md`](FASE_4_CREDITOS.md).
+
 ### Fase 5 — Pagos y cobranzas (≈ 1.5–2 semanas)
 - Registro de pagos (Efectivo, Yape, Plin, transferencia) con voucher; aplicación automática mora → interés → capital, pagos parciales y adelantados.
 - **Cobranzas de Hoy**: pestañas Por cobrar / En mora por tramos (1–7, 8–15, 16–30, +30) / Pagados hoy, con botón WhatsApp de mensaje pre-armado.
 - Job diario: cálculo de mora, cambio de estados de cuota/crédito/cliente.
 - Acciones de bloqueo/corte GPS como **registro manual de eventos** (las APIs de PayJoy/Knox/GPS requieren convenio; se integran después).
 - Cierre de caja por cobrador.
+
+**Estado (2026-11-25): implementada.** Registro de pagos con vista previa y voucher privado, aplicación mora → interés → capital por cuota (parciales y adelantos, sin sobrepagos), mora diaria con días de gracia y tope opcional, anulación de pagos que revierte las cuotas, Cobranzas con pestañas y tramos, cierre de caja con totales calculados por la base, registro manual de bloqueo/GPS y job diario (panel + Railway cron). Detalle en [`FASE_5_PAGOS.md`](FASE_5_PAGOS.md).
 
 ### Fase 6 — Documentos (≈ 1 semana)
 - PDFs: contrato vehicular con reserva de propiedad, contrato de celular con cláusula de bloqueo, mutuo + pagaré, cronograma, recibo de pago.
@@ -226,22 +230,23 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 
 ---
 
-## 5. Siguiente paso: Fase 5 — Pagos y cobranzas
+## 5. Siguiente paso: Fase 6 — Documentos
 
-Fases 0 a 3 en producción (2026-11-25). **Fase 4 terminada** (ver [`FASE_4_CREDITOS.md`](FASE_4_CREDITOS.md)): alta de créditos con vista previa,
-cronograma con días hábiles, anulación auditada y web rediseñada con imágenes. Antes de empezar: **aplicar en Railway**
-`database/migrations/20261129000100_fase4_creditos.sql`.
+Fases 0 a 5 terminadas (2026-11-25). **Fase 5** (ver [`FASE_5_PAGOS.md`](FASE_5_PAGOS.md)): pagos con voucher, mora diaria, anulación,
+Cobranzas por tramos, cierre de caja, bloqueo/GPS manual y job diario. Migración `20261130000100_fase5_pagos.sql` aplicada en Railway.
 
-**Ya resuelto (no repetir):** todo lo anterior + `lib/creditos.ts` (validación y cronograma definitivo), `/admin/creditos` (listado, alta, detalle, anulación),
-`cuota.capital` / `cuota.interes` / `cuota.saldo_capital` ya se guardan en cada crédito nuevo, y la tabla `pago` + `aplicacion_pago` existen desde la Fase 1.
+**Ya resuelto (no repetir):** todo lo anterior + `lib/pagos.ts` (reparto, mora, caja), `/admin/creditos/[id]/pagar`, `/admin/pagos` (+ `[id]` con constancia
+imprimible del navegador), `/admin/caja`, `/api/vouchers/[id]`, `pago.numero_recibo` (correlativo para el recibo), `hoy_lima()`, `proceso_diario()`.
+El detalle del crédito ya imprime el cronograma con `window.print()` (`BotonImprimir`).
 
-**Alcance de la Fase 5:**
-1. Registrar pago desde el detalle del crédito y desde Cobranzas: monto, método (Efectivo, Yape, Plin, transferencia), n.º de operación y voucher (foto privada, como `documento_kyc`).
-2. Aplicación automática **mora → interés → capital** por cuota en orden de vencimiento (`aplicacion_pago`), pagos parciales y adelantados; actualizar `cuota.monto_pagado`, `estado`, `fecha_pago`.
-3. Mora: `penalidad_diaria × días de atraso` (con `dias_gracia_mora`), calculada por el job diario (`recalcular_estados` + cálculo de `cuota.mora`).
-4. Cobranzas de hoy: pestañas Por cobrar / En mora por tramos (1–7, 8–15, 16–30, +30) / Pagados hoy.
-5. Anulación de pagos (solo admins, con motivo) que revierte las aplicaciones; con esto un crédito con pagos anulados se vuelve a poder anular.
-6. Cierre de caja por cobrador (`cierre_caja`) y eventos de bloqueo/corte GPS manuales (`evento_bloqueo`).
-7. Tests de la aplicación de pagos (parciales, adelantos, sobrepago, redondeo).
+**Alcance de la Fase 6:**
+1. Generar PDFs en el servidor (p. ej. `@react-pdf/renderer` o `pdf-lib`; evitar Chromium en Vercel): ruta protegida con sesión, sin caché, auditada como las descargas de KYC.
+2. **Contrato vehicular** con reserva de propiedad (datos del cliente, garante, unidad: motor, chasis, placa; condiciones y cronograma).
+3. **Contrato de celular** con cláusula de bloqueo (IMEI, plataforma de bloqueo; consentimiento expreso).
+4. **Mutuo + pagaré** (cuando aplique) y **cronograma** en PDF.
+5. **Recibo de pago** en PDF a partir de `pago` + `aplicacion_pago` (n.º `numero_recibo`), y botón **compartir por WhatsApp** tras registrar el pago (enlace `wa.me` con texto y enlace al recibo; el PDF no puede adjuntarse vía `wa.me`).
+6. Guardar el contrato firmado escaneado (`credito.contrato_pdf` existe; usar una tabla privada como `voucher_pago`/`documento_kyc`).
+7. Plantillas con datos de la empresa desde `configuracion.empresa` / `siteConfig` (RUC 10479269217). Tests de los datos que se vuelcan en cada documento.
 
-**Pendientes del negocio:** si `credito_exige_expediente_completo` pasa a `true`, si la mora se cobra sobre cuota o por día fijo (hoy: penalidad diaria fija por crédito), y las fotos reales de celulares y del Torito Bajaj.
+**Pendientes del negocio:** textos legales **validados por abogado** (contratos, cláusula de bloqueo, pagaré); si la mora debe contar solo días hábiles
+o tener tope (`mora_tope_porcentaje_cuota`); si se permite condonar mora; si `credito_exige_expediente_completo` pasa a `true`; fotos reales de celulares y del Torito Bajaj.

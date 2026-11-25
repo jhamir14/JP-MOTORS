@@ -4,6 +4,7 @@ import { AdminNav, type ItemNav } from "@/components/admin/AdminNav";
 import { Logo } from "@/components/Logo";
 import { ETIQUETA_ROL, puede, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
+import { asegurarProcesoDiario } from "@/lib/server/pagos";
 import { salir } from "../login/actions";
 
 export const metadata: Metadata = {
@@ -13,6 +14,8 @@ export const metadata: Metadata = {
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const sesion = await requerirSesion();
+  // Mora y estados del día (una vez por día; si el job programado ya corrió, no hace nada).
+  await asegurarProcesoDiario();
   const [pendientes] = await sql()<{ solicitudes: number; reclamos: number; mora: number }[]>`
     select (select count(*) from public.solicitud_credito where estado = 'NUEVA')::int as solicitudes,
            (select count(distinct cu.credito_id) from public.cuota cu join public.credito cr on cr.id = cu.credito_id
@@ -27,6 +30,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     { href: "/admin/clientes", label: "Clientes" },
     { href: "/admin/creditos", label: "Créditos" },
     { href: "/admin/cobranzas", label: "Cobranzas", badge: pendientes.mora },
+    { href: "/admin/pagos", label: "Pagos" },
+    { href: "/admin/caja", label: "Caja" },
     { href: "/admin/catalogo", label: "Catálogo" },
     { href: "/admin/inventario", label: "Inventario" },
     { href: "/admin/tasas", label: "Tasas por servicio" },
