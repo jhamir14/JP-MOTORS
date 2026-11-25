@@ -1,3 +1,4 @@
+/** Fuente del respaldo de repuestos (ver catalogoRespaldo.ts); en producción se leen de la base de datos. */
 export interface Repuesto {
   id: number;
   name: string;

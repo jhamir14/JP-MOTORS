@@ -1,7 +1,9 @@
+import { PublicChrome } from "@/components/PublicChrome";
 import { ButtonLink } from "@/components/ui";
 
 export default function NotFound() {
   return (
+    <PublicChrome>
     <main className="flex min-h-[60vh] flex-col items-center justify-center px-5 text-center">
       <span className="eyebrow">Error 404</span>
       <h1 className="mt-3 text-[2.4rem]">No encontramos esta página</h1>
@@ -11,5 +13,6 @@ export default function NotFound() {
         <ButtonLink href="/financiamiento" variant="outline">Solicitar crédito</ButtonLink>
       </div>
     </main>
+    </PublicChrome>
   );
 }

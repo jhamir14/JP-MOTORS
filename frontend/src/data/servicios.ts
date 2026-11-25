@@ -30,7 +30,7 @@ export const servicios: Servicio[] = [
     id: "vehicular",
     titulo: "Crédito vehicular",
     resumen: "Motos lineales y mototaxis para trabajar, con cuotas mensuales y crédito directo, sin bancos.",
-    href: "/motos",
+    href: "/vehiculos",
     cta: "Ver vehículos",
     Icon: IconMoto,
     puntos: ["Motos Honda y Motokar", "Hasta 36 meses", "Inicial flexible"],

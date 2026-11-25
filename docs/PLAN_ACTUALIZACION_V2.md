@@ -160,6 +160,8 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 - `/financiamiento` guarda `SolicitudCredito` en BD (+ aviso por correo/WhatsApp) y consentimiento de datos.
 - Home con selector Motos / Toritos / Celulares; Libro de Reclamaciones.
 
+**Estado (2026-11-25): implementada.** Catálogo, tasas y planes leídos de la BD (con respaldo estático), `/vehiculos` + fichas por slug con SEO y redirecciones 301 desde `/motos`, landing Torito Bajaj, simulador semanal/quincenal con TEA, Libro de Reclamaciones, privacidad y términos. Panel `/admin` con login propio (scrypt + sesiones en BD), roles y RLS por usuario: solicitudes, catálogo con fotos y planes, inventario (VIN/IMEI), tasas y tope de TEA, reclamos y personal. Detalle en [`FASE_2_CATALOGO_Y_PANEL.md`](FASE_2_CATALOGO_Y_PANEL.md).
+
 ### Fase 3 — Clientes e inventario (≈ 2 semanas)
 - CRUD de clientes con KYC completo, garantes, subida de documentos a Storage **privado** (URLs firmadas), geolocalización.
 - Bandeja de **solicitudes** web → convertir en cliente.

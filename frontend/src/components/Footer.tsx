@@ -9,7 +9,7 @@ const columnas = [
     titulo: "Servicios",
     links: [
       { href: "/prestamos", label: "Préstamos en efectivo" },
-      { href: "/motos", label: "Crédito vehicular" },
+      { href: "/vehiculos", label: "Crédito vehicular" },
       { href: "/celulares", label: "Celulares a crédito" },
       { href: "/repuestos", label: "Repuestos y accesorios" },
     ],
@@ -24,8 +24,11 @@ const columnas = [
   },
 ];
 
-// Páginas legales: se implementan en la Fase 2 (Libro de Reclamaciones es obligatorio antes del go-live).
-const legales = ["Políticas de privacidad", "Términos y condiciones", "Libro de Reclamaciones"];
+const legales = [
+  { href: "/privacidad", label: "Política de privacidad" },
+  { href: "/terminos", label: "Términos y condiciones" },
+  { href: "/libro-reclamaciones", label: "Libro de Reclamaciones" },
+];
 
 export default function Footer() {
   return (
@@ -93,7 +96,9 @@ export default function Footer() {
           <span>© {new Date().getFullYear()} {siteConfig.legalName}. Todos los derechos reservados.</span>
           <ul className="flex flex-wrap gap-x-5 gap-y-1">
             {legales.map((l) => (
-              <li key={l} title="Próximamente">{l}</li>
+              <li key={l.href}>
+                <Link href={l.href} className="transition-colors hover:text-white">{l.label}</Link>
+              </li>
             ))}
           </ul>
         </div>
