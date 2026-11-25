@@ -1,7 +1,7 @@
 /**
  * Configuración pública centralizada del sitio.
  * Se puede sobrescribir con variables de entorno (ver `.env.example`).
- * Las tasas reales de cada servicio viven en la tabla `tasa_servicio` de Supabase;
+ * Las tasas reales de cada servicio viven en la tabla `tasa_servicio` de la base de datos;
  * estos valores son el respaldo mientras la web pública no lee de la base de datos.
  */
 

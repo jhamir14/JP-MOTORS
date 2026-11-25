@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { ETIQUETAS_SERVICIO, erroresPorCampo, solicitudCreditoSchema, type SolicitudCredito } from "@/schemas/solicitudCredito";
 import { siteConfig } from "@/lib/config";
-import { insertar, supabaseConfigurado } from "@/lib/server/supabase";
+import { dbConfigurada, sql } from "@/lib/server/db";
 
 /**
  * Recibe la solicitud de la web, la valida en el servidor y:
- *   1. la guarda en Supabase (tabla solicitud_credito) si SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY están configuradas;
+ *   1. la guarda en PostgreSQL (tabla solicitud_credito) si DATABASE_URL está configurada;
  *   2. avisa por correo a LEADS_EMAIL (vía formsubmit.co) si está configurado.
  * Basta con que uno de los dos canales funcione para no perder la solicitud.
  */
@@ -39,6 +39,12 @@ function filaSolicitud(d: SolicitudCredito) {
     acepta_datos: true,
     origen: "web",
   };
+}
+
+async function guardarEnBD(d: SolicitudCredito) {
+  const { datos_extra, ...fila } = filaSolicitud(d);
+  const db = sql();
+  await db`insert into public.solicitud_credito ${db({ ...fila, datos_extra: db.json(datos_extra) })}`;
 }
 
 async function enviarCorreo(d: SolicitudCredito, leadsEmail: string) {
@@ -97,17 +103,17 @@ export async function POST(request: Request) {
   const d = parsed.data;
   const leadsEmail = process.env.LEADS_EMAIL;
 
-  if (!supabaseConfigurado && !leadsEmail) {
-    console.error("[solicitudes] No hay canal configurado: define SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY y/o LEADS_EMAIL");
+  if (!dbConfigurada && !leadsEmail) {
+    console.error("[solicitudes] No hay canal configurado: define DATABASE_URL y/o LEADS_EMAIL");
     return NextResponse.json({ ok: false, error: "Servicio no configurado" }, { status: 503 });
   }
 
   const resultados = await Promise.allSettled([
-    supabaseConfigurado ? insertar("solicitud_credito", filaSolicitud(d)) : Promise.reject(new Error("omitido")),
+    dbConfigurada ? guardarEnBD(d) : Promise.reject(new Error("omitido")),
     leadsEmail ? enviarCorreo(d, leadsEmail) : Promise.reject(new Error("omitido")),
   ]);
   const [bd, correo] = resultados;
-  if (bd.status === "rejected" && supabaseConfigurado) console.error("[solicitudes] No se pudo guardar en Supabase:", bd.reason);
+  if (bd.status === "rejected" && dbConfigurada) console.error("[solicitudes] No se pudo guardar en la base de datos:", bd.reason);
   if (correo.status === "rejected" && leadsEmail) console.error("[solicitudes] No se pudo enviar el correo:", correo.reason);
 
   if (bd.status === "rejected" && correo.status === "rejected") {

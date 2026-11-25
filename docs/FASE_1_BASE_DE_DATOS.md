@@ -1,19 +1,29 @@
-# Fase 1 · Base de datos en Supabase y migración del sistema anterior
+# Fase 1 · Base de datos (PostgreSQL en Railway) y migración del sistema anterior
 
 Fecha: 2026-11-25
 
-## 1. Decisión: migraciones SQL en lugar de Prisma
+## 1. Decisiones
 
-El plan v2 proponía Prisma. Se optó por **migraciones SQL nativas de Supabase** (`database/migrations/`) porque:
+**Hosting: PostgreSQL en Railway** (proyecto `shimmering-spirit`, servicio `Postgres`, región us-east4), junto al sistema
+anterior. Se eligió por costo frente a Supabase. Lo que Supabase traía y Railway no, y cómo se resuelve:
 
-- La seguridad se apoya en **Row Level Security** de Postgres (políticas, funciones `security definer`, triggers), que Prisma no modela.
-- Supabase CLI y el panel aplican estas migraciones directamente; no hay un paso de generación extra.
-- Si más adelante se quiere Prisma para consultas tipadas, basta `prisma db pull` sobre esta base.
+| Supabase | En Railway |
+|---|---|
+| Esquema `auth` y roles `anon`/`authenticated` | `20261125000000_compat_auth.sql` los crea (no-op en Supabase) |
+| Login del personal (Supabase Auth) | Fase 2: Auth.js con credenciales contra `auth.users` (hash de contraseña) |
+| Storage privado para DNI/recibos | Fase 3: bucket de Railway u otro almacenamiento S3 privado |
+| API REST + service role | La web se conecta directo con `DATABASE_URL` (solo servidor) |
+| Backups automáticos | Activar backups del volumen de Postgres en el panel de Railway |
+
+**Migraciones SQL en lugar de Prisma**: la seguridad se apoya en Row Level Security (políticas, funciones
+`security definer`, triggers), que Prisma no modela. Si más adelante se quiere Prisma para consultas tipadas,
+basta `prisma db pull` sobre esta base.
 
 ## 2. Migraciones
 
 | Archivo | Contenido |
 |---|---|
+| `20261125000000_compat_auth.sql` | Esquema `auth`, `auth.uid()` y roles cuando la base no es Supabase |
 | `20261125000100_esquema_base.sql` | Enums (glosario único), 19 tablas, índices y triggers `updated_at` |
 | `20261125000200_seguridad_rls.sql` | RLS en todas las tablas, funciones de rol y auditoría automática |
 | `20261125000300_funciones_negocio.sql` | Código correlativo de crédito, reserva de unidades, `recalcular_estados()`, vistas `v_cobranza` y `v_resumen_cartera` |
@@ -46,7 +56,9 @@ enums de bloqueo/GPS + `evento_bloqueo` (E7), `pago` → `aplicacion_pago` → n
 | `ASESOR_VENTAS` | Clientes, garantes, catálogo, planes, inventario |
 | `COBRADOR` | Registrar pagos y bloqueos a su nombre, su cierre de caja |
 
-Las solicitudes de la web se insertan desde `/api/solicitudes` con la `service_role` key (solo servidor).
+Las solicitudes de la web se insertan desde `/api/solicitudes` con el usuario dueño de la base (solo servidor, no sujeto a RLS).
+Para que el RLS aplique a un usuario del panel, la app ejecuta en cada transacción
+`set local role authenticated` y `select set_config('app.usuario_id', '<uuid>', true)`.
 Los créditos nunca se borran: se anulan con motivo. Cambios en tasas, configuración, créditos, pagos, bloqueos y personal quedan en `audit_log`.
 
 ## 3. Migración del backup (`prestamos_backup.sql`)
@@ -69,7 +81,7 @@ y el SQL resultante se ejecuta una sola vez sobre la base ya migrada (es idempot
 | `devices_devicesale` | `credito` (CREDITO_CELULAR) | 10 |
 | `loans_cuotaprestamo` + `devices_deviceinstallment` | `cuota` / `pago` / `aplicacion_pago` | 985 / 912 / 912 |
 
-Resultado verificado en un Postgres 16 local (con stub del esquema `auth`): 24 préstamos activos (7 en mora),
+Resultado verificado en un Postgres 16 local y luego en Railway: 24 préstamos activos (7 en mora),
 131 créditos finalizados, saldo por cobrar S/ 16,665.00, 0 descuadres entre pagos y su aplicación.
 
 ### Hallazgos de calidad de datos
@@ -91,14 +103,33 @@ un score 1–5 según la puntualidad de sus cuotas pagadas (tolerancia `configur
 mayoría de pagos llega entre 0 y 3 días tras el vencimiento). Con los datos actuales: 24 clientes "excelente pagador",
 33 aptos para préstamo en efectivo.
 
-## 4. Puesta en marcha en Supabase
+## 4. Estado en Railway (2026-11-25)
 
-1. Crear el proyecto (región `sa-east-1`, São Paulo).
-2. Aplicar las 4 migraciones en orden (`supabase db push` o el editor SQL).
-3. Generar y ejecutar `database/.legado/legado.sql`.
-4. Crear los usuarios del personal en Auth y su fila en `perfil_usuario` con el rol.
-5. En Vercel: `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` (solo servidor).
-6. Fijar `configuracion.tope_tea_porcentaje` con el área legal.
+**Hecho:**
+1. Servicio `Postgres` (PostgreSQL 18) creado en el proyecto del sistema anterior, con acceso público por TCP (SSL) para Vercel.
+2. Migraciones aplicadas y datos copiados **directo del MySQL en vivo** por la red privada, con una Railway Function
+   temporal (`database/railway/migrar.ts`). Resultado: 93 clientes, 155 créditos, 985 cuotas, 912 pagos, 14 productos.
+   La función se eliminó al terminar; los logs solo contienen conteos.
+3. El sistema anterior (`prestamos` + `MySQL`) **no se tocó** y sigue funcionando.
+
+**Pendiente:**
+1. En Vercel, `DATABASE_URL` = valor de `DATABASE_PUBLIC_URL` del servicio Postgres en Railway (solo servidor).
+2. Activar backups del volumen de Postgres en Railway.
+3. Fijar `configuracion.tope_tea_porcentaje` con el área legal.
+4. **Corte del sistema anterior**: mientras se siga usando, los pagos nuevos quedan solo en MySQL. El día del cambio,
+   volver a ejecutar la función con `IMPORTAR_LEGADO=1`: agrega los registros nuevos, pero **no actualiza** los ya copiados
+   (por ejemplo, una cuota pagada después de hoy). Para ese corte conviene vaciar las tablas operativas y recargar.
+
+### Volver a ejecutar la migración
+
+```bash
+python3 database/railway/construir_funcion.py --remoto <commit con las migraciones>
+# crear una Railway Function con database/railway/dist/funcion.ts y las variables:
+#   DATABASE_URL=${{Postgres.DATABASE_URL}}  MYSQL_URL=${{MySQL.MYSQL_URL}}  IMPORTAR_LEGADO=1
+```
+
+Sin Railway Function también se puede usar el backup: `python3 database/importar_legado.py backup.sql` y ejecutar
+`database/.legado/legado.sql` con `psql` sobre la URL pública.
 
 ## 5. Rediseño de la web
 
@@ -108,7 +139,7 @@ La web deja de ser una tienda de motos y pasa a presentarse como **financiera mu
 - Portada: simulador de cuotas (vehículo / celular) con TEA visible, servicios, pasos, frecuencias de pago, productos, requisitos y FAQ.
 - Nuevas páginas: `/prestamos` (selector de monto, sin tasa publicada) y `/celulares` (catálogo con cuota semanal).
 - `/motos` presentado como **crédito vehicular**; incluye el Honda Motokar GL150 del inventario real.
-- Formulario único para los 3 servicios; `/api/solicitudes` guarda en `solicitud_credito` y avisa por correo.
+- Formulario único para los 3 servicios; `/api/solicitudes` guarda en `solicitud_credito` (PostgreSQL) y avisa por correo.
 
-Pendiente para la Fase 2: leer catálogo y tasas desde Supabase en la web, panel `/admin` con login, fotos reales de celulares,
+Pendiente para la Fase 2: leer catálogo y tasas desde la base de datos en la web, panel `/admin` con login, fotos reales de celulares,
 páginas legales y Libro de Reclamaciones.

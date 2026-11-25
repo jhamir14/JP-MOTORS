@@ -151,7 +151,7 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 - Auth admin con roles, middleware que protege `/admin`, layout del panel.
 - `AuditLog` y `Configuracion` desde el día uno.
 
-**Estado (2026-11-25): base de datos lista, pendiente de aplicar en Supabase.** Esquema en migraciones SQL (no Prisma) con RLS por rol, auditoría y funciones de negocio; migración del backup del sistema anterior (93 clientes, 155 créditos, 985 cuotas) con `database/importar_legado.py`; web rediseñada como financiera multiservicio (`/prestamos`, `/celulares`). Pendiente: crear el proyecto en Supabase, auth y panel `/admin`. Detalle en [`FASE_1_BASE_DE_DATOS.md`](FASE_1_BASE_DE_DATOS.md).
+**Estado (2026-11-25): base de datos en producción en Railway (PostgreSQL), en lugar de Supabase por costo.** Esquema en migraciones SQL (no Prisma) con RLS por rol, auditoría y funciones de negocio; migración del backup del sistema anterior (93 clientes, 155 créditos, 985 cuotas) con `database/importar_legado.py`; web rediseñada como financiera multiservicio (`/prestamos`, `/celulares`). Datos copiados del MySQL en vivo. Pendiente: `DATABASE_URL` en Vercel, backups, auth (Auth.js) y panel `/admin`. Detalle en [`FASE_1_BASE_DE_DATOS.md`](FASE_1_BASE_DE_DATOS.md).
 
 ### Fase 2 — Web pública multivertical + catálogo administrable (≈ 2.5–3 semanas)
 - Admin: ABM de catálogo con subida de fotos, ingreso de stock básico, tasas por servicio y planes de crédito por producto (§2.4).

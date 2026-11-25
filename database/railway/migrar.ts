@@ -393,7 +393,16 @@ async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("Falta DATABASE_URL");
   const pool = new pg.Pool({ connectionString: url, max: 1 });
-  const db = await pool.connect();
+  let db: pg.PoolClient | undefined;
+  for (let intento = 1; !db; intento++) {
+    try {
+      db = await pool.connect();
+    } catch (e) {
+      if (intento >= 6) throw e;
+      console.log(`PostgreSQL no responde aún (intento ${intento}); reintentando en 5 s`);
+      await Bun.sleep(5000);
+    }
+  }
   try {
     await aplicarMigraciones(db);
     if (process.env.IMPORTAR_LEGADO === "1") await importarLegado(db);
