@@ -191,6 +191,8 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 - PDFs: contrato vehicular con reserva de propiedad, contrato de celular con cláusula de bloqueo, mutuo + pagaré, cronograma, recibo de pago.
 - Recibo compartible por WhatsApp tras cada pago. Textos legales **validados por abogado**.
 
+**Estado (2026-11-25): implementada.** PDFs generados en el servidor con pdf-lib (sin Chromium): contrato vehicular con reserva de propiedad y GPS, contrato de celular con cláusula de bloqueo, mutuo para préstamos migrados, pagaré sin protesto con aval, cronograma con lo pagado y recibo con monto en letras. Documentos firmados guardados en privado (`documento_credito`), recibo por WhatsApp con enlace no adivinable (`/r/<token>`, DNI enmascarado), datos del representante en `/admin/tasas` y auditoría de cada descarga. Textos marcados como modelo referencial hasta la validación legal. Detalle en [`FASE_6_DOCUMENTOS.md`](FASE_6_DOCUMENTOS.md).
+
 ### Fase 7 — Scoring de clientes (≈ 0.5 semana)
 - Cálculo de `scoreInterno` según historial y beneficios para clientes puntuales en su siguiente financiamiento.
 - ~~Préstamos en efectivo~~: **descartado (decisión 2026-11-25)**. La empresa solo financia productos; los préstamos migrados del sistema anterior se conservan únicamente para su cobranza.
@@ -230,23 +232,33 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 
 ---
 
-## 5. Siguiente paso: Fase 6 — Documentos
+## 5. Siguiente paso: Fase 7 — Scoring de clientes
 
-Fases 0 a 5 terminadas (2026-11-25). **Fase 5** (ver [`FASE_5_PAGOS.md`](FASE_5_PAGOS.md)): pagos con voucher, mora diaria, anulación,
-Cobranzas por tramos, cierre de caja, bloqueo/GPS manual y job diario. Migración `20261130000100_fase5_pagos.sql` aplicada en Railway.
+Fases 0 a 6 terminadas (2026-11-25). **Fase 6** (ver [`FASE_6_DOCUMENTOS.md`](FASE_6_DOCUMENTOS.md)): contratos, pagaré, cronograma y recibo en PDF,
+documentos firmados privados, recibo por WhatsApp con enlace público seguro. Migración `20261201000100_fase6_documentos.sql` aplicada en Railway.
 
-**Ya resuelto (no repetir):** todo lo anterior + `lib/pagos.ts` (reparto, mora, caja), `/admin/creditos/[id]/pagar`, `/admin/pagos` (+ `[id]` con constancia
-imprimible del navegador), `/admin/caja`, `/api/vouchers/[id]`, `pago.numero_recibo` (correlativo para el recibo), `hoy_lima()`, `proceso_diario()`.
-El detalle del crédito ya imprime el cronograma con `window.print()` (`BotonImprimir`).
+**Ya resuelto (no repetir):** todo lo anterior + `lib/documentos.ts` (plantillas puras con tests), `lib/pdf/render.ts`, `lib/server/documentos.ts`
+(`datosCredito`, `datosRecibo`, `datosEmpresa`, `auditarDescarga`), `/api/documentos/...`, `/r/[token]`, `documento_credito`, `pago.token_recibo`,
+`configuracion.empresa_documentos` y `documentos_validados`.
 
-**Alcance de la Fase 6:**
-1. Generar PDFs en el servidor (p. ej. `@react-pdf/renderer` o `pdf-lib`; evitar Chromium en Vercel): ruta protegida con sesión, sin caché, auditada como las descargas de KYC.
-2. **Contrato vehicular** con reserva de propiedad (datos del cliente, garante, unidad: motor, chasis, placa; condiciones y cronograma).
-3. **Contrato de celular** con cláusula de bloqueo (IMEI, plataforma de bloqueo; consentimiento expreso).
-4. **Mutuo + pagaré** (cuando aplique) y **cronograma** en PDF.
-5. **Recibo de pago** en PDF a partir de `pago` + `aplicacion_pago` (n.º `numero_recibo`), y botón **compartir por WhatsApp** tras registrar el pago (enlace `wa.me` con texto y enlace al recibo; el PDF no puede adjuntarse vía `wa.me`).
-6. Guardar el contrato firmado escaneado (`credito.contrato_pdf` existe; usar una tabla privada como `voucher_pago`/`documento_kyc`).
-7. Plantillas con datos de la empresa desde `configuracion.empresa` / `siteConfig` (RUC 10479269217). Tests de los datos que se vuelcan en cada documento.
+**Lo que ya existe del score (base para la Fase 7):** `cliente.score_interno` (1–5, `null` = sin historial), `cliente.estado`
+(`NUEVO`, `ACTIVO_AL_DIA`, `ACTIVO_EN_MORA`, `EXCELENTE_PAGADOR`, `BLOQUEADO_LEGAL`) y `apto_prestamo_efectivo` (en desuso: ya no hay préstamos),
+calculados en `recalcular_estados()` (migración de la Fase 5, se ejecuta en `proceso_diario()`): % de cuotas pagadas a tiempo
+(dentro de `dias_gracia_mora`) → 5 (≥95 %), 4 (≥85 %), 3 (≥70 %), 2 (≥50 %), 1; con un crédito en mora el máximo es 2.
+El panel muestra las estrellas en `/admin/clientes` y en la ficha.
 
-**Pendientes del negocio:** textos legales **validados por abogado** (contratos, cláusula de bloqueo, pagaré); si la mora debe contar solo días hábiles
-o tener tope (`mora_tope_porcentaje_cuota`); si se permite condonar mora; si `credito_exige_expediente_completo` pasa a `true`; fotos reales de celulares y del Torito Bajaj.
+**Alcance de la Fase 7:**
+1. Llevar el cálculo a una función pura y testeada (`lib/scoring.ts`) que explique **por qué** cada cliente tiene su puntaje (puntualidad, días de atraso
+   promedio y máximo, cuotas en mora hoy, créditos cancelados, antigüedad, bloqueos/cortes de GPS, anulaciones) y mantener la versión SQL equivalente
+   (o guardar un detalle `score_detalle jsonb` + `score_calculado_at`).
+2. Historial del score (tabla `score_historial` con fecha, puntaje y motivo) para ver la evolución en la ficha del cliente.
+3. **Beneficios para clientes puntuales** en su siguiente financiamiento, configurables en el panel (`configuracion`): p. ej. inicial menor,
+   descuento de tasa o más cuotas para score 4–5 / `EXCELENTE_PAGADOR`; y alerta o bloqueo para score 1–2 o mora vigente.
+4. Aplicar los beneficios en el **alta de crédito** (`/admin/creditos/nuevo`, `lib/creditos.ts`): sugerirlos y mostrar el score y el historial del cliente
+   antes de confirmar; las condiciones finales quedan congeladas como hoy.
+5. Filtro y orden por score en `/admin/clientes`; tests con historiales de ejemplo.
+6. Eliminar o renombrar `apto_prestamo_efectivo` (la empresa no otorga préstamos) si ya no se usa.
+
+**Pendientes del negocio:** reglas exactas del score y de los beneficios (¿cuánto descuento o inicial?, ¿desde qué puntaje?); validación legal de los
+textos de la Fase 6; representante legal y domicilio en `/admin/tasas`; si la mora debe contar solo días hábiles o tener tope; si se permite condonar mora;
+fotos reales de celulares y del Torito Bajaj.

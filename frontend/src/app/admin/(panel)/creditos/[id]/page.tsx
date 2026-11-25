@@ -11,9 +11,12 @@ import { formatSoles } from "@/lib/format";
 import { ACCIONES_BLOQUEO, ETIQUETA_METODO, ROLES_BLOQUEO, type MetodoPago } from "@/lib/pagos";
 import { buttonClasses } from "@/components/ui/Button";
 import { registrarEventoBloqueo } from "../../pagos/actions";
-import { requerirSesion } from "@/lib/server/auth";
+import { puede, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { anularCredito } from "../actions";
+import { eliminarDocumentoCredito, subirDocumentoCredito } from "../documentosActions";
+import { SubirDocumentoCredito } from "@/components/admin/SubirDocumentoCredito";
+import { ETIQUETA_DOCUMENTO_FIRMADO, ROLES_DOCUMENTOS_LEGALES, TIPOS_DOCUMENTO_FIRMADO } from "@/lib/documentos";
 
 export const metadata = { title: "Crédito" };
 
@@ -78,7 +81,7 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
     select numero, to_char(fecha_vencimiento, 'YYYY-MM-DD') as fecha_vencimiento, monto_cuota::float8, capital::float8, interes::float8,
            mora::float8, monto_pagado::float8, saldo_capital::float8, estado, to_char(fecha_pago, 'YYYY-MM-DD') as fecha_pago
     from public.cuota where credito_id = ${id} order by numero`;
-  const [pagos, eventos] = await Promise.all([
+  const [pagos, eventos, documentos] = await Promise.all([
     db<{ id: string; numero_recibo: string; fecha_pago: string; monto: number; metodo: MetodoPago; anulado: boolean; registrado_por: string | null }[]>`
       select p.id, p.numero_recibo::text, to_char(p.fecha_pago, 'YYYY-MM-DD') as fecha_pago, p.monto::float8, p.metodo, p.anulado,
              ${nombre("u")} as registrado_por
@@ -88,6 +91,10 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
       select e.id, e.accion, e.motivo, e.created_at, ${nombre("u")} as por
       from public.evento_bloqueo e left join public.perfil_usuario u on u.id = e.realizado_por
       where e.credito_id = ${id} order by e.created_at desc`,
+    db<{ id: string; tipo: keyof typeof ETIQUETA_DOCUMENTO_FIRMADO; nombre: string; tipo_mime: string; tamano: number; created_at: Date; por: string | null }[]>`
+      select d.id, d.tipo, d.nombre, d.tipo_mime, d.tamano, d.created_at, ${nombre("u")} as por
+      from public.documento_credito d left join public.perfil_usuario u on u.id = d.subido_por
+      where d.credito_id = ${id} order by d.created_at desc`,
   ]);
   const pagado = pagos.filter((p) => !p.anulado).reduce((s, p) => s + p.monto, 0);
   const pagadas = cuotas.filter((c) => c.estado === "PAGADA").length;
@@ -98,6 +105,10 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
   const acciones = cr.tipo === "CREDITO_CELULAR" ? ACCIONES_BLOQUEO.CREDITO_CELULAR : cr.tipo === "CREDITO_VEHICULAR" ? ACCIONES_BLOQUEO.CREDITO_VEHICULAR : [];
   const puedeBloquear = (ROLES_BLOQUEO as readonly string[]).includes(sesion.rol) && cr.bien && acciones.length > 0 && cr.estado !== "ANULADO";
   const f = ETIQUETA_FRECUENCIA[cr.frecuencia];
+  const legales = puede(sesion, ...ROLES_DOCUMENTOS_LEGALES) && cr.estado !== "ANULADO";
+  const nombreContrato = cr.tipo === "PRESTAMO_EFECTIVO" ? "Contrato de mutuo" : "Contrato";
+  const faltaContrato = legales && !cr.legado_origen && !documentos.some((d) => d.tipo === "CONTRATO_FIRMADO");
+  const pdf = (tipo: string) => `/api/documentos/credito/${cr.id}/${tipo}`;
 
   return (
     <>
@@ -108,7 +119,8 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
       <Encabezado titulo={`Crédito ${cr.codigo}`} acciones={
         <>
           {activo && <Link href={`/admin/creditos/${cr.id}/pagar`} className={buttonClasses({ variant: "primary", size: "sm" }, "print:hidden")}>Registrar pago</Link>}
-          <BotonImprimir />
+          <a href={pdf("cronograma")} target="_blank" rel="noopener" className={buttonClasses({ variant: "outline", size: "sm" }, "print:hidden")}>Cronograma PDF</a>
+          <BotonImprimir>Imprimir</BotonImprimir>
         </>
       }>
         {ETIQUETA_SERVICIO[cr.tipo]} · {cr.cliente} ({cr.documento}) · entregado el {fecha(cr.fecha_desembolso)}
@@ -163,6 +175,56 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
           </dl>
         </Panel>
       </div>
+
+      <Panel className="mt-6 print:hidden" titulo="Documentos">
+        <div className="flex flex-wrap gap-2">
+          {legales && (
+            <>
+              <a href={pdf("contrato")} target="_blank" rel="noopener" className={buttonClasses({ variant: "primary", size: "sm" })}>{nombreContrato} (PDF)</a>
+              <a href={pdf("pagare")} target="_blank" rel="noopener" className={buttonClasses({ variant: "outline", size: "sm" })}>Pagaré (PDF)</a>
+            </>
+          )}
+          <a href={pdf("cronograma")} target="_blank" rel="noopener" className={buttonClasses({ variant: "outline", size: "sm" })}>Cronograma (PDF)</a>
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          Se generan con las condiciones pactadas y los datos actuales del cliente{cr.garante ? ", del fiador" : ""} y {cr.tipo === "CREDITO_CELULAR" ? "del equipo (IMEI)" : cr.tipo === "CREDITO_VEHICULAR" ? "del vehículo (motor, chasis, placa)" : "del préstamo"}.
+          Imprime, firma (con huella) y sube aquí el escaneo o una foto.
+        </p>
+        {faltaContrato && (
+          <p role="status" className="mt-3 rounded-xl bg-gold-soft px-4 py-2 text-sm font-medium text-[#8a5d00]">Falta subir el contrato firmado.</p>
+        )}
+        {documentos.length > 0 && (
+          <ul className="mt-4 divide-y divide-line-soft text-sm">
+            {documentos.map((d) => (
+              <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <div className="min-w-0">
+                  <a href={`/api/documentos-credito/${d.id}`} target="_blank" rel="noopener" className="font-semibold text-brand hover:underline">
+                    {ETIQUETA_DOCUMENTO_FIRMADO[d.tipo]} ↗
+                  </a>
+                  <span className="block truncate text-xs text-muted">
+                    {d.nombre} · {d.tipo_mime === "application/pdf" ? "PDF" : "foto"} · {(d.tamano / 1024).toFixed(0)} KB · {fechaCorta(d.created_at)}{d.por ? ` · ${d.por}` : ""}
+                  </span>
+                </div>
+                {puedeGestionarCreditos(sesion.rol) && (
+                  <form action={eliminarDocumentoCredito}>
+                    <input type="hidden" name="id" value={d.id} />
+                    <button type="submit" className="cursor-pointer text-xs font-semibold text-danger hover:underline">Eliminar</button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {legales && (
+          <div className="mt-4 border-t border-line-soft pt-4">
+            <SubirDocumentoCredito
+              action={subirDocumentoCredito}
+              creditoId={cr.id}
+              tipos={TIPOS_DOCUMENTO_FIRMADO.map((t) => ({ value: t, label: ETIQUETA_DOCUMENTO_FIRMADO[t] }))}
+            />
+          </div>
+        )}
+      </Panel>
 
       <Panel className="mt-6" titulo="Cronograma de pagos">
         <Tabla className="shadow-none">

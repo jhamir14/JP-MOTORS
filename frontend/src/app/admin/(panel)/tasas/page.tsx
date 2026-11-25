@@ -7,7 +7,8 @@ import { CATEGORIAS, ETIQUETA_CATEGORIA, type CategoriaProducto } from "@/lib/ca
 import { ETIQUETA_FRECUENCIA, FRECUENCIAS, PERIODOS_POR_ANIO, calcularCredito, type Frecuencia, type TipoCalculo } from "@/lib/finance";
 import { puede, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
-import { guardarFeriados, guardarTasa, guardarTopeTea } from "./actions";
+import { datosEmpresa } from "@/lib/server/documentos";
+import { guardarDatosDocumentos, guardarFeriados, guardarTasa, guardarTopeTea } from "./actions";
 
 export const metadata = { title: "Tasas por servicio" };
 
@@ -65,7 +66,7 @@ export default async function TasasPage() {
   const sesion = await requerirSesion();
   const editable = puede(sesion, "SUPERADMIN", "ADMIN_CREDITOS");
   const db = sql();
-  const [tasas, [conf], [fer]] = await Promise.all([
+  const [tasas, [conf], [fer], empresa] = await Promise.all([
     db<Tasa[]>`
       select id, servicio, categoria, nombre, frecuencia, tipo_calculo, tasa_porcentaje::float8 as tasa, cuotas_min, cuotas_max,
              penalidad_diaria::float8 as penalidad, publica, activa
@@ -75,6 +76,7 @@ export default async function TasasPage() {
       from public.configuracion where clave = 'tope_tea_porcentaje'`,
     db<{ fechas: string[] | null }[]>`
       select case when jsonb_typeof(valor) = 'array' then valor end as fechas from public.configuracion where clave = 'feriados'`,
+    datosEmpresa(db),
   ]);
   const fechasFeriados = fer?.fechas ?? [];
   const anioActual = new Date().getFullYear();
@@ -166,6 +168,34 @@ export default async function TasasPage() {
           </AdminForm>
         ) : (
           <p className="text-xs text-muted">Solo un superadministrador puede cambiarlo.</p>
+        )}
+      </Panel>
+      <Panel titulo="Datos para contratos y recibos" className="mt-6" acciones={empresa.validados ? <Badge tone="accent">Textos validados</Badge> : <Badge tone="outline">Modelo referencial</Badge>}>
+        <p className="mb-3 text-sm text-muted">
+          Se imprimen en los contratos, el pagaré y los recibos de pago ({empresa.razonSocial}, RUC {empresa.ruc}). Si falta un dato, el documento
+          deja una línea para completarlo a mano. Estos datos no se publican en la web.
+        </p>
+        {puede(sesion, "SUPERADMIN") ? (
+          <AdminForm action={guardarDatosDocumentos} className="grid gap-3 sm:grid-cols-2">
+            <CampoTexto label="Representante legal" name="representanteLegal" defaultValue={empresa.representante ?? ""} placeholder="Nombres y apellidos" maxLength={120} />
+            <CampoTexto label="Documento del representante" name="representanteDocumento" defaultValue={empresa.representanteDocumento ?? ""} placeholder="DNI N.° 12345678" maxLength={60} />
+            <CampoTexto label="Domicilio de la empresa" name="domicilio" defaultValue={empresa.domicilio ?? ""} placeholder="Av. …, distrito, provincia" maxLength={250} />
+            <CampoTexto label="Ciudad (firma y jurisdicción)" name="ciudad" defaultValue={empresa.ciudad} required maxLength={60} />
+            <div className="sm:col-span-2">
+              <Check
+                label="Un abogado validó los textos de los contratos, la cláusula de bloqueo y el pagaré"
+                name="validados"
+                defaultChecked={empresa.validados}
+                hint="Mientras no se marque, cada documento indica que es un modelo referencial pendiente de validación legal."
+              />
+            </div>
+            <BotonEnviar size="sm" className="justify-self-start">Guardar datos</BotonEnviar>
+          </AdminForm>
+        ) : (
+          <dl className="grid gap-2 text-sm sm:grid-cols-2">
+            <div><dt className="text-xs text-muted">Representante legal</dt><dd className="font-semibold">{empresa.representante ?? "—"}</dd></div>
+            <div><dt className="text-xs text-muted">Ciudad</dt><dd className="font-semibold">{empresa.ciudad}</dd></div>
+          </dl>
         )}
       </Panel>
     </>
