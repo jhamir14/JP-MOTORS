@@ -53,6 +53,20 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
       )}
       <Encabezado titulo={`Hola, ${sesion.nombres}`}>Resumen del día en Inversiones JP.</Encabezado>
 
+      <nav aria-label="Accesos rápidos de cobranza" className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+        {[
+          { href: "/admin/cobranzas", titulo: "Cobranzas", texto: "Por cobrar hoy, en mora y botón Cobrar" },
+          { href: "/admin/creditos", titulo: "Registrar pago", texto: "Busca el crédito y pulsa «Registrar pago»" },
+          { href: "/admin/pagos", titulo: "Pagos", texto: "Pagos registrados y constancias" },
+          { href: "/admin/caja", titulo: "Caja", texto: "Cierre de caja del día" },
+        ].map((a) => (
+          <Link key={a.href + a.titulo} href={a.href} className="rounded-2xl bg-brand px-4 py-3 text-white shadow-card transition-colors hover:bg-brand-hover">
+            <span className="block font-semibold">{a.titulo}</span>
+            <span className="block text-xs text-white/75">{a.texto}</span>
+          </Link>
+        ))}
+      </nav>
+
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         {tarjetas.map((t) => {
           const contenido = (
