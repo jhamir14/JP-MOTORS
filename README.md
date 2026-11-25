@@ -8,6 +8,7 @@ Web pública, panel y base de datos (PostgreSQL en Railway) de **Inversiones JP*
 - Catálogo y panel `/admin` (Fase 2): [`docs/FASE_2_CATALOGO_Y_PANEL.md`](docs/FASE_2_CATALOGO_Y_PANEL.md)
 - Clientes, garantes y documentos KYC (Fase 3): [`docs/FASE_3_CLIENTES.md`](docs/FASE_3_CLIENTES.md)
 - Motor de créditos y web con imágenes (Fase 4): [`docs/FASE_4_CREDITOS.md`](docs/FASE_4_CREDITOS.md)
+- Pagos, mora, cobranzas y cierre de caja (Fase 5): [`docs/FASE_5_PAGOS.md`](docs/FASE_5_PAGOS.md)
 
 ## Desarrollo local
 
@@ -37,14 +38,14 @@ CI (GitHub Actions, `.github/workflows/ci.yml`) ejecuta lint, typecheck, tests y
 |---|---|
 | `database/migrations/` | Esquema PostgreSQL, RLS, funciones de negocio y datos iniciales (sin datos personales) |
 | `database/importar_legado.py` | Migra el backup del sistema anterior (Django/MySQL) al esquema nuevo |
-| `database/railway/` | Railway Function que aplica migraciones y copia los datos desde el MySQL en vivo |
+| `database/railway/` | Railway Functions: `migrar.ts` (aplica migraciones y copia los datos del MySQL en vivo) y `proceso_diario.ts` (job diario de mora y estados) |
 | `frontend/src/app/(public)/` | Web: `/`, `/vehiculos` (+ `[slug]`, `torito-bajaj`), `/celulares` (+ `[slug]`), `/repuestos`, `/financiamiento`, `/nosotros`, `/libro-reclamaciones`, `/privacidad`, `/terminos` |
-| `frontend/src/app/admin/` | Panel: login, inicio, solicitudes, clientes, créditos (alta, cronograma, anulación), cobranzas (recordatorios por WhatsApp), catálogo, inventario, tasas y feriados, reclamos, personal |
-| `frontend/src/app/api/` | `solicitudes`, `reclamos`, `archivos/[id]` (fotos del catálogo), `kyc/[id]` (documentos privados, con sesión y auditoría), `salud` |
+| `frontend/src/app/admin/` | Panel: login, inicio, solicitudes, clientes, créditos (alta, cronograma, anulación, registrar pago), cobranzas (por cobrar hoy, mora por tramos, pagados hoy, WhatsApp), pagos (constancia, anulación), caja (cierre por cobrador), catálogo, inventario, tasas y feriados, reclamos, personal |
+| `frontend/src/app/api/` | `solicitudes`, `reclamos`, `archivos/[id]` (fotos del catálogo), `kyc/[id]` y `vouchers/[id]` (documentos y vouchers privados, con sesión y auditoría), `salud` |
 | `frontend/src/components/ui/` | Componentes base: `Button`, `Card`, `Badge`, `Field` |
 | `frontend/src/components/public/` | `Simulador`, `MotoCard`, `CelularCard`, `SectionHeading`… |
 | `frontend/src/components/admin/` | Formularios y piezas del panel |
-| `frontend/src/lib/` | `config.ts`, `finance.ts` (cuotas/TEA/cronograma), `clientes.ts` (documentos, duplicados, completitud y permisos KYC), `calendario.ts` (días hábiles y feriados), `creditos.ts` (validación y cronograma definitivo de un crédito), `recordatorios.ts` (mensajes de cobranza), `catalogo.ts`, `validaciones.ts`, `server/` (BD, catálogo, auth, contraseñas, límite de intentos) |
+| `frontend/src/lib/` | `config.ts`, `finance.ts` (cuotas/TEA/cronograma), `clientes.ts` (documentos, duplicados, completitud y permisos KYC), `calendario.ts` (días hábiles y feriados), `creditos.ts` (validación y cronograma definitivo de un crédito), `recordatorios.ts` (mensajes de cobranza), `pagos.ts` (reparto de pagos, mora, caja), `catalogo.ts`, `validaciones.ts`, `server/` (BD, catálogo, auth, contraseñas, límite de intentos) |
 | `frontend/src/schemas/` | Esquemas Zod compartidos cliente/servidor |
 | `frontend/src/data/` | Respaldo estático del catálogo (solo si no hay base de datos) |
 
