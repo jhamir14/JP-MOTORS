@@ -226,17 +226,22 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 
 ---
 
-## 5. Siguiente paso: Fase 4 — Motor de créditos
+## 5. Siguiente paso: Fase 5 — Pagos y cobranzas
 
-Fases 0 a 3 en producción (2026-11-25): migraciones aplicadas en Railway (`_migraciones`), web y panel publicados en Vercel desde `main`, backups diarios/semanales/mensuales del volumen de Postgres.
+Fases 0 a 3 en producción (2026-11-25). **Fase 4 terminada** (ver [`FASE_4_CREDITOS.md`](FASE_4_CREDITOS.md)): alta de créditos con vista previa,
+cronograma con días hábiles, anulación auditada y web rediseñada con imágenes. Antes de empezar: **aplicar en Railway**
+`database/migrations/20261129000100_fase4_creditos.sql`.
 
-**Ya resuelto (no repetir):** clientes con KYC, garantes, documentos privados, geolocalización, conversión de solicitudes, inventario serializado, `lib/finance.ts` (FLAT/FRANCÉS, TEA, cronograma con ajuste de redondeo), **`lib/calendario.ts`** (`fechasCronograma()` sin domingos ni feriados, con tests), feriados en `configuracion.feriados` y recordatorios de pago por WhatsApp (`/admin/cobranzas`).
+**Ya resuelto (no repetir):** todo lo anterior + `lib/creditos.ts` (validación y cronograma definitivo), `/admin/creditos` (listado, alta, detalle, anulación),
+`cuota.capital` / `cuota.interes` / `cuota.saldo_capital` ya se guardan en cada crédito nuevo, y la tabla `pago` + `aplicacion_pago` existen desde la Fase 1.
 
-**Alcance de la Fase 4** (solo crédito vehicular y de celular):
-1. Alta de crédito desde la ficha del cliente: unidad en stock, garante (obligatorio en vehicular), plan publicado o condiciones personalizadas (precio, inicial, tasa o cuota, FLAT/FRANCÉS, frecuencia, n.º de cuotas, penalidad).
-2. Cronograma: montos con `cronograma()` y fechas con `fechasCronograma()` leyendo `configuracion.feriados`.
-3. Vista previa (cuotas, fechas, total, TEA) y confirmación en una transacción: inserta `credito` + `cuota`, reserva la unidad (`VENDIDO_CREDITO`) y bloquea clientes `BLOQUEADO_LEGAL` o con expediente incompleto (decidir si es bloqueo o advertencia).
-4. Anulación con motivo y auditoría (la unidad vuelve a stock).
-5. Tests de todas las combinaciones de cálculo y fechas.
+**Alcance de la Fase 5:**
+1. Registrar pago desde el detalle del crédito y desde Cobranzas: monto, método (Efectivo, Yape, Plin, transferencia), n.º de operación y voucher (foto privada, como `documento_kyc`).
+2. Aplicación automática **mora → interés → capital** por cuota en orden de vencimiento (`aplicacion_pago`), pagos parciales y adelantados; actualizar `cuota.monto_pagado`, `estado`, `fecha_pago`.
+3. Mora: `penalidad_diaria × días de atraso` (con `dias_gracia_mora`), calculada por el job diario (`recalcular_estados` + cálculo de `cuota.mora`).
+4. Cobranzas de hoy: pestañas Por cobrar / En mora por tramos (1–7, 8–15, 16–30, +30) / Pagados hoy.
+5. Anulación de pagos (solo admins, con motivo) que revierte las aplicaciones; con esto un crédito con pagos anulados se vuelve a poder anular.
+6. Cierre de caja por cobrador (`cierre_caja`) y eventos de bloqueo/corte GPS manuales (`evento_bloqueo`).
+7. Tests de la aplicación de pagos (parciales, adelantos, sobrepago, redondeo).
 
-**Pendientes del negocio:** tipo de cálculo por defecto (FLAT o FRANCÉS) por servicio, si el expediente incompleto bloquea el alta de un crédito, y las fotos reales de celulares y del Torito Bajaj.
+**Pendientes del negocio:** si `credito_exige_expediente_completo` pasa a `true`, si la mora se cobra sobre cuota o por día fijo (hoy: penalidad diaria fija por crédito), y las fotos reales de celulares y del Torito Bajaj.

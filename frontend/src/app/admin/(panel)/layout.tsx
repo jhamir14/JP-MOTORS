@@ -25,6 +25,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     { href: "/admin", label: "Inicio" },
     { href: "/admin/solicitudes", label: "Solicitudes web", badge: pendientes.solicitudes },
     { href: "/admin/clientes", label: "Clientes" },
+    { href: "/admin/creditos", label: "Créditos" },
     { href: "/admin/cobranzas", label: "Cobranzas", badge: pendientes.mora },
     { href: "/admin/catalogo", label: "Catálogo" },
     { href: "/admin/inventario", label: "Inventario" },
@@ -34,8 +35,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   ];
 
   return (
-    <div className="min-h-dvh bg-bg md:grid md:grid-cols-[250px_1fr]">
-      <aside className="bg-brand-ink px-4 py-4 text-white md:sticky md:top-0 md:flex md:h-dvh md:flex-col md:gap-6 md:py-6">
+    <div className="min-h-dvh bg-bg md:grid md:grid-cols-[250px_1fr] print:block print:bg-white">
+      <aside className="print:hidden bg-brand-ink px-4 py-4 text-white md:sticky md:top-0 md:flex md:h-dvh md:flex-col md:gap-6 md:py-6">
         <div className="mb-3 flex items-center justify-between md:mb-0">
           <Link href="/admin" aria-label="Inicio del panel">
             <Logo tone="light" />
@@ -55,7 +56,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
         </div>
       </aside>
       <div className="min-w-0">
-        <div className="flex items-center justify-between border-b border-line-soft bg-surface px-4 py-2 text-xs md:hidden">
+        <div className="flex items-center justify-between border-b border-line-soft bg-surface px-4 py-2 text-xs md:hidden print:hidden">
           <span>{sesion.nombres} · {ETIQUETA_ROL[sesion.rol]}</span>
           <form action={salir}>
             <button type="submit" className="cursor-pointer font-semibold text-brand">Cerrar sesión</button>

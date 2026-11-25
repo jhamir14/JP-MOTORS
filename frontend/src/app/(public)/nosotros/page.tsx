@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { ButtonLink, Card, ExternalButton } from "@/components/ui";
 import { IconClock, IconMapPin, IconShield, IconTrend, IconUser, IconWhatsApp } from "@/components/icons";
+import { PageHero } from "@/components/public/PageHero";
 import { SectionHeading } from "@/components/public/SectionHeading";
 import { siteConfig } from "@/lib/config";
 import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
@@ -39,34 +41,50 @@ const preguntas = [
 export default function NosotrosPage() {
   return (
     <main>
-      <section className="border-b border-line-soft bg-surface">
-        <div className="container grid items-center gap-10 py-12 md:grid-cols-[1.3fr_1fr] md:py-20">
-          <div>
-            <span className="eyebrow">Quiénes somos</span>
-            <h1 className="mt-3 text-[2.2rem] md:text-[3rem]">La financiera del emprendedor peruano</h1>
-            <p className="mt-5 max-w-xl text-lg text-muted">
-              En Inversiones JP financiamos las herramientas y el capital que mueven el trabajo diario: la moto o
-              mototaxi para generar ingresos, el celular para estar conectado y el efectivo para hacer crecer un negocio.
-            </p>
+      <PageHero
+        eyebrow="Quiénes somos"
+        title="La financiera del emprendedor peruano"
+        imagen="/motos/gallery/gallery-4.webp"
+        alt="Cliente junto a su moto nueva"
+        posicion="center 30%"
+      >
+        <p>
+          En Inversiones JP financiamos las herramientas que mueven el trabajo diario: la moto o mototaxi para generar
+          ingresos y el celular para estar conectado. Te llevas el producto y lo pagas en cuotas.
+        </p>
+      </PageHero>
+
+      <section className="py-16 md:py-20">
+        <div className="container grid items-center gap-10 md:grid-cols-2 md:gap-14">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="relative col-span-2 aspect-[16/9] overflow-hidden rounded-3xl shadow-lift">
+              <Image src="/finance_cta.webp" alt="Cliente con su moto en la tienda" fill sizes="(max-width: 768px) 90vw, 560px" className="object-cover" />
+            </div>
+            <div className="relative aspect-square overflow-hidden rounded-3xl bg-brand-ink">
+              <Image src="/financing_person.webp" alt="Clienta con las llaves de su moto" fill sizes="280px" className="object-cover" />
+            </div>
+            <div className="showcase relative aspect-square overflow-hidden rounded-3xl">
+              <Image src="/motos/nl150.webp" alt="Mototaxi" fill sizes="280px" className="object-cover mix-blend-lighten" />
+            </div>
           </div>
-          <Card className="grid gap-5 p-6 md:p-8">
-            <div>
+          <div className="grid gap-5">
+            <Card className="p-6 md:p-8">
               <div className="eyebrow">Misión</div>
               <p className="mt-2 text-[0.95rem]">
                 Dar acceso a crédito justo y rápido a trabajadores independientes que la banca tradicional no atiende.
               </p>
-            </div>
-            <div className="border-t border-line-soft pt-5">
+            </Card>
+            <Card className="p-6 md:p-8">
               <div className="eyebrow">Visión</div>
               <p className="mt-2 text-[0.95rem]">
                 Ser la empresa de financiamiento de confianza de los emprendedores de Lima y provincias.
               </p>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </div>
       </section>
 
-      <section className="py-16 md:py-20">
+      <section className="border-t border-line-soft bg-surface-2 py-16 md:py-20">
         <div className="container">
           <SectionHeading eyebrow="Nuestros valores" title="Cómo trabajamos" />
           <div className="mt-10 grid gap-5 md:grid-cols-3">

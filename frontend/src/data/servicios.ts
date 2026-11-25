@@ -12,6 +12,8 @@ export interface Servicio {
   Icon: Icon;
   puntos: string[];
   etiqueta?: string;
+  /** Foto de portada de la tarjeta (en /public). */
+  imagen: { src: string; alt: string; sobreNegro?: boolean };
 }
 
 /** Los servicios que ofrece Inversiones JP, en el orden en que se muestran en la web. */
@@ -25,6 +27,7 @@ export const servicios: Servicio[] = [
     Icon: IconMoto,
     puntos: ["Motos Honda y Motokar", "Hasta 36 meses", "Inicial flexible"],
     etiqueta: "Más solicitado",
+    imagen: { src: "/motos/gallery/gallery-3.webp", alt: "Moto Honda estacionada lista para trabajar" },
   },
   {
     id: "celulares",
@@ -34,6 +37,7 @@ export const servicios: Servicio[] = [
     cta: "Ver celulares",
     Icon: IconPhone,
     puntos: ["Todas las marcas", "Cuotas semanales", "Sin boletas de pago"],
+    imagen: { src: "/celulares/celulares-escena.webp", alt: "Celulares de última generación" },
   },
   {
     id: "repuestos",
@@ -43,5 +47,6 @@ export const servicios: Servicio[] = [
     cta: "Ver repuestos",
     Icon: IconWrench,
     puntos: ["Productos originales", "Pedido por WhatsApp", "Entrega coordinada"],
+    imagen: { src: "/repuestos/casco.webp", alt: "Casco para moto", sobreNegro: true },
   },
 ];

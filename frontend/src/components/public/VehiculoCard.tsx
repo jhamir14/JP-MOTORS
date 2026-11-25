@@ -16,7 +16,7 @@ export function VehiculoCard({ producto, priority = false }: { producto: Product
       <Link href={href} className="showcase relative block h-52">
         <Badge tone="dark" className="absolute top-3 left-3 z-[1]">{ETIQUETA_CATEGORIA[producto.categoria]}</Badge>
         {producto.stock > 0 && <Badge tone="accent" className="absolute top-3 right-3 z-[1]">En stock</Badge>}
-        <ProductoImagen producto={producto} priority={priority} sizes="(max-width: 768px) 90vw, 380px" className="p-4" />
+        <ProductoImagen producto={producto} priority={priority} sizes="(max-width: 768px) 90vw, 380px" />
       </Link>
 
       <div className="flex flex-1 flex-col p-5">

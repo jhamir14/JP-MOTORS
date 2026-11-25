@@ -8,6 +8,7 @@ import { BotonRecordatorio } from "@/components/admin/BotonRecordatorio";
 import { CampoArea, CampoSelect, CampoTexto, Encabezado, Estado, Panel, Tabla, Vacio, fechaCorta } from "@/components/admin/ui";
 import { Badge, ButtonLink } from "@/components/ui";
 import { ETIQUETA_SERVICIO, legible } from "@/lib/admin/constantes";
+import { puedeGestionarCreditos } from "@/lib/creditos";
 import {
   DOCUMENTOS_GARANTE,
   ETIQUETA_DOCUMENTO,
@@ -200,7 +201,10 @@ export default async function FichaClientePage({
                 <a href={`tel:+51${cliente.telefono}`} className="rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold hover:border-brand">Llamar</a>
               </>
             )}
-            {edita && <ButtonLink href={`/admin/clientes/${id}/editar`} variant="brand" size="sm">Editar datos</ButtonLink>}
+            {edita && <ButtonLink href={`/admin/clientes/${id}/editar`} variant={puedeGestionarCreditos(sesion.rol) ? "outline" : "brand"} size="sm">Editar datos</ButtonLink>}
+            {puedeGestionarCreditos(sesion.rol) && cliente.estado !== "BLOQUEADO_LEGAL" && (
+              <ButtonLink href={`/admin/creditos/nuevo?cliente=${id}`} variant="brand" size="sm">+ Nuevo crédito</ButtonLink>
+            )}
           </>
         }
       >
@@ -386,7 +390,12 @@ export default async function FichaClientePage({
 
       <Panel className="mt-6" titulo={`Créditos (${creditos.length})`}>
         {creditos.length === 0 ? (
-          <Vacio>Sin créditos. El alta de créditos llega con el motor de créditos (Fase 4).</Vacio>
+          <Vacio>
+            Sin créditos.{" "}
+            {puedeGestionarCreditos(sesion.rol) && cliente.estado !== "BLOQUEADO_LEGAL" && (
+              <Link href={`/admin/creditos/nuevo?cliente=${id}`} className="font-semibold text-brand">Registrar el primero →</Link>
+            )}
+          </Vacio>
         ) : (
           <ul className="grid gap-3">
             {creditos.map((cr) => {
@@ -460,7 +469,10 @@ export default async function FichaClientePage({
                           ))}
                         </tbody>
                       </Tabla>
-                      <p className="mt-2 text-xs text-muted">Solo lectura. Pagos y cobranzas se registran desde el módulo de cobranzas (Fase 5).</p>
+                      <p className="mt-2 text-xs text-muted">
+                        <Link href={`/admin/creditos/${cr.id}`} className="font-semibold text-brand">Ver detalle, imprimir o anular →</Link>{" "}
+                        · Los pagos se registran desde Cobranzas (Fase 5).
+                      </p>
                     </div>
                   </details>
                 </li>
