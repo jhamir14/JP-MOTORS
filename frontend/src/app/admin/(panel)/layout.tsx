@@ -20,6 +20,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const items: ItemNav[] = [
     { href: "/admin", label: "Inicio" },
     { href: "/admin/solicitudes", label: "Solicitudes web", badge: pendientes.solicitudes },
+    { href: "/admin/clientes", label: "Clientes" },
     { href: "/admin/catalogo", label: "Catálogo" },
     { href: "/admin/inventario", label: "Inventario" },
     { href: "/admin/tasas", label: "Tasas por servicio" },

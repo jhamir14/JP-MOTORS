@@ -5,10 +5,17 @@ export type EstadoAccion = {
   ok?: boolean;
   mensaje?: string;
   errores?: Record<string, string>;
+  /** Enlace opcional junto al mensaje (ej. al registro duplicado). */
+  enlace?: { href: string; texto: string };
 } | null;
 
 export const exito = (mensaje: string): EstadoAccion => ({ ok: true, mensaje });
-export const fallo = (mensaje: string, errores?: Record<string, string>): EstadoAccion => ({ ok: false, mensaje, errores });
+export const fallo = (mensaje: string, errores?: Record<string, string>, enlace?: { href: string; texto: string }): EstadoAccion => ({
+  ok: false,
+  mensaje,
+  errores,
+  enlace,
+});
 
 export function erroresZod(error: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};

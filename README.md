@@ -6,6 +6,7 @@ Web pública y base de datos (PostgreSQL en Railway) de **Inversiones JP**, fina
 - Plan y roadmap: [`docs/PLAN_ACTUALIZACION_V2.md`](docs/PLAN_ACTUALIZACION_V2.md)
 - Base de datos (Fase 1): [`docs/FASE_1_BASE_DE_DATOS.md`](docs/FASE_1_BASE_DE_DATOS.md)
 - Catálogo y panel `/admin` (Fase 2): [`docs/FASE_2_CATALOGO_Y_PANEL.md`](docs/FASE_2_CATALOGO_Y_PANEL.md)
+- Clientes, garantes y documentos KYC (Fase 3): [`docs/FASE_3_CLIENTES.md`](docs/FASE_3_CLIENTES.md)
 
 ## Desarrollo local
 
@@ -37,12 +38,12 @@ CI (GitHub Actions, `.github/workflows/ci.yml`) ejecuta lint, typecheck, tests y
 | `database/importar_legado.py` | Migra el backup del sistema anterior (Django/MySQL) al esquema nuevo |
 | `database/railway/` | Railway Function que aplica migraciones y copia los datos desde el MySQL en vivo |
 | `frontend/src/app/(public)/` | Web: `/`, `/prestamos`, `/vehiculos` (+ `[slug]`, `torito-bajaj`), `/celulares` (+ `[slug]`), `/repuestos`, `/financiamiento`, `/nosotros`, `/libro-reclamaciones`, `/privacidad`, `/terminos` |
-| `frontend/src/app/admin/` | Panel: login, inicio, solicitudes, catálogo, inventario, tasas, reclamos, personal |
-| `frontend/src/app/api/` | `solicitudes`, `reclamos`, `archivos/[id]` (fotos), `salud` |
+| `frontend/src/app/admin/` | Panel: login, inicio, solicitudes, clientes, catálogo, inventario, tasas, reclamos, personal |
+| `frontend/src/app/api/` | `solicitudes`, `reclamos`, `archivos/[id]` (fotos del catálogo), `kyc/[id]` (documentos privados, con sesión y auditoría), `salud` |
 | `frontend/src/components/ui/` | Componentes base: `Button`, `Card`, `Badge`, `Field` |
 | `frontend/src/components/public/` | `Simulador`, `MotoCard`, `CelularCard`, `SectionHeading`… |
 | `frontend/src/components/admin/` | Formularios y piezas del panel |
-| `frontend/src/lib/` | `config.ts`, `finance.ts` (cuotas/TEA/cronograma), `catalogo.ts`, `validaciones.ts`, `server/` (BD, catálogo, auth, contraseñas, límite de intentos) |
+| `frontend/src/lib/` | `config.ts`, `finance.ts` (cuotas/TEA/cronograma), `clientes.ts` (documentos, duplicados, completitud y permisos KYC), `catalogo.ts`, `validaciones.ts`, `server/` (BD, catálogo, auth, contraseñas, límite de intentos) |
 | `frontend/src/schemas/` | Esquemas Zod compartidos cliente/servidor |
 | `frontend/src/data/` | Respaldo estático del catálogo (solo si no hay base de datos) |
 

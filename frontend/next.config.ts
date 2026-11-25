@@ -14,8 +14,8 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
   experimental: {
-    // Fotos del catálogo subidas desde el panel (máx. 5 MB por archivo).
-    serverActions: { bodySizeLimit: "6mb" },
+    // Fotos del catálogo (máx. 5 MB) y documentos KYC (máx. 8 MB) subidos desde el panel.
+    serverActions: { bodySizeLimit: "9mb" },
   },
   async redirects() {
     return [

@@ -7,6 +7,7 @@ import { CATEGORIAS } from "@/lib/catalogo";
 import { FRECUENCIAS, TIPOS_CALCULO, calcularCredito } from "@/lib/finance";
 import { comoUsuario, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
+import { TIPOS_IMAGEN, detectarTipo } from "@/lib/server/archivos";
 
 const ROLES_CATALOGO = ["SUPERADMIN", "ADMIN_CREDITOS", "ASESOR_VENTAS"] as const;
 
@@ -112,15 +113,6 @@ export async function cambiarPublicacion(fd: FormData) {
 // -----------------------------------------------------------------------------
 const MAX_BYTES = 5 * 1024 * 1024;
 
-/** Detecta el tipo real por los primeros bytes (no confía en la extensión ni en el navegador). */
-function tipoImagen(b: Buffer): string | null {
-  if (b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
-  if (b.length > 8 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
-  if (b.length > 12 && b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WEBP") return "image/webp";
-  if (b.length > 12 && b.toString("ascii", 4, 8) === "ftyp" && /avi[fs]/.test(b.toString("ascii", 8, 12))) return "image/avif";
-  return null;
-}
-
 export async function subirImagenes(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   const sesion = await requerirSesion(...ROLES_CATALOGO);
   const productoId = z.string().uuid().safeParse(fd.get("productoId"));
@@ -134,8 +126,8 @@ export async function subirImagenes(_prev: EstadoAccion, fd: FormData): Promise<
   for (const f of archivos) {
     if (f.size > MAX_BYTES) return fallo(`«${f.name}» pesa más de 5 MB. Redúcela antes de subirla.`, { imagenes: "Máximo 5 MB por imagen" });
     const datos = Buffer.from(await f.arrayBuffer());
-    const tipo = tipoImagen(datos);
-    if (!tipo) return fallo(`«${f.name}» no es una imagen JPG, PNG, WEBP o AVIF.`, { imagenes: "Formato no permitido" });
+    const tipo = detectarTipo(datos);
+    if (!tipo || !(TIPOS_IMAGEN as readonly string[]).includes(tipo)) return fallo(`«${f.name}» no es una imagen JPG, PNG, WEBP o AVIF.`, { imagenes: "Formato no permitido" });
     listos.push({ nombre: f.name.slice(0, 120), tipo, datos });
   }
 

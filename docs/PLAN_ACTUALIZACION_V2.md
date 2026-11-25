@@ -167,6 +167,8 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 - Bandeja de **solicitudes** web → convertir en cliente.
 - Inventario serializado de motos/toritos (motor, VIN, placa, GPS) y celulares (IMEI 1/2, S/N, plataforma de bloqueo) con validaciones (VIN 17 caracteres, IMEI 15 dígitos + Luhn).
 
+**Estado (2026-11-25): implementada.** `/admin/clientes` con búsqueda y filtro de expedientes incompletos, ficha 360° (pendientes del KYC, GPS con enlace a Google Maps, documentos privados, garantes reutilizables, créditos migrados con cuotas en solo lectura, auditoría), conversión y vinculación de solicitudes web, detección de duplicados (incluye RUC 10 ↔ DNI) y permisos por rol (el cobrador solo consulta y ve la fachada). Documentos en la tabla privada `documento_kyc`, descargables solo por `/api/kyc/<id>` con sesión y registro en `audit_log`. El inventario serializado ya se había adelantado en la Fase 2. Detalle en [`FASE_3_CLIENTES.md`](FASE_3_CLIENTES.md).
+
 ### Fase 4 — Motor de créditos (≈ 2 semanas) ⚠️ núcleo del negocio
 - Alta de crédito: cliente + unidad + parámetros (precio, inicial, tasa, FLAT/FRANCÉS, frecuencia, nº cuotas, penalidad).
 - Generación de cronograma: diario lun–sáb (excluyendo domingos y feriados configurables), semanal, quincenal, mensual; ajuste de redondeo en la última cuota.
@@ -219,18 +221,12 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 
 ---
 
-## 5. Siguiente paso: Fase 3 — Clientes e inventario
+## 5. Siguiente paso: Fase 4 — Motor de créditos
 
-Fases 0, 1 y 2 en producción (2026-11-25): base en Railway con las 6 migraciones aplicadas, web leyendo el catálogo de la BD y panel `/admin` operativo con un SUPERADMIN.
+Fases 0 a 3 implementadas (2026-11-25). Para producción falta aplicar en Railway la migración `20261127000100_fase3_clientes.sql`.
 
-**Ya resuelto en la Fase 2 (no repetir):** inventario serializado con validaciones de VIN, IMEI (Luhn) y placa (`/admin/inventario`), bandeja de solicitudes con estados (`/admin/solicitudes`), login, roles y patrón de escrituras con RLS (`comoUsuario()` en `src/lib/server/auth.ts`).
+**Ya resuelto (no repetir):** clientes con KYC completo, garantes (`cliente_garante`), documentos privados, geolocalización, conversión de solicitudes, inventario serializado y `lib/finance.ts` (FLAT/FRANCÉS, TEA, cronograma con ajuste de redondeo).
 
-**Alcance de la Fase 3:**
-1. **Clientes** (`/admin/clientes`, `/admin/clientes/[id]`): listado con búsqueda por documento/nombre y filtros por estado; alta/edición con el KYC completo de la tabla `cliente`; ficha 360° (datos, garantes, documentos, créditos migrados con sus cuotas en solo lectura). 92 de los 93 clientes migrados tienen `datos_incompletos = true`: la ficha debe destacar qué falta completar.
-2. **Garantes** (`garante`): alta y vínculo con el cliente; reutilizables entre créditos.
-3. **Documentos KYC privados**: DNI (anverso/reverso), recibo de servicio y fachada. Hoy las fotos del catálogo van a la tabla `archivo` (públicas si el producto está publicado). Para KYC usar almacenamiento **privado**: tabla aparte (`documento_kyc`, nunca expuesta por `/api/archivos`) o un bucket S3 de Railway con URLs firmadas de corta duración; descarga solo con sesión y rol, y registro en `audit_log`.
-4. **Geolocalización** del domicilio (latitud/longitud) desde el celular del asesor (`navigator.geolocation`) y enlace a Google Maps para el cobrador.
-5. **Convertir solicitud → cliente**: desde `/admin/solicitudes`, prellenar el cliente con los datos de la solicitud (detectar duplicados por documento), marcarla `CONVERTIDA` y guardar `cliente_id`.
-6. Tests: validación de DNI/CE/RUC, detección de duplicados y permisos por rol (el COBRADOR no edita KYC).
+**Alcance de la Fase 4:** alta de crédito desde la ficha del cliente (cliente + garante + unidad en stock o préstamo en efectivo, plan publicado o personalizado, tope de TEA), cronograma diario lun–sáb sin feriados / semanal / quincenal / mensual, vista previa, confirmación en una transacción (reserva la unidad), anulación con motivo y auditoría, y bloqueo de clientes `BLOQUEADO_LEGAL`. Tests de todas las combinaciones de cálculo.
 
-**Pendientes operativos** (no bloquean la Fase 3): borrar en Railway el servicio temporal `migrar-fase2`, activar backups del volumen Postgres, fijar el tope de TEA, completar `NEXT_PUBLIC_RUC`, validar los textos legales y subir fotos reales de celulares y del Torito Bajaj.
+**Pendientes operativos:** borrar en Railway el servicio temporal `migrar-fase2`, activar backups del volumen Postgres, fijar el tope de TEA, completar `NEXT_PUBLIC_RUC`, validar los textos legales y subir fotos reales de celulares y del Torito Bajaj.

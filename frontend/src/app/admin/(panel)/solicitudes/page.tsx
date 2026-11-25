@@ -7,6 +7,7 @@ import { whatsappLink } from "@/lib/whatsapp";
 import { requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { ESTADOS_SOLICITUD } from "@/lib/admin/constantes";
+import { puedeEditarKyc } from "@/lib/clientes";
 import { actualizarSolicitud } from "./actions";
 
 export const metadata = { title: "Solicitudes web" };
@@ -23,18 +24,23 @@ interface Fila {
   numero_documento: string; celular: string; email: string | null; preferencia_contacto: string | null; distrito: string | null;
   provincia: string | null; departamento: string | null; situacion_laboral: string | null; ingreso_mensual: number | null;
   monto_solicitado: number | null; cuota_inicial: number | null; datos_extra: Record<string, string>; estado: string;
-  notas: string | null; created_at: Date;
+  notas: string | null; created_at: Date; cliente_id: string | null; cliente_existente: string | null;
 }
 
 export default async function SolicitudesPage({ searchParams }: { searchParams: Promise<{ estado?: string }> }) {
-  await requerirSesion();
+  const sesion = await requerirSesion();
+  const convierte = puedeEditarKyc(sesion.rol);
   const { estado } = await searchParams;
   const filtro = (ESTADOS_SOLICITUD as readonly string[]).includes(estado ?? "") ? estado! : null;
   const filas = await sql()<Fila[]>`
     select id, servicio, producto_interes, nombres, apellidos, tipo_documento, numero_documento, celular, email::text,
            preferencia_contacto, distrito, provincia, departamento, situacion_laboral, ingreso_mensual::float8,
-           monto_solicitado::float8, cuota_inicial::float8, datos_extra, estado, notas, created_at
-    from public.solicitud_credito
+           monto_solicitado::float8, cuota_inicial::float8, datos_extra, estado, notas, created_at, cliente_id,
+           (select c.id from public.cliente c
+            where s.cliente_id is null and c.tipo_documento = s.tipo_documento
+              and c.numero_documento = upper(regexp_replace(s.numero_documento, '[[:space:].-]', '', 'g'))
+            limit 1) as cliente_existente
+    from public.solicitud_credito s
     where ${filtro}::text is null or estado::text = ${filtro}
     order by created_at desc
     limit 200`;
@@ -42,7 +48,7 @@ export default async function SolicitudesPage({ searchParams }: { searchParams: 
   return (
     <>
       <Encabezado titulo="Solicitudes web">
-        Lo que llega desde el formulario de /financiamiento. Contacta al cliente y actualiza el estado. La conversión a cliente llega en la Fase 3.
+        Lo que llega desde el formulario de /financiamiento. Contacta a la persona, actualiza el estado y conviértela en cliente para abrir su expediente.
       </Encabezado>
 
       <div className="mb-5 flex flex-wrap gap-2">
@@ -109,11 +115,24 @@ export default async function SolicitudesPage({ searchParams }: { searchParams: 
                         Escribir por WhatsApp
                       </a>
                       <a href={`tel:+51${s.celular}`} className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold">Llamar</a>
+                      {s.cliente_id ? (
+                        <Link href={`/admin/clientes/${s.cliente_id}`} className="rounded-lg bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent">Ver ficha del cliente →</Link>
+                      ) : convierte ? (
+                        <Link href={`/admin/clientes/nuevo?solicitud=${s.id}`} className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white">
+                          {s.cliente_existente ? "Ya es cliente: vincular" : "Convertir en cliente"}
+                        </Link>
+                      ) : null}
                     </div>
                   </dl>
                   <AdminForm action={actualizarSolicitud} className="grid content-start gap-3">
                     <input type="hidden" name="id" value={s.id} />
-                    <CampoSelect label="Estado" name="estado" id={`estado-${s.id}`} defaultValue={s.estado} opciones={ESTADOS_SOLICITUD} />
+                    <CampoSelect
+                      label="Estado"
+                      name="estado"
+                      id={`estado-${s.id}`}
+                      defaultValue={s.estado}
+                      opciones={ESTADOS_SOLICITUD.filter((e) => e !== "CONVERTIDA" || s.cliente_id)}
+                    />
                     <CampoArea label="Notas internas" name="notas" id={`notas-${s.id}`} defaultValue={s.notas ?? ""} rows={3} />
                     <BotonEnviar size="sm" className="justify-self-start">Guardar</BotonEnviar>
                   </AdminForm>
