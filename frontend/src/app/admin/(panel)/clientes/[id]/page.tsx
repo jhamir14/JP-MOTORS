@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { AdminForm, BotonEnviar } from "@/components/admin/AdminForm";
 import { CapturarUbicacion } from "@/components/admin/Gps";
+import { ScoreCliente } from "@/components/admin/ScoreCliente";
 import { SubirDocumento } from "@/components/admin/SubirDocumento";
 import { BotonRecordatorio } from "@/components/admin/BotonRecordatorio";
 import { CampoArea, CampoSelect, CampoTexto, Encabezado, Estado, Panel, Tabla, Vacio, fechaCorta } from "@/components/admin/ui";
@@ -30,10 +31,12 @@ import {
   type TipoDocumentoKyc,
 } from "@/lib/clientes";
 import { formatSoles } from "@/lib/format";
+import { estrellas } from "@/lib/scoring";
 import { whatsappLink } from "@/lib/whatsapp";
 import { requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { creditosPorCobrar } from "@/lib/server/cobranza";
+import { perfilScore } from "@/lib/server/scoring";
 import { registrarRecordatorio } from "../../cobranzas/actions";
 import { cambiarBloqueo, desvincularGarante, eliminarDocumento, guardarGarante, guardarUbicacion, subirDocumento } from "../actions";
 
@@ -41,7 +44,7 @@ export const metadata = { title: "Ficha del cliente" };
 
 interface Cliente extends DatosKyc {
   id: string; nombres: string; apellidos: string; telefono_secundario: string | null; email: string | null; urbanizacion: string | null;
-  direccion_trabajo: string | null; estado: EstadoCliente; score_interno: number | null; apto_prestamo_efectivo: boolean;
+  direccion_trabajo: string | null; estado: EstadoCliente; score_interno: number | null;
   notas: string | null; datos_incompletos: boolean; legado_id: number | null; geo_precision_m: number | null;
   geo_registrada_at: Date | null; created_at: Date; updated_at: Date; registrado_por: string | null;
 }
@@ -90,14 +93,14 @@ export default async function FichaClientePage({
     select c.id, c.nombres, c.apellidos, c.tipo_documento, c.numero_documento, to_char(c.fecha_nacimiento, 'YYYY-MM-DD') as fecha_nacimiento,
            c.sexo, c.estado_civil, c.telefono, c.telefono_secundario, c.email::text, c.direccion, c.urbanizacion, c.distrito, c.provincia,
            c.departamento, c.referencia, c.tipo_vivienda, c.latitud::float8, c.longitud::float8, c.ocupacion, c.direccion_trabajo,
-           c.ingreso_mensual::float8, c.estado, c.score_interno, c.apto_prestamo_efectivo, c.notas, c.datos_incompletos, c.legado_id,
+           c.ingreso_mensual::float8, c.estado, c.score_interno, c.notas, c.datos_incompletos, c.legado_id,
            c.geo_precision_m, c.geo_registrada_at, c.created_at, c.updated_at,
            nullif(trim(coalesce(p.nombres, '') || ' ' || coalesce(p.apellidos, '')), '') as registrado_por
     from public.cliente c left join public.perfil_usuario p on p.id = c.registrado_por
     where c.id = ${id}`;
   if (!cliente) notFound();
 
-  const [garantes, creditos, cuotas, solicitudes, historial, cobranza] = await Promise.all([
+  const [garantes, creditos, cuotas, solicitudes, historial, cobranza, score] = await Promise.all([
     db<Garante[]>`
       select g.id, g.nombres, g.apellidos, g.tipo_documento, g.numero_documento, g.telefono, g.direccion,
              coalesce(cg.parentesco, g.parentesco) as parentesco, cg.notas,
@@ -137,6 +140,7 @@ export default async function FichaClientePage({
           order by a.created_at desc limit 15`
       : Promise.resolve([]),
     creditosPorCobrar(db, { clienteId: id }),
+    perfilScore(db, id),
   ]);
   const porCobrar = new Map(cobranza.creditos.map((c) => [c.id, c]));
 
@@ -220,10 +224,9 @@ export default async function FichaClientePage({
 
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <Badge tone={TONO_ESTADO_CLIENTE[cliente.estado]}>{ETIQUETA_ESTADO_CLIENTE[cliente.estado]}</Badge>
-        <Badge tone="outline">
-          Score {cliente.score_interno != null ? <span className="text-gold">{"★".repeat(cliente.score_interno)}{"☆".repeat(5 - cliente.score_interno)}</span> : "sin historial"}
-        </Badge>
-        {cliente.apto_prestamo_efectivo && <Badge tone="accent">Apto para préstamo en efectivo</Badge>}
+        <a href="#score" className="rounded-full border border-line px-2.5 py-1 text-xs font-semibold hover:border-brand">
+          Score {cliente.score_interno != null ? <span className="text-gold">{estrellas(cliente.score_interno)}</span> : "sin historial"}
+        </a>
       </div>
 
       {faltan.length > 0 && (
@@ -239,7 +242,7 @@ export default async function FichaClientePage({
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1.25fr_1fr]">
-        <div className="grid content-start gap-6">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-6">
           <Panel titulo="Datos personales">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
               <Dato k="Fecha de nacimiento" vacio={!cliente.fecha_nacimiento}>{fecha(cliente.fecha_nacimiento as string)}</Dato>
@@ -291,7 +294,12 @@ export default async function FichaClientePage({
           </Panel>
         </div>
 
-        <div className="grid content-start gap-6">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-6">
+          <section id="score" className="scroll-mt-6">
+            <Panel titulo="Score del cliente">
+              <ScoreCliente perfil={score} bloqueado={cliente.estado === "BLOQUEADO_LEGAL"} />
+            </Panel>
+          </section>
           <Panel titulo="Documentos (privados)">
             {listaDocumentos(docsCliente)}
             {docsCliente.length === 0 && <p className="text-sm text-muted">Aún no hay documentos.</p>}

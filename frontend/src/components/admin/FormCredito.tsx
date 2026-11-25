@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { planCredito, primerVencimientoSugerido, validarCredito, type EntradaCredito, type TipoCreditoNuevo } from "@/lib/creditos";
 import { ETIQUETA_FRECUENCIA, FRECUENCIAS, type Frecuencia, type TipoCalculo } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
+import { aplicarBeneficio, describirBeneficio, type NivelBeneficio } from "@/lib/scoring";
 
 interface Unidad { id: string; tipo: "vehiculo" | "celular"; descripcion: string; identificador: string; precio: number; productoId: string | null }
 interface Plan { id: string; productoId: string; nombre: string; cuotaInicial: number; numeroCuotas: number; frecuencia: string; tipoCalculo: string; tasaPorcentaje: number | null; montoCuota: number | null; publicado: boolean }
@@ -24,6 +25,11 @@ export interface PropsFormCredito {
   hoy: string;
   topeTea: number | null;
   vehicularExigeGarante: boolean;
+  /** Beneficio por score que califica (null = ninguno). */
+  beneficio?: NivelBeneficio | null;
+  puntaje?: number | null;
+  /** Si hay texto, se pide confirmar el riesgo antes de registrar. */
+  alertaRiesgo?: string | null;
 }
 
 const fechaLarga = (iso: string) =>
@@ -54,7 +60,30 @@ export function FormCredito(props: PropsFormCredito) {
     fechaDesembolso: hoy,
     primerVencimiento: primerVencimientoSugerido(hoy, (tasaInicial?.frecuencia ?? "MENSUAL") as Frecuencia, feriados),
   }));
+  // Beneficio aplicado: se guardan los valores previos para poder quitarlo.
+  const [previo, setPrevio] = useState<{ tasaPorcentaje: string; cuotaInicial: string } | null>(null);
+  const conBeneficio = previo != null && props.beneficio != null;
   const set = (cambios: Partial<typeof v>) => setV((prev) => ({ ...prev, ...cambios }));
+  /** Cambios que redefinen las condiciones base (tipo, plan o tasa): el beneficio se vuelve a aplicar a mano. */
+  const reiniciar = (cambios: Partial<typeof v>) => {
+    setPrevio(null);
+    set(cambios);
+  };
+  const alternarBeneficio = () => {
+    const b = props.beneficio;
+    if (!b) return;
+    if (previo) {
+      set({ tasaPorcentaje: previo.tasaPorcentaje, cuotaInicial: previo.cuotaInicial });
+      setPrevio(null);
+      return;
+    }
+    const nuevo = aplicarBeneficio({ tasaPorcentaje: v.modo === "tasa" ? num(v.tasaPorcentaje) : null, cuotaInicial: num(v.cuotaInicial) }, b);
+    setPrevio({ tasaPorcentaje: v.tasaPorcentaje, cuotaInicial: v.cuotaInicial });
+    set({
+      ...(v.modo === "tasa" && nuevo.tasaPorcentaje != null && Number.isFinite(nuevo.tasaPorcentaje) ? { tasaPorcentaje: String(nuevo.tasaPorcentaje) } : {}),
+      ...(Number.isFinite(nuevo.cuotaInicial) ? { cuotaInicial: nuevo.cuotaInicial.toFixed(2) } : {}),
+    });
+  };
   const vencimientoPara = (desembolso: string, frecuencia: Frecuencia) =>
     /^\d{4}-\d{2}-\d{2}$/.test(desembolso) ? primerVencimientoSugerido(desembolso, frecuencia, feriados) : v.primerVencimiento;
 
@@ -66,7 +95,7 @@ export function FormCredito(props: PropsFormCredito) {
   const cambiarTipo = (t: TipoCreditoNuevo) => {
     setTipo(t);
     const ts = tasas.find((x) => x.servicio === t);
-    set({
+    reiniciar({
       unidadId: "",
       planId: "",
       precio: "",
@@ -93,9 +122,9 @@ export function FormCredito(props: PropsFormCredito) {
   };
   const elegirPlan = (id: string) => {
     const p = planes.find((x) => x.id === id);
-    if (!p) return set({ planId: "" });
+    if (!p) return reiniciar({ planId: "" });
     const frecuencia = p.frecuencia as Frecuencia;
-    set({
+    reiniciar({
       planId: id,
       cuotaInicial: p.cuotaInicial.toFixed(2),
       numeroCuotas: String(p.numeroCuotas),
@@ -123,7 +152,9 @@ export function FormCredito(props: PropsFormCredito) {
   };
   const reglas = {
     topeTea: props.topeTea,
-    ...(tasa && !v.planId && tasa.frecuencia === v.frecuencia ? { cuotasMin: tasa.cuotasMin, cuotasMax: tasa.cuotasMax } : {}),
+    ...(tasa && !v.planId && tasa.frecuencia === v.frecuencia
+      ? { cuotasMin: tasa.cuotasMin, cuotasMax: tasa.cuotasMax + (conBeneficio ? props.beneficio!.cuotasExtra : 0) }
+      : {}),
   };
   const errores = validarCredito(entrada, reglas);
   const plan = Object.keys(errores).length === 0 ? planCredito(entrada, feriados, reglas) : null;
@@ -135,6 +166,7 @@ export function FormCredito(props: PropsFormCredito) {
       <input type="hidden" name="tipo" value={tipo} />
       <input type="hidden" name="modo" value={v.modo} />
       <input type="hidden" name="tasaId" value={v.tasaId} />
+      <input type="hidden" name="beneficio" value={conBeneficio ? "1" : ""} />
 
       <div className="grid content-start gap-5">
         <fieldset className="grid gap-3 rounded-2xl border border-line-soft bg-surface p-5 shadow-card">
@@ -194,6 +226,21 @@ export function FormCredito(props: PropsFormCredito) {
         <fieldset className="grid gap-3 rounded-2xl border border-line-soft bg-surface p-5 shadow-card sm:grid-cols-2">
           <legend className="sr-only">Condiciones</legend>
           <h2 className="text-lg sm:col-span-2">2 · Condiciones</h2>
+          {props.beneficio && (
+            <div className={cn("flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm sm:col-span-2", conBeneficio ? "border-accent bg-accent-soft" : "border-line-soft bg-surface-2")}>
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold">🎁 {props.beneficio.nombre}{props.puntaje != null ? ` · score ${props.puntaje}` : ""}</div>
+                <div className="text-xs text-muted">
+                  {describirBeneficio(props.beneficio)}
+                  {v.modo === "cuota" && props.beneficio.descuentoTasaPct > 0 ? " · con cuota fija el descuento de tasa no se aplica solo: ajusta la cuota" : ""}
+                </div>
+              </div>
+              <button type="button" onClick={alternarBeneficio} aria-pressed={conBeneficio}
+                className={cn("cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold", conBeneficio ? "border border-line bg-surface" : "bg-accent text-white")}>
+                {conBeneficio ? "Quitar beneficio" : "Aplicar beneficio"}
+              </button>
+            </div>
+          )}
           {!v.planId && tasasTipo.length > 0 && (
             <CampoSelect
               label="Tasa vigente"
@@ -202,8 +249,8 @@ export function FormCredito(props: PropsFormCredito) {
               value={v.tasaId}
               onChange={(e) => {
                 const t = tasas.find((x) => x.id === e.target.value);
-                if (t) set(aplicarTasa(t));
-                else set({ tasaId: "" });
+                if (t) reiniciar(aplicarTasa(t));
+                else reiniciar({ tasaId: "" });
               }}
               opciones={[
                 { value: "", label: "— Personalizada —" },
@@ -306,6 +353,15 @@ export function FormCredito(props: PropsFormCredito) {
           <span>Revisé el cronograma con el cliente y acepta las condiciones.</span>
         </label>
         <ErrorCampo name="confirmo" />
+        {props.alertaRiesgo && (
+          <>
+            <label className="flex items-start gap-2.5 text-sm text-danger">
+              <input type="checkbox" name="confirmoRiesgo" className="mt-0.5 size-4 accent-brand" />
+              <span>Entiendo que el cliente tiene score bajo y aun así apruebo el crédito.</span>
+            </label>
+            <ErrorCampo name="confirmoRiesgo" />
+          </>
+        )}
         <BotonEnviar variant="brand" disabled={!plan || !v.unidadId || faltaGarante} pendiente="Registrando…">
           Confirmar y registrar crédito
         </BotonEnviar>

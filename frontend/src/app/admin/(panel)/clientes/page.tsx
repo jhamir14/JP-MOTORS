@@ -9,6 +9,7 @@ import { sql } from "@/lib/server/db";
 export const metadata = { title: "Clientes" };
 
 const POR_PAGINA = 50;
+const FILTROS_SCORE = ["5", "4", "3", "2", "1", "sin"] as const;
 
 interface Fila {
   id: string; nombres: string; apellidos: string; tipo_documento: string; numero_documento: string; telefono: string | null;
@@ -17,12 +18,14 @@ interface Fila {
 }
 
 
-export default async function ClientesPage({ searchParams }: { searchParams: Promise<{ q?: string; estado?: string; incompletos?: string; p?: string }> }) {
+export default async function ClientesPage({ searchParams }: { searchParams: Promise<{ q?: string; estado?: string; incompletos?: string; score?: string; orden?: string; p?: string }> }) {
   const sesion = await requerirSesion();
   const sp = await searchParams;
   const q = (sp.q ?? "").trim().slice(0, 80);
   const estado = (ESTADOS_CLIENTE as readonly string[]).includes(sp.estado ?? "") ? sp.estado! : null;
   const incompletos = sp.incompletos === "1";
+  const score = FILTROS_SCORE.includes(sp.score as (typeof FILTROS_SCORE)[number]) ? sp.score! : null;
+  const orden = sp.orden === "score_desc" || sp.orden === "score_asc" ? sp.orden : null;
   const pagina = Math.max(1, Math.min(1000, Number(sp.p) || 1));
   const db = sql();
 
@@ -32,6 +35,11 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
     ? db`and (c.numero_documento like ${`${doc}%`} or c.telefono like ${`%${q.replace(/\D/g, "") || "x"}%`}
               or (c.nombres || ' ' || c.apellidos) ilike ${texto} or (c.apellidos || ' ' || c.nombres) ilike ${texto})`
     : db``;
+  const filtroScore = score === "sin" ? db`and c.score_interno is null` : score ? db`and c.score_interno = ${Number(score)}` : db``;
+  const ordenSql =
+    orden === "score_desc" ? db`c.score_interno desc nulls last, c.apellidos, c.nombres`
+    : orden === "score_asc" ? db`c.score_interno asc nulls last, c.apellidos, c.nombres`
+    : db`c.apellidos, c.nombres`;
 
   const [filas, [conteo]] = await Promise.all([
     db<Fila[]>`
@@ -41,19 +49,19 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
              count(cr.id) filter (where cr.estado <> 'ANULADO')::int as creditos_total
       from public.cliente c
       left join public.credito cr on cr.cliente_id = c.id
-      where (${estado}::text is null or c.estado::text = ${estado}) and (not ${incompletos} or c.datos_incompletos) ${busqueda}
+      where (${estado}::text is null or c.estado::text = ${estado}) and (not ${incompletos} or c.datos_incompletos) ${busqueda} ${filtroScore}
       group by c.id
-      order by c.apellidos, c.nombres
+      order by ${ordenSql}
       limit ${POR_PAGINA} offset ${(pagina - 1) * POR_PAGINA}`,
     db<{ total: number; incompletos: number }[]>`
       select count(*)::int as total, count(*) filter (where c.datos_incompletos)::int as incompletos
       from public.cliente c
-      where (${estado}::text is null or c.estado::text = ${estado}) ${busqueda}`,
+      where (${estado}::text is null or c.estado::text = ${estado}) ${busqueda} ${filtroScore}`,
   ]);
 
   const enlace = (cambios: Record<string, string | null>) => {
     const params = new URLSearchParams();
-    const base: Record<string, string | null> = { q: q || null, estado, incompletos: incompletos ? "1" : null, ...cambios };
+    const base: Record<string, string | null> = { q: q || null, estado, incompletos: incompletos ? "1" : null, score, orden, ...cambios };
     for (const [k, v] of Object.entries(base)) if (v) params.set(k, v);
     const s = params.toString();
     return s ? `/admin/clientes?${s}` : "/admin/clientes";
@@ -81,6 +89,8 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
         />
         {estado && <input type="hidden" name="estado" value={estado} />}
         {incompletos && <input type="hidden" name="incompletos" value="1" />}
+        {score && <input type="hidden" name="score" value={score} />}
+        {orden && <input type="hidden" name="orden" value={orden} />}
         <button type="submit" className="cursor-pointer rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white">Buscar</button>
         {q && <Link href={enlace({ q: null, p: null })} className="self-center text-xs font-semibold text-danger">Limpiar ✕</Link>}
       </form>
@@ -107,6 +117,32 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
         >
           ⚠ Datos incompletos ({conteo.incompletos})
         </Link>
+      </div>
+
+      <div className="mb-5 flex flex-wrap items-center gap-2 text-xs">
+        <span className="font-semibold text-muted">Score:</span>
+        {[null, ...FILTROS_SCORE].map((f) => (
+          <Link
+            key={f ?? "todos"}
+            href={enlace({ score: f, p: null })}
+            className={cn(
+              "rounded-full border px-3 py-1.5 font-semibold",
+              score === f ? "border-brand bg-brand text-white" : "border-line bg-surface hover:border-brand",
+            )}
+          >
+            {f == null ? "Todos" : f === "sin" ? "Sin historial" : <><span className={score === f ? "" : "text-gold"}>{"★".repeat(Number(f))}</span> {f}</>}
+          </Link>
+        ))}
+        <span className="ml-2 font-semibold text-muted">Ordenar:</span>
+        {([[null, "Nombre"], ["score_desc", "Mejor score"], ["score_asc", "Menor score"]] as const).map(([o, etiqueta]) => (
+          <Link
+            key={etiqueta}
+            href={enlace({ orden: o, p: null })}
+            className={cn("rounded-full border px-3 py-1.5 font-semibold", orden === o ? "border-brand bg-brand text-white" : "border-line bg-surface hover:border-brand")}
+          >
+            {etiqueta}
+          </Link>
+        ))}
       </div>
 
       {filas.length === 0 ? (

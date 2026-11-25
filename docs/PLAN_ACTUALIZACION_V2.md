@@ -197,6 +197,8 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 - Cálculo de `scoreInterno` según historial y beneficios para clientes puntuales en su siguiente financiamiento.
 - ~~Préstamos en efectivo~~: **descartado (decisión 2026-11-25)**. La empresa solo financia productos; los préstamos migrados del sistema anterior se conservan únicamente para su cobranza.
 
+**Estado (2026-11-25): implementada.** Score 1–5 calculado en la base y explicado en TypeScript con las mismas reglas (puntualidad con días de gracia, −1 por atraso de más de 30 días, −1 por bloqueo o corte de GPS, +1 por 2+ créditos cancelados a tiempo, topes por mora de hoy), métricas en `cliente_score`, historial de cambios en `score_historial`, panel del score en la ficha, filtro y orden en `/admin/clientes`, beneficios configurables en `/admin/tasas` (menos tasa, menos inicial, más cuotas) aplicables en el alta y congelados en `credito.beneficio_score`, alerta con confirmación para score bajo y bloqueo con cuotas vencidas. Se eliminó `apto_prestamo_efectivo`. Detalle en [`FASE_7_SCORING.md`](FASE_7_SCORING.md).
+
 ### Fase 8 — Dashboard y reportes (≈ 1 semana)
 - KPIs: cartera vigente, colocado del mes, cobrado hoy/mes, % mora por tramo, intereses ganados.
 - Reportes con filtros por fecha/sucursal/asesor y exportación a Excel.
@@ -232,33 +234,26 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 
 ---
 
-## 5. Siguiente paso: Fase 7 — Scoring de clientes
+## 5. Siguiente paso: Fase 8 — Dashboard y reportes
 
-Fases 0 a 6 terminadas (2026-11-25). **Fase 6** (ver [`FASE_6_DOCUMENTOS.md`](FASE_6_DOCUMENTOS.md)): contratos, pagaré, cronograma y recibo en PDF,
-documentos firmados privados, recibo por WhatsApp con enlace público seguro. Migración `20261201000100_fase6_documentos.sql` aplicada en Railway.
+Fases 0 a 7 terminadas (2026-11-25). **Fase 7** (ver [`FASE_7_SCORING.md`](FASE_7_SCORING.md)): score explicable con historial, beneficios
+para el siguiente financiamiento y alertas de riesgo. Migración `20261202000100_fase7_scoring.sql`.
 
-**Ya resuelto (no repetir):** todo lo anterior + `lib/documentos.ts` (plantillas puras con tests), `lib/pdf/render.ts`, `lib/server/documentos.ts`
-(`datosCredito`, `datosRecibo`, `datosEmpresa`, `auditarDescarga`), `/api/documentos/...`, `/r/[token]`, `documento_credito`, `pago.token_recibo`,
-`configuracion.empresa_documentos` y `documentos_validados`.
+**Ya resuelto (no repetir):** todo lo anterior + `lib/scoring.ts` (`calcularScore`, `explicarScore`, `metricasDesdeHistorial`, `evaluarCliente`,
+`aplicarBeneficio`, con tests), `lib/server/scoring.ts` (`perfilScore`, `perfilParaCredito`, `configBeneficios`), `components/admin/ScoreCliente.tsx`,
+`cliente_score`, `score_historial`, `configuracion.beneficios_score` y `credito.beneficio_score`.
 
-**Lo que ya existe del score (base para la Fase 7):** `cliente.score_interno` (1–5, `null` = sin historial), `cliente.estado`
-(`NUEVO`, `ACTIVO_AL_DIA`, `ACTIVO_EN_MORA`, `EXCELENTE_PAGADOR`, `BLOQUEADO_LEGAL`) y `apto_prestamo_efectivo` (en desuso: ya no hay préstamos),
-calculados en `recalcular_estados()` (migración de la Fase 5, se ejecuta en `proceso_diario()`): % de cuotas pagadas a tiempo
-(dentro de `dias_gracia_mora`) → 5 (≥95 %), 4 (≥85 %), 3 (≥70 %), 2 (≥50 %), 1; con un crédito en mora el máximo es 2.
-El panel muestra las estrellas en `/admin/clientes` y en la ficha.
+**Datos que ya existen para el dashboard:** vistas `v_cobranza` (cuotas por cobrar con tramo de mora) y `v_resumen_cartera` (por tipo: activos, en mora,
+finalizados, colocado, intereses pactados, saldo por cobrar); `pago` + `aplicacion_pago` (mora / interés / capital cobrados por fecha y cajero);
+`cierre_caja`; `credito.creado_por` (asesor), `sucursal_id`; `cliente_score` (distribución de score).
 
-**Alcance de la Fase 7:**
-1. Llevar el cálculo a una función pura y testeada (`lib/scoring.ts`) que explique **por qué** cada cliente tiene su puntaje (puntualidad, días de atraso
-   promedio y máximo, cuotas en mora hoy, créditos cancelados, antigüedad, bloqueos/cortes de GPS, anulaciones) y mantener la versión SQL equivalente
-   (o guardar un detalle `score_detalle jsonb` + `score_calculado_at`).
-2. Historial del score (tabla `score_historial` con fecha, puntaje y motivo) para ver la evolución en la ficha del cliente.
-3. **Beneficios para clientes puntuales** en su siguiente financiamiento, configurables en el panel (`configuracion`): p. ej. inicial menor,
-   descuento de tasa o más cuotas para score 4–5 / `EXCELENTE_PAGADOR`; y alerta o bloqueo para score 1–2 o mora vigente.
-4. Aplicar los beneficios en el **alta de crédito** (`/admin/creditos/nuevo`, `lib/creditos.ts`): sugerirlos y mostrar el score y el historial del cliente
-   antes de confirmar; las condiciones finales quedan congeladas como hoy.
-5. Filtro y orden por score en `/admin/clientes`; tests con historiales de ejemplo.
-6. Eliminar o renombrar `apto_prestamo_efectivo` (la empresa no otorga préstamos) si ya no se usa.
+**Alcance de la Fase 8:**
+1. `/admin` (inicio) con KPIs: cartera vigente y en mora, colocado del mes, cobrado hoy y en el mes, % de mora por tramo, intereses ganados
+   (cobrados) vs. pactados, distribución de clientes por score.
+2. Reportes con filtros por fecha, tipo de crédito, asesor y sucursal: colocaciones, cobranzas, mora por tramo, créditos cancelados.
+3. Exportación a Excel (CSV o .xlsx generado en el servidor) con auditoría de la descarga.
+4. Consultas agregadas en SQL (vistas o funciones) con tests de las fórmulas en TypeScript.
 
-**Pendientes del negocio:** reglas exactas del score y de los beneficios (¿cuánto descuento o inicial?, ¿desde qué puntaje?); validación legal de los
-textos de la Fase 6; representante legal y domicilio en `/admin/tasas`; si la mora debe contar solo días hábiles o tener tope; si se permite condonar mora;
-fotos reales de celulares y del Torito Bajaj.
+**Pendientes del negocio:** validar las reglas del score y los porcentajes de los beneficios; validación legal de los textos de la Fase 6;
+representante legal y domicilio en `/admin/tasas`; si la mora debe contar solo días hábiles o tener tope; si se permite condonar mora;
+fotos reales de celulares y del Torito Bajaj; qué KPIs y reportes necesita ver la gerencia primero.

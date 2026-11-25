@@ -8,7 +8,9 @@ import { ETIQUETA_FRECUENCIA, FRECUENCIAS, PERIODOS_POR_ANIO, calcularCredito, t
 import { puede, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { datosEmpresa } from "@/lib/server/documentos";
-import { guardarDatosDocumentos, guardarFeriados, guardarTasa, guardarTopeTea } from "./actions";
+import { describirBeneficio } from "@/lib/scoring";
+import { configBeneficios } from "@/lib/server/scoring";
+import { guardarBeneficios, guardarDatosDocumentos, guardarFeriados, guardarTasa, guardarTopeTea } from "./actions";
 
 export const metadata = { title: "Tasas por servicio" };
 
@@ -66,7 +68,7 @@ export default async function TasasPage() {
   const sesion = await requerirSesion();
   const editable = puede(sesion, "SUPERADMIN", "ADMIN_CREDITOS");
   const db = sql();
-  const [tasas, [conf], [fer], empresa] = await Promise.all([
+  const [tasas, [conf], [fer], empresa, beneficios] = await Promise.all([
     db<Tasa[]>`
       select id, servicio, categoria, nombre, frecuencia, tipo_calculo, tasa_porcentaje::float8 as tasa, cuotas_min, cuotas_max,
              penalidad_diaria::float8 as penalidad, publica, activa
@@ -77,6 +79,7 @@ export default async function TasasPage() {
     db<{ fechas: string[] | null }[]>`
       select case when jsonb_typeof(valor) = 'array' then valor end as fechas from public.configuracion where clave = 'feriados'`,
     datosEmpresa(db),
+    configBeneficios(db),
   ]);
   const fechasFeriados = fer?.fechas ?? [];
   const anioActual = new Date().getFullYear();
@@ -170,6 +173,48 @@ export default async function TasasPage() {
           <p className="text-xs text-muted">Solo un superadministrador puede cambiarlo.</p>
         )}
       </Panel>
+      <Panel titulo="Beneficios por score" className="mt-6" acciones={beneficios.activo ? <Badge tone="accent">Activos</Badge> : <Badge tone="outline">Desactivados</Badge>}>
+        <p className="mb-3 text-sm text-muted">
+          Se sugieren al registrar el <strong className="text-fg">siguiente financiamiento</strong> de un cliente puntual: el asesor pulsa «Aplicar beneficio»
+          y la tasa y la inicial bajan, y se permiten más cuotas que el máximo de la tasa. Lo aplicado queda guardado en el crédito.
+          El score (1–5) se calcula cada noche y después de cada pago con la puntualidad, el atraso máximo, los bloqueos o cortes de GPS y los créditos cancelados.
+        </p>
+        {puede(sesion, "SUPERADMIN") ? (
+          <AdminForm action={guardarBeneficios} className="grid gap-4">
+            {beneficios.niveles.slice(0, 2).map((n, i) => (
+              <fieldset key={i} className="grid gap-3 rounded-xl border border-line-soft p-4 sm:grid-cols-2 lg:grid-cols-5">
+                <legend className="px-1 text-sm font-semibold">Nivel {i + 1}</legend>
+                <CampoTexto label="Nombre" name={`nombre${i + 1}`} defaultValue={n.nombre} maxLength={40} required />
+                <CampoSelect label="Desde score" name={`scoreMin${i + 1}`} defaultValue={String(n.scoreMin)} opciones={["5", "4", "3"].map((x) => ({ value: x, label: `${x} ${"★".repeat(Number(x))}` }))} />
+                <CampoTexto label="Descuento de tasa (%)" name={`descuentoTasa${i + 1}`} defaultValue={String(n.descuentoTasaPct)} inputMode="decimal" hint="10 = una tasa de 3 % baja a 2.7 %" />
+                <CampoTexto label="Menos inicial (%)" name={`reduccionInicial${i + 1}`} defaultValue={String(n.reduccionInicialPct)} inputMode="decimal" hint="50 = la mitad" />
+                <CampoTexto label="Cuotas extra" name={`cuotasExtra${i + 1}`} defaultValue={String(n.cuotasExtra)} inputMode="numeric" />
+              </fieldset>
+            ))}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid content-start gap-2">
+                <Check label="Beneficios activos" name="activo" defaultChecked={beneficios.activo} />
+                <Check label="Solo si ya canceló al menos un crédito" name="requiereCreditoCancelado" defaultChecked={beneficios.requiereCreditoCancelado} />
+                <Check label="No registrar créditos a clientes con cuotas vencidas" name="bloquearConMora" defaultChecked={beneficios.bloquearConMora} hint="Si se desmarca, solo se advierte." />
+              </div>
+              <CampoSelect
+                label="Pedir confirmación de riesgo con score"
+                name="alertaScoreMax"
+                defaultValue={String(beneficios.alertaScoreMax)}
+                opciones={[{ value: "0", label: "Nunca" }, { value: "1", label: "1" }, { value: "2", label: "2 o menos" }, { value: "3", label: "3 o menos" }]}
+              />
+            </div>
+            <BotonEnviar size="sm" className="justify-self-start">Guardar beneficios</BotonEnviar>
+          </AdminForm>
+        ) : (
+          <ul className="grid gap-1 text-sm">
+            {beneficios.niveles.map((n) => (
+              <li key={n.nombre}><strong>{n.nombre}</strong> (score {n.scoreMin}+): {describirBeneficio(n)}</li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+
       <Panel titulo="Datos para contratos y recibos" className="mt-6" acciones={empresa.validados ? <Badge tone="accent">Textos validados</Badge> : <Badge tone="outline">Modelo referencial</Badge>}>
         <p className="mb-3 text-sm text-muted">
           Se imprimen en los contratos, el pagaré y los recibos de pago ({empresa.razonSocial}, RUC {empresa.ruc}). Si falta un dato, el documento

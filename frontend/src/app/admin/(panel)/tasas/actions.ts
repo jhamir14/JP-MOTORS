@@ -126,3 +126,46 @@ export async function guardarDatosDocumentos(_prev: EstadoAccion, fd: FormData):
   revalidatePath("/admin/tasas");
   return exito(validados ? "Datos guardados. Los documentos ya no muestran el aviso de modelo referencial." : "Datos guardados. Se usan en los próximos documentos que se generen.");
 }
+
+const porcentaje = (campo: string, max: number) =>
+  z.string().trim().regex(/^\d{1,3}(\.\d{1,2})?$/, `${campo}: porcentaje (ej. 10)`).transform(Number)
+    .refine((n) => n <= max, `${campo}: máximo ${max} %`);
+const nombreNivel = z.string().trim().min(3, "Ingresa un nombre").max(40);
+const scoreMin = z.enum(["3", "4", "5"]).transform(Number);
+const cuotasExtra = z.string().trim().regex(/^\d{1,2}$/, "Número entero").transform(Number).refine((n) => n <= 24, "Máximo 24");
+const beneficiosSchema = z
+  .object({
+    nombre1: nombreNivel, scoreMin1: scoreMin, descuentoTasa1: porcentaje("Descuento", 50), reduccionInicial1: porcentaje("Reducción", 100), cuotasExtra1: cuotasExtra,
+    nombre2: nombreNivel, scoreMin2: scoreMin, descuentoTasa2: porcentaje("Descuento", 50), reduccionInicial2: porcentaje("Reducción", 100), cuotasExtra2: cuotasExtra,
+    alertaScoreMax: z.enum(["0", "1", "2", "3"]).transform(Number),
+  })
+  .refine((d) => d.scoreMin1 > d.scoreMin2, { path: ["scoreMin2"], message: "Debe ser menor que el del primer nivel" });
+
+/** Beneficios del siguiente financiamiento según el score (configuracion.beneficios_score). */
+export async function guardarBeneficios(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
+  const sesion = await requerirSesion("SUPERADMIN");
+  const parsed = beneficiosSchema.safeParse(datosDe(fd));
+  if (!parsed.success) return fallo("Revisa los datos de los beneficios.", erroresZod(parsed.error));
+  const d = parsed.data;
+  const nivel = (i: 1 | 2) => ({
+    scoreMin: d[`scoreMin${i}`], nombre: d[`nombre${i}`], descuentoTasaPct: d[`descuentoTasa${i}`],
+    reduccionInicialPct: d[`reduccionInicial${i}`], cuotasExtra: d[`cuotasExtra${i}`],
+  });
+  const valor = {
+    activo: fd.get("activo") === "on",
+    niveles: [nivel(1), nivel(2)],
+    requiereCreditoCancelado: fd.get("requiereCreditoCancelado") === "on",
+    alertaScoreMax: d.alertaScoreMax,
+    bloquearConMora: fd.get("bloquearConMora") === "on",
+  };
+  try {
+    await comoUsuario(sesion, (tx) => tx`
+      insert into public.configuracion (clave, valor, descripcion, publica, updated_by)
+      values ('beneficios_score', ${tx.json(valor)}, 'Beneficios del siguiente financiamiento según el score del cliente, y alertas por score bajo o mora vigente', false, ${sesion.usuarioId})
+      on conflict (clave) do update set valor = excluded.valor, updated_by = excluded.updated_by, updated_at = now()`);
+  } catch (e) {
+    return fallo(mensajeErrorBD(e));
+  }
+  revalidatePath("/admin", "layout");
+  return exito(valor.activo ? "Beneficios guardados. Se sugieren en los próximos créditos; los ya registrados no cambian." : "Beneficios desactivados.");
+}
