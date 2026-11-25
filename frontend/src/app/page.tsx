@@ -1,248 +1,308 @@
-"use client";
-import Image from "next/image";
 import Link from "next/link";
-import { mockMotos } from "@/data/mockMotos";
+import { ButtonLink, Card, ExternalButton } from "@/components/ui";
+import {
+  IconArrowRight,
+  IconCalendar,
+  IconCheck,
+  IconClock,
+  IconFile,
+  IconShield,
+  IconTrend,
+  IconUser,
+  IconWallet,
+  IconWhatsApp,
+} from "@/components/icons";
+import { CelularCard } from "@/components/public/CelularCard";
+import { MotoCard } from "@/components/public/MotoCard";
+import { SectionHeading } from "@/components/public/SectionHeading";
+import { Simulador } from "@/components/public/Simulador";
+import { getCelularesDestacados } from "@/data/celulares";
+import { getMotosDestacadas } from "@/data/motos";
+import { servicios } from "@/data/servicios";
+import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
+
+const confianza = [
+  { Icon: IconClock, texto: "Respuesta en 24 horas" },
+  { Icon: IconCalendar, texto: "Pagos diarios, semanales o mensuales" },
+  { Icon: IconWallet, texto: "Paga con Yape, Plin o efectivo" },
+];
+
+const pasos = [
+  { Icon: IconUser, titulo: "Elige tu servicio", texto: "Préstamo en efectivo, vehículo o celular. Simula tu cuota en segundos." },
+  { Icon: IconFile, titulo: "Envía tu solicitud", texto: "Solo tu DNI y datos de contacto. Sin boletas de pago ni trámites bancarios." },
+  { Icon: IconShield, titulo: "Te evaluamos", texto: "Un asesor revisa tu perfil y te llama o escribe por WhatsApp en menos de 24 h." },
+  { Icon: IconTrend, titulo: "Recibe y crece", texto: "Paga a tu ritmo. Con buen historial accedes a montos mayores y mejores condiciones." },
+];
+
+const frecuencias = [
+  { nombre: "Diario", detalle: "Lunes a sábado", uso: "Préstamos para comerciantes" },
+  { nombre: "Semanal", detalle: "Cada 7 días", uso: "Préstamos y celulares" },
+  { nombre: "Quincenal", detalle: "Cada 15 días", uso: "Celulares" },
+  { nombre: "Mensual", detalle: "Cada 30 días", uso: "Motos y mototaxis" },
+];
+
+const requisitos = [
+  "DNI vigente (o carné de extranjería)",
+  "Recibo de luz o agua de tu domicilio",
+  "Celular con WhatsApp activo",
+  "Garante para créditos vehiculares",
+];
+
+const preguntas = [
+  {
+    p: "¿Necesito boletas de pago o estar en planilla?",
+    r: "No. Evaluamos a trabajadores independientes, mototaxistas, comerciantes y emprendedores según su actividad y capacidad de pago.",
+  },
+  {
+    p: "¿Cuánto demora la aprobación?",
+    r: "Normalmente te respondemos en menos de 24 horas hábiles después de recibir tu solicitud completa.",
+  },
+  {
+    p: "¿Cómo pago mis cuotas?",
+    r: "Puedes pagar en efectivo con nuestro cobrador, por Yape, Plin o transferencia. Te enviamos un recordatorio por WhatsApp antes de cada vencimiento.",
+  },
+  {
+    p: "¿Quién puede acceder a un préstamo en efectivo?",
+    r: "Los préstamos en efectivo están pensados para clientes que ya trabajan con nosotros. Si es tu primera vez, empieza con un monto pequeño y, al pagar puntualmente, tu línea crece.",
+  },
+];
 
 export default function Home() {
-  const featuredMotos = mockMotos.filter(m => [1, 6, 11].includes(m.id));
-  
-  const formatSoles = (value: number) => {
-    return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN', maximumFractionDigits: 0 }).format(value);
-  };
+  const motos = getMotosDestacadas().slice(0, 3);
+  const celulares = getCelularesDestacados().slice(0, 4);
 
   return (
     <main>
-      {/* Hero Section */}
-      <section className="hero-section" style={{ 
-        padding: "160px 0 120px 0", 
-        position: "relative",
-        backgroundImage: "linear-gradient(to bottom, rgba(15, 17, 21, 0.4) 0%, rgba(15, 17, 21, 0.7) 60%, rgba(15, 17, 21, 1) 100%), url('/hero_bg.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center 20%"
-      }}>
-        <div className="container" style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ textAlign: "center", marginBottom: "48px" }}>
-            <h1 style={{ marginBottom: "16px", textTransform: "uppercase", fontSize: "3rem", fontWeight: 900, textShadow: "0 4px 12px rgba(0,0,0,0.8)", letterSpacing: "1px" }}>
-              La moto que buscas, la tenemos
+      {/* ───────────── Hero ───────────── */}
+      <section className="relative overflow-hidden bg-brand-ink text-white">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_80%_at_85%_10%,rgba(47,211,155,0.22)_0%,transparent_60%),radial-gradient(50%_60%_at_0%_100%,rgba(37,99,235,0.35)_0%,transparent_70%)]"
+        />
+        <div className="container relative grid items-center gap-10 pt-12 pb-14 md:grid-cols-[1.1fr_1fr] md:gap-14 md:pt-20 md:pb-24">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-[#7ff0c4]">
+              <span className="size-1.5 rounded-full bg-[#2fd39b]" /> Financiera para emprendedores
+            </span>
+            <h1 className="mt-5 text-[2.3rem] leading-[1.08] text-white md:text-[3.4rem]">
+              Financiamos tu trabajo
+              <br className="hidden md:block" /> y <span className="text-[#7ff0c4]">tus proyectos</span>
             </h1>
-            <p style={{ fontSize: "1.3rem", color: "var(--text-secondary)", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>
-              Conócela, cómprala o finánciala aquí.
+            <p className="mt-5 max-w-xl text-lg text-white/75">
+              Préstamos en efectivo, motos y mototaxis para trabajar y celulares en cuotas. Crédito directo, sin bancos y
+              con pagos que se adaptan a cómo generas tus ingresos.
             </p>
-            <div style={{ display: "flex", justifyContent: "center", gap: "32px", marginTop: "24px", color: "white", fontSize: "0.9rem", fontWeight: 700, flexWrap: "wrap" }}>
-              <span className="flex items-center" style={{ gap: "8px" }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg> FÁCIL Y RÁPIDO</span>
-              <span className="flex items-center" style={{ gap: "8px" }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg> 100% SEGURO</span>
-              <span className="flex items-center" style={{ gap: "8px" }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg> ASESORÍA PERSONALIZADA</span>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <ButtonLink href="/financiamiento" size="lg">
+                Solicitar mi crédito <IconArrowRight size={18} />
+              </ButtonLink>
+              <ExternalButton href={whatsappLink(whatsappMessages.general())} variant="light" size="lg">
+                <IconWhatsApp size={20} className="text-whatsapp" /> Hablar con un asesor
+              </ExternalButton>
             </div>
+
+            <ul className="mt-9 grid gap-3 text-sm text-white/80 sm:grid-cols-3">
+              {confianza.map(({ Icon, texto }) => (
+                <li key={texto} className="flex items-center gap-2.5">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-[#7ff0c4]">
+                    <Icon size={16} />
+                  </span>
+                  {texto}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Panel de Filtros (Solo Escritorio) */}
-          <div className="desktop-only" style={{ background: "rgba(15, 17, 21, 0.4)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "40px 20px", maxWidth: "1000px", margin: "0 auto", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "48px" }}>
-            
-            {/* Columna Izquierda: Filtros Completos */}
-            <div>
-              <h3 style={{ fontSize: "0.9rem", textTransform: "uppercase", fontWeight: 700, marginBottom: "24px", letterSpacing: "1px" }}>Completa los filtros y encuentra tu moto ideal</h3>
-              
-              <div style={{ display: "flex", gap: "24px", marginBottom: "24px" }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, marginBottom: "12px", textTransform: "uppercase" }}>Precio (S/)</label>
-                  <input type="range" min="3000" max="50000" defaultValue="25000" style={{ width: "100%", accentColor: "var(--accent-primary)", marginBottom: "8px" }} />
-                  <div className="flex space-between" style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 700 }}>
-                    <span>S/ 3,000</span>
-                    <span>S/ 50,000+</span>
-                  </div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, marginBottom: "12px", textTransform: "uppercase" }}>Cilindrada</label>
-                  <input type="range" min="0" max="1000" defaultValue="500" style={{ width: "100%", accentColor: "var(--accent-primary)", marginBottom: "8px" }} />
-                  <div className="flex space-between" style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 700 }}>
-                    <span>0 cc</span>
-                    <span>1,000 cc+</span>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: "24px" }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, marginBottom: "12px", textTransform: "uppercase" }}>Tipo de Moto</label>
-                <select style={{ width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "4px", padding: "12px 16px", color: "white", fontSize: "1rem", appearance: "none" }}>
-                  <option value="" style={{ color: "black" }}>Sin Preferencia</option>
-                  <option value="deportiva" style={{ color: "black" }}>Deportiva</option>
-                  <option value="scooter" style={{ color: "black" }}>Scooter</option>
-                  <option value="todoterreno" style={{ color: "black" }}>Todo Terreno</option>
-                </select>
-              </div>
-
-              <button style={{ width: "100%", background: "var(--accent-primary)", color: "black", fontWeight: 900, textTransform: "uppercase", letterSpacing: "1px", padding: "16px", border: "none", borderRadius: "8px", fontSize: "1rem" }}>
-                Buscar Motos
-              </button>
-            </div>
-
-            {/* Columna Derecha: Búsqueda Libre */}
-            <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div>
-                <h3 style={{ fontSize: "0.9rem", textTransform: "uppercase", fontWeight: 700, marginBottom: "16px", letterSpacing: "1px" }}>¿Tienes una moto en mente? Búscala aquí.</h3>
-                <div style={{ position: "relative" }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)" }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                  <input type="text" placeholder="Escribe modelo, marca o tipo de moto" style={{ width: "100%", background: "white", padding: "16px 16px 16px 48px", border: "none", borderRadius: "4px", color: "black", fontWeight: 700, outline: "none" }} />
-                </div>
-              </div>
-              
-              <div style={{ marginTop: "40px" }}>
-                <h3 style={{ fontSize: "0.9rem", textTransform: "uppercase", fontWeight: 700, marginBottom: "16px", letterSpacing: "1px" }}>Mira todos los modelos</h3>
-                <button style={{ width: "100%", background: "transparent", border: "1px solid white", color: "white", padding: "16px", borderRadius: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", textTransform: "uppercase", fontWeight: 700, letterSpacing: "1px" }}>
-                  Ver Catálogo Completo
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                </button>
-              </div>
-            </div>
-
+          <div id="simulador" className="scroll-mt-28 text-fg">
+            <Simulador />
           </div>
         </div>
       </section>
 
-      {/* Botones de Acción (Solo Móvil) */}
-      <section className="mobile-only" style={{ padding: "0 20px 40px 20px" }}>
-        <Link href="/motos" className="btn btn-primary" style={{ display: "flex", justifyContent: "space-between", fontSize: "1.1rem", padding: "16px", borderRadius: "12px", width: "100%" }}>
-          Ver Catálogo de Motos 
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </Link>
-        <Link href="/repuestos" className="btn btn-secondary" style={{ display: "flex", justifyContent: "space-between", fontSize: "1.1rem", padding: "16px", borderRadius: "12px", width: "100%", backgroundColor: "rgba(255,255,255,0.05)" }}>
-          Tienda de Repuestos
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </Link>
-        <Link href="/financiamiento" className="btn btn-secondary" style={{ display: "flex", justifyContent: "space-between", fontSize: "1.1rem", padding: "16px", borderRadius: "12px", width: "100%", backgroundColor: "rgba(255,255,255,0.05)" }}>
-          Quiero un Crédito
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </Link>
-      </section>
-
-      {/* Motos Destacadas */}
-      <section style={{ padding: "80px 0", background: "var(--bg-primary)" }}>
+      {/* ───────────── Servicios ───────────── */}
+      <section className="py-16 md:py-24">
         <div className="container">
-          <div className="flex space-between items-center" style={{ marginBottom: "40px" }}>
-            <h2>Recién Llegadas</h2>
-            <Link href="/motos" style={{ color: "var(--accent-primary)", fontWeight: 600 }}>Ver Todas →</Link>
-          </div>
-          
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "24px" }}>
-            {featuredMotos.map((moto) => (
-              <div key={moto.id} className="card" style={{ flex: "1 1 300px", maxWidth: "380px", display: "flex", flexDirection: "column", padding: "0", overflow: "hidden", border: "1px solid rgba(255,255,255,0.05)", transition: "transform 0.2s, box-shadow 0.2s", cursor: "pointer" }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                  e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,255,200,0.1)';
-                  e.currentTarget.style.borderColor = 'rgba(0,255,200,0.3)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)';
-                }}
-              >
-                
-                {/* Foto de la Moto */}
-                <div style={{ backgroundColor: "rgba(255,255,255,0.02)", width: "100%", height: "220px", display: "flex", justifyContent: "center", alignItems: "center", position: "relative", padding: "20px" }}>
-                  <span style={{ position: "absolute", top: "16px", right: "16px", backgroundColor: "var(--accent-primary)", color: "black", fontSize: "0.75rem", fontWeight: 800, padding: "4px 8px", borderRadius: "4px", zIndex: 2 }}>{moto.category}</span>
-                  <img src={moto.image} alt={moto.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", mixBlendMode: "screen", filter: "contrast(1.1) drop-shadow(0 4px 6px rgba(0,0,0,0.5))" }} />
+          <SectionHeading eyebrow="Nuestros servicios" title="Un solo lugar para financiar lo que necesitas">
+            Elige el producto que mejor se ajusta a tu momento. Todos con evaluación rápida y atención personalizada.
+          </SectionHeading>
+
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {servicios.map(({ id, titulo, resumen, href, cta, Icon, puntos, etiqueta }) => (
+              <Card key={id} interactive className="flex flex-col p-6">
+                <div className="flex items-start justify-between">
+                  <span className="flex size-12 items-center justify-center rounded-xl bg-brand-soft text-brand">
+                    <Icon size={24} />
+                  </span>
+                  {etiqueta && (
+                    <span className="rounded-full bg-gold-soft px-2.5 py-1 text-[0.7rem] font-bold text-[#8a5d00]">{etiqueta}</span>
+                  )}
                 </div>
-
-                {/* Info de la Moto */}
-                <div style={{ padding: "24px", display: "flex", flexDirection: "column", flexGrow: 1 }}>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Marca HondA</div>
-                  <h3 style={{ fontSize: "1.3rem", fontWeight: 800, marginBottom: "16px", lineHeight: "1.2" }}>{moto.name}</h3>
-                  
-                  <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
-                    <span style={{ border: "1px solid rgba(255,255,255,0.1)", padding: "4px 8px", borderRadius: "4px", fontSize: "0.8rem", color: "var(--text-secondary)" }}>⚙️ {moto.cc} cc</span>
-                    <span style={{ border: "1px solid rgba(255,255,255,0.1)", padding: "4px 8px", borderRadius: "4px", fontSize: "0.8rem", color: "var(--text-secondary)" }}>⚖️ {moto.weight}</span>
-                  </div>
-
-                  <div style={{ marginTop: "auto", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "16px", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
-                    <div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px", textTransform: "uppercase" }}>Precio Contado</div>
-                      <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "white" }}>{formatSoles(moto.price)}</div>
-                    </div>
-                  </div>
-
-                  {/* Botones de acción */}
-                  <div style={{ display: "flex", gap: "8px", marginTop: "24px" }}>
-                    <Link href={`/motos/${moto.id}`} style={{ flex: 1, textAlign: "center", padding: "10px", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "6px", fontSize: "0.9rem", fontWeight: 700, transition: "background 0.2s" }} onMouseOver={(e) => e.currentTarget.style.backgroundColor="rgba(255,255,255,0.05)"} onMouseOut={(e) => e.currentTarget.style.backgroundColor="transparent"}>
-                      Detalles
-                    </Link>
-                  </div>
-
-                </div>
-              </div>
+                <h3 className="mt-5 text-xl">{titulo}</h3>
+                <p className="mt-2 text-sm text-muted">{resumen}</p>
+                <ul className="mt-4 flex flex-col gap-2 text-sm">
+                  {puntos.map((p) => (
+                    <li key={p} className="flex items-center gap-2">
+                      <IconCheck size={16} className="shrink-0 text-accent" strokeWidth={2.6} /> {p}
+                    </li>
+                  ))}
+                </ul>
+                <Link href={href} className="mt-auto flex items-center gap-1.5 pt-6 text-sm font-semibold text-brand hover:gap-2.5 transition-all">
+                  {cta} <IconArrowRight size={16} />
+                </Link>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Financiamento CTA (Estilo Nuevo Inspirado en Referencia) */}
-      <section style={{ padding: "120px 0" }}>
-        <div className="container" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 450px), 1fr))", gap: "64px", alignItems: "center" }}>
-          
-          {/* Lado Imagen (Persona con llave, fondo extraido matemáticamente) */}
-          <div style={{ position: "relative", width: "100%", display: "flex", justifyContent: "center" }}>
-            <img src="/financing_worker.png" alt="Financiamiento JP Motors Trabajadores" style={{ maxWidth: "100%", maxHeight: "600px", objectFit: "contain", mixBlendMode: "screen", filter: "contrast(1.1) brightness(1.2)" }} />
-          </div>
-
-          {/* Lado Textos y Columnas */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "48px" }}>
-            
-            {/* Título Principal */}
-            <h2 style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", lineHeight: "1.1", fontWeight: 900, textTransform: "uppercase", letterSpacing: "-1px" }}>
-              Tu próxima moto está<br />
-              <span style={{ color: "var(--accent-primary)" }}>al alcance de tu mano</span>
-            </h2>
-
-            {/* Columnas Inferiores responsivas */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "40px" }}>
-              
-              {/* Col Bloque 1 */}
-              <div>
-                <h3 style={{ fontSize: "1.2rem", marginBottom: "16px", fontWeight: 700, lineHeight: "1.4" }}>El financiamiento que te entiende</h3>
-                <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.6" }}>
-                  Entendemos que la moto es tu principal herramienta de progreso. Evaluamos tu perfil rápidamente y te brindamos créditos accesibles, con la flexibilidad que requieres.
-                </p>
-              </div>
-
-              {/* Col Bloque 2 */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                <h3 style={{ fontSize: "1.2rem", marginBottom: "16px", fontWeight: 700, lineHeight: "1.4" }}>Proyecta tus pagos hoy</h3>
-                <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.6", marginBottom: "32px" }}>
-                  Descubre cuál sería tu cuota mensual y la inicial que mejor encaja en tu economía actual mediante nuestro simulador. Te acompañamos paso a paso de forma transparente.
-                </p>
-                <Link href="/financiamiento" className="btn btn-primary" style={{ width: "100%", textAlign: "center", textTransform: "uppercase", fontWeight: 800 }}>
-                  Calcular mis cuotas
-                </Link>
-              </div>
-
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* Marcas Aliadas */}
-      <section style={{ padding: "60px 0 100px 0", textAlign: "center" }}>
+      {/* ───────────── Cómo funciona ───────────── */}
+      <section className="border-y border-line-soft bg-surface py-16 md:py-24">
         <div className="container">
-          <h2 style={{ fontSize: "2.5rem", fontWeight: 800, textTransform: "uppercase", marginBottom: "48px" }}>
-            Busca tu Moto por <span style={{ color: "var(--accent-primary)" }}>Marca</span>
-          </h2>
-          
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            
-            {/* HONDA */}
-            <div style={{ width: "100%", maxWidth: "180px", display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <div className="card" style={{ width: "100%", height: "140px", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-                <img src="/brands/HONDA_wing.png" alt="Honda" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", mixBlendMode: "screen" }} />
-              </div>
-              <span style={{ marginTop: "16px", fontSize: "0.9rem", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase" }}>HONDA EXCLUSIVO</span>
-            </div>
+          <SectionHeading eyebrow="Cómo funciona" title="Tu crédito en 4 pasos" align="center">
+            Sin colas ni papeleo innecesario. Te acompañamos de principio a fin.
+          </SectionHeading>
+          <ol className="mt-12 grid gap-8 md:grid-cols-4 md:gap-6">
+            {pasos.map(({ Icon, titulo, texto }, i) => (
+              <li key={titulo} className="relative text-center md:px-2">
+                {i < pasos.length - 1 && (
+                  <span aria-hidden className="absolute top-7 left-[calc(50%+40px)] hidden h-px w-[calc(100%-80px)] bg-line md:block" />
+                )}
+                <span className="relative mx-auto flex size-14 items-center justify-center rounded-2xl bg-brand text-white shadow-[0_8px_20px_rgba(11,59,140,0.25)]">
+                  <Icon size={24} />
+                  <span className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-white">
+                    {i + 1}
+                  </span>
+                </span>
+                <h3 className="mt-5 text-lg">{titulo}</h3>
+                <p className="mt-2 text-sm text-muted">{texto}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
 
+      {/* ───────────── Frecuencias ───────────── */}
+      <section className="py-16 md:py-24">
+        <div className="container grid items-center gap-10 md:grid-cols-[1fr_1.3fr] md:gap-16">
+          <SectionHeading eyebrow="Pagos flexibles" title="Paga como trabajas">
+            Si cobras por día, paga por día. Elegimos contigo la frecuencia que mejor acompaña tus ingresos y te
+            recordamos cada cuota por WhatsApp.
+          </SectionHeading>
+          <div className="grid grid-cols-2 gap-4">
+            {frecuencias.map((f) => (
+              <Card key={f.nombre} className="p-5">
+                <div className="text-2xl font-extrabold text-brand">{f.nombre}</div>
+                <div className="mt-1 text-sm font-semibold">{f.detalle}</div>
+                <div className="mt-3 text-xs text-muted">{f.uso}</div>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
+      {/* ───────────── Productos a crédito ───────────── */}
+      <section className="bg-surface-2 py-16 md:py-24">
+        <div className="container">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <SectionHeading eyebrow="Crédito vehicular" title="Vehículos para trabajar">
+              Motos Honda y mototaxis con cuotas mensuales.
+            </SectionHeading>
+            <ButtonLink href="/motos" variant="outline" size="sm" className="self-start md:self-auto">
+              Ver todos <IconArrowRight size={16} />
+            </ButtonLink>
+          </div>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {motos.map((m, i) => (
+              <MotoCard key={m.id} moto={m} priority={i === 0} />
+            ))}
+          </div>
 
+          <div className="mt-16 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <SectionHeading eyebrow="Celulares a crédito" title="Estrena celular pagando por semana">
+              iPhone, Samsung, Xiaomi y Honor sin inicial obligatoria.
+            </SectionHeading>
+            <ButtonLink href="/celulares" variant="outline" size="sm" className="self-start md:self-auto">
+              Ver todos <IconArrowRight size={16} />
+            </ButtonLink>
+          </div>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {celulares.map((c) => (
+              <CelularCard key={c.slug} celular={c} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ───────────── Préstamos + requisitos ───────────── */}
+      <section className="py-16 md:py-24">
+        <div className="container grid gap-6 md:grid-cols-[1.3fr_1fr]">
+          <div className="relative overflow-hidden rounded-3xl bg-brand p-8 text-white md:p-12">
+            <div aria-hidden className="absolute -right-16 -bottom-20 size-72 rounded-full bg-[#2fd39b]/20 blur-2xl" />
+            <span className="eyebrow text-[#7ff0c4]">Préstamos en efectivo</span>
+            <h2 className="mt-3 text-[1.9rem] text-white md:text-[2.3rem]">Tu puntualidad abre más puertas</h2>
+            <p className="mt-4 max-w-lg text-white/80">
+              Empieza con un préstamo pequeño y, a medida que pagas a tiempo, accedes a montos mayores. Ideal para
+              capital de trabajo, mercadería o una emergencia.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <ButtonLink href="/prestamos" variant="light">Conocer préstamos</ButtonLink>
+              <ButtonLink href="/financiamiento?servicio=PRESTAMO_EFECTIVO" variant="primary">Solicitar préstamo</ButtonLink>
+            </div>
+          </div>
+
+          <Card className="p-8 md:p-10">
+            <span className="eyebrow">Requisitos</span>
+            <h2 className="mt-3 text-[1.6rem]">Lo que necesitas</h2>
+            <ul className="mt-6 flex flex-col gap-4">
+              {requisitos.map((r) => (
+                <li key={r} className="flex items-start gap-3">
+                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+                    <IconCheck size={14} strokeWidth={3} />
+                  </span>
+                  {r}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 text-xs text-muted">Los requisitos pueden variar según el producto y el monto solicitado.</p>
+          </Card>
+        </div>
+      </section>
+
+      {/* ───────────── Preguntas frecuentes ───────────── */}
+      <section className="border-t border-line-soft bg-surface py-16 md:py-24">
+        <div className="container grid gap-10 md:grid-cols-[1fr_1.5fr]">
+          <SectionHeading eyebrow="Preguntas frecuentes" title="Resolvemos tus dudas">
+            ¿No encuentras tu respuesta? Escríbenos por WhatsApp y un asesor te atiende.
+          </SectionHeading>
+          <div className="divide-y divide-line-soft rounded-2xl border border-line-soft">
+            {preguntas.map(({ p, r }) => (
+              <details key={p} className="group px-5 py-4 [&_summary::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
+                  {p}
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-2 text-brand transition-transform group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 text-sm text-muted">{r}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ───────────── CTA final ───────────── */}
+      <section className="bg-brand-ink py-14 text-white">
+        <div className="container flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+          <div>
+            <h2 className="text-[1.7rem] text-white md:text-[2rem]">¿Listo para dar el siguiente paso?</h2>
+            <p className="mt-2 text-white/70">Solicita tu evaluación hoy. Es gratis y sin compromiso.</p>
+          </div>
+          <ButtonLink href="/financiamiento" size="lg">
+            Solicitar evaluación <IconArrowRight size={18} />
+          </ButtonLink>
+        </div>
+      </section>
     </main>
   );
 }

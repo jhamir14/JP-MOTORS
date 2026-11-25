@@ -1,279 +1,105 @@
-/* src/app/globals.css */
+/* src/app/globals.css
+ * Tailwind CSS v4 · Sistema de diseño "financiera": fondo claro, azul institucional
+ * para la marca y verde para las acciones y montos (confianza + crecimiento).
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities);
 
-:root {
-  /* Core Colors */
-  --bg-primary: #0F1115; /* Deep Onyx */
-  --bg-secondary: #161A22; /* Lighter Onyx for cards */
-  --bg-glass: rgba(22, 26, 34, 0.7); /* Glassmorphism surface */
-  
-  --accent-primary: #00E5FF; /* Cyan Neon */
-  --accent-secondary: #FF3D00; /* Energetic Orange */
-  
-  --text-primary: #FFFFFF;
-  --text-secondary: #9DA3AE;
-  
-  --border-color: rgba(255, 255, 255, 0.1);
-  --border-glow: rgba(0, 229, 255, 0.3);
+@theme {
+  /* Superficies */
+  --color-bg: #f4f6fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef2f8;
+  /* Texto */
+  --color-fg: #0b1f3a;
+  --color-muted: #5a6a82;
+  /* Bordes */
+  --color-line: #d9e1ec;
+  --color-line-soft: #e8edf5;
+  /* Marca: azul institucional */
+  --color-brand: #0b3b8c;
+  --color-brand-hover: #0a3277;
+  --color-brand-ink: #071d45;
+  --color-brand-soft: #e7eefb;
+  /* Acción y montos: verde */
+  --color-accent: #0c9a6a;
+  --color-accent-hover: #0a8159;
+  --color-accent-soft: #e2f5ec;
+  /* Destacado: dorado */
+  --color-gold: #f2a900;
+  --color-gold-soft: #fff4d6;
+  /* Estados */
+  --color-danger: #c8323c;
+  --color-whatsapp: #1fa855;
 
-  --font-family: var(--font-outfit), system-ui, sans-serif;
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
+  --breakpoint-md: 769px; /* md: = escritorio; coincide con el corte móvil ≤768px usado en todo el sitio */
+
+  --shadow-card: 0 1px 2px rgba(11, 31, 58, 0.04), 0 4px 16px rgba(11, 31, 58, 0.06);
+  --shadow-lift: 0 2px 4px rgba(11, 31, 58, 0.06), 0 12px 32px rgba(11, 31, 58, 0.12);
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-family);
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-/* Utilities */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-/* Premium Typography */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-h1 {
-  font-size: 3.5rem;
-  line-height: 1.1;
-  background: linear-gradient(90deg, #FFF 0%, var(--text-secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-h2 {
-  font-size: 2.5rem;
-  margin-bottom: 1.5rem;
-}
-
-p {
-  line-height: 1.6;
-  color: var(--text-secondary);
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 28px;
-  font-size: 1rem;
-  font-weight: 600;
-  font-family: var(--font-family);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-  outline: none;
-}
-
-.btn-primary {
-  background: var(--accent-primary);
-  color: #000;
-  box-shadow: 0 4px 20px rgba(0, 229, 255, 0.3);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(0, 229, 255, 0.5);
-  background: #33eeff;
-}
-
-.btn-secondary {
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-/* Glassmorphism Cards */
-.card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 24px;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  position: relative;
-  overflow: hidden;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 100%);
-  z-index: 1;
-  pointer-events: none;
-}
-
-.card:hover {
-  transform: translateY(-8px);
-  border-color: var(--border-glow);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
-/* Inputs and Forms */
-.input-base {
-  width: 100%;
-  background: rgba(0,0,0,0.2);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  padding: 14px 16px;
-  border-radius: 8px;
-  font-family: var(--font-family);
-  font-size: 1rem;
-  transition: all 0.3s ease;
-}
-
-.input-base:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.2);
-}
-
-/* Layout Utilities */
-.grid {
-  display: grid;
-}
-
-.flex {
-  display: flex;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.space-between {
-  justify-content: space-between;
-}
-
-.gap-4 {
-  gap: 1rem;
-}
-
-.gap-6 {
-  gap: 1.5rem;
-}
-
-.gap-8 {
-  gap: 2rem;
-}
-
-/* Formularios Premium */
-.form-card {
-  background-color: rgba(15, 17, 21, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  padding: 40px;
-  margin-bottom: 32px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  gap: 24px;
-}
-
-/* ========================================= */
-/* RESPONSIVE OPTIMIZATIONS                  */
-/* ========================================= */
-
-.desktop-menu { display: flex; }
-.mobile-menu-btn { display: none !important; }
-.mobile-drawer { display: none; }
-
-.desktop-only { display: grid; }
-.mobile-only { display: none !important; }
-
-@media (max-width: 768px) {
-  /* Ocultar elementos de escritorio */
-  .desktop-menu { display: none !important; }
-  .desktop-only { display: none !important; }
-  .mobile-only { display: flex !important; flex-direction: column; gap: 16px; }
-  
-  /* Ya no necesitamos el menú hamburguesa porque usamos BottomNav estilo App */
-  .mobile-menu-btn { display: none !important; }
-  
-  /* Mostrar Bottom Navigation Bar */
-  .bottom-nav { display: flex !important; }
-  
-  /* Dar espacio al final de la página para que el BottomNav no tape contenido */
-  body { padding-bottom: 70px; }
-
-  /* Ajuste para el botón flotante de WhatsApp (subirlo un poco para que no choque con BottomNav) */
-  a[href*="wa.me"] {
-    bottom: 80px !important;
+@layer base {
+  html {
+    scroll-behavior: smooth;
   }
 
-  /* Compactar Footer en Móvil */
-  .footer-padding { padding: 40px 0 30px 0 !important; }
-  .footer-grid { gap: 24px !important; }
-  .footer-col-gap { margin-bottom: 12px !important; }
-  .footer-list-gap { gap: 8px !important; }
-  .footer-text { display: none !important; }
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
 
-  /* Ajustes Formulario Mobile */
-  .form-card {
-    padding: 24px 16px !important;
+  h1, h2, h3, h4 {
+    color: var(--color-fg);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
   }
-  .form-grid {
-    gap: 16px !important;
+
+  p {
+    line-height: 1.65;
   }
-  
-  .mobile-drawer.open {
-    display: flex !important; 
-    flex-direction: column;
-    position: absolute;
-    top: 100%;
-    left: 0;
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  /* Números financieros alineados */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .container {
     width: 100%;
-    background: rgba(10, 12, 16, 0.98);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    padding: 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    z-index: 999;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: 20px;
   }
 
-  /* Tipografía Fluida */
-  h1 {
-    font-size: 2.2rem !important; /* Más pequeño para celular */
-  }
-  
-  h2 {
-    font-size: 1.8rem !important;
+  /* Encabezado corto de sección: "Préstamos" sobre el título */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-brand);
   }
 
-  /* Botones adaptables */
-  .btn {
-    width: 100%; /* Botones de ancho completo en móvil son más fáciles de presionar */
+  /* Panel oscuro para fotos de producto (las imágenes vienen con fondo negro) */
+  .showcase {
+    background:
+      radial-gradient(120% 80% at 50% 100%, rgba(12, 154, 106, 0.22) 0%, transparent 60%),
+      linear-gradient(180deg, #0a2350 0%, #071d45 100%);
   }
 }
-
