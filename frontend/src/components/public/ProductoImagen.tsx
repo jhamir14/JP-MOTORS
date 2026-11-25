@@ -35,7 +35,7 @@ export function ProductoImagen({
       fill
       priority={priority}
       sizes={sizes}
-      className={cn(recorteSobreNegro ? "object-contain mix-blend-lighten" : "object-contain", className)}
+      className={cn(recorteSobreNegro ? "object-cover mix-blend-lighten" : "object-contain", className)}
     />
   );
 }

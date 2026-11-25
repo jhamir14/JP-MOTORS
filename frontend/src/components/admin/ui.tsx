@@ -99,6 +99,8 @@ const TONOS_ESTADO: Record<string, "brand" | "accent" | "gold" | "outline"> = {
   NUEVA: "gold", PENDIENTE: "gold", CONTACTADA: "brand", EN_ATENCION: "brand", EVALUADA: "brand",
   CONVERTIDA: "accent", RESPONDIDO: "accent", EN_STOCK: "accent", RESERVADO: "gold",
   DESCARTADA: "outline", DADO_DE_BAJA: "outline", VENDIDO_CREDITO: "brand", VENDIDO_CONTADO: "brand", INCAUTADO_MORA: "outline",
+  VIGENTE: "brand", APROBADO: "brand", EN_MORA: "gold", REFINANCIADO: "brand", FINALIZADO_LIQUIDADO: "accent", ANULADO: "outline",
+  PAGADA: "accent", PAGADA_PARCIAL: "brand",
 };
 
 export function Estado({ valor }: { valor: string }) {

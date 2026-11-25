@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { ButtonLink, Card, ExternalButton } from "@/components/ui";
 import { IconArrowRight, IconCheck, IconWhatsApp } from "@/components/icons";
 import { SectionHeading } from "@/components/public/SectionHeading";
@@ -19,16 +20,19 @@ export const revalidate = 300;
 
 const versiones = [
   {
+    imagen: "/motos/nl125.webp",
     nombre: "Torito RE 4T Pasajeros",
     uso: "Transporte de pasajeros",
     puntos: ["Motor 198.6 cc, 4 tiempos", "Encendido digital twin spark", "Gasolina, Dual GLP o Dual GNV"],
   },
   {
+    imagen: "/motos/nl125.webp",
     nombre: "Torito Máxima Cargo",
     uso: "Reparto y comercio",
     puntos: ["Tolva abierta o furgón cerrado", "Chasis reforzado para carga", "Ideal para mercados y delivery"],
   },
   {
+    imagen: "/motos/nl150.webp",
     nombre: "Honda Motokar",
     uso: "Provincia y selva",
     puntos: ["Motor Honda confiable", "Carreta techada de pasajeros", "Repuestos en todo el país"],
@@ -52,8 +56,9 @@ export default async function ToritoBajajPage() {
 
   return (
     <main>
-      <section className="relative overflow-hidden bg-brand-ink text-white">
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_80%_at_85%_10%,rgba(242,169,0,0.22)_0%,transparent_60%),radial-gradient(50%_60%_at_0%_100%,rgba(37,99,235,0.35)_0%,transparent_70%)]" />
+      <section className="relative isolate overflow-hidden bg-brand-ink text-white">
+        <Image src="/motos/nl150.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover object-[75%_60%] opacity-50 mix-blend-lighten md:opacity-70" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(90deg,#071d45_0%,rgba(7,29,69,0.85)_45%,rgba(7,29,69,0.4)_100%),radial-gradient(60%_80%_at_85%_10%,rgba(242,169,0,0.22)_0%,transparent_60%)]" />
         <div className="container relative grid items-center gap-10 pt-12 pb-14 md:grid-cols-[1.1fr_1fr] md:gap-14 md:pt-16 md:pb-20">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-gold">
@@ -94,11 +99,15 @@ export default async function ToritoBajajPage() {
       <section className="py-16 md:py-20">
         <div className="container">
           <SectionHeading eyebrow="Modelos" title="Elige el trimóvil para tu trabajo">
-            Trabajamos con Torito Bajaj y Honda Motokar. Consulta disponibilidad, colores y versiones a gas.
+            Trabajamos con Torito Bajaj y Honda Motokar. Consulta disponibilidad, colores y versiones a gas. Imágenes referenciales.
           </SectionHeading>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {versiones.map((v) => (
-              <Card key={v.nombre} className="p-6">
+              <Card key={v.nombre} className="flex flex-col">
+                <div className="showcase relative h-44">
+                  <Image src={v.imagen} alt={v.nombre} fill sizes="(max-width: 768px) 90vw, 380px" className="object-cover mix-blend-lighten" />
+                </div>
+                <div className="flex flex-1 flex-col p-6">
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted">{v.uso}</span>
                 <h3 className="mt-1 text-xl">{v.nombre}</h3>
                 <ul className="mt-4 flex flex-col gap-2 text-sm">
@@ -108,9 +117,10 @@ export default async function ToritoBajajPage() {
                     </li>
                   ))}
                 </ul>
-                <ExternalButton href={whatsappLink(whatsappMessages.moto(v.nombre))} variant="outline" size="sm" className="mt-5">
+                <ExternalButton href={whatsappLink(whatsappMessages.moto(v.nombre))} variant="outline" size="sm" className="mt-5 self-start">
                   <IconWhatsApp size={16} className="text-whatsapp" /> Consultar precio
                 </ExternalButton>
+                </div>
               </Card>
             ))}
           </div>
