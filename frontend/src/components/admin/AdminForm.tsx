@@ -10,6 +10,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import type { EstadoAccion } from "@/lib/admin/accion";
@@ -58,6 +59,12 @@ export function AdminForm({
             )}
           >
             {estado.mensaje}
+            {estado.enlace && (
+              <>
+                {" "}
+                <Link href={estado.enlace.href} className="font-semibold underline">{estado.enlace.texto}</Link>
+              </>
+            )}
           </p>
         )}
         {children}

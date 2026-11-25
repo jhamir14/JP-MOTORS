@@ -114,7 +114,7 @@ mayoría de pagos llega entre 0 y 3 días tras el vencimiento). Con los datos ac
 
 **Pendiente:**
 1. En Vercel, `DATABASE_URL` = valor de `DATABASE_PUBLIC_URL` del servicio Postgres en Railway (solo servidor).
-2. Activar backups del volumen de Postgres en Railway.
+2. ~~Activar backups del volumen de Postgres en Railway.~~ Hecho (2026-11-25): diario, semanal y mensual.
 3. Fijar `configuracion.tope_tea_porcentaje` con el área legal.
 4. **Corte del sistema anterior**: mientras se siga usando, los pagos nuevos quedan solo en MySQL. El día del cambio,
    volver a ejecutar la función con `IMPORTAR_LEGADO=1`: agrega los registros nuevos, pero **no actualiza** los ya copiados
