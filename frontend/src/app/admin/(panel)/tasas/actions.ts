@@ -92,3 +92,37 @@ export async function guardarFeriados(_prev: EstadoAccion, fd: FormData): Promis
   revalidatePath("/admin/tasas");
   return exito(`Feriados guardados (${r.fechas.length} fechas). Se aplican a los cronogramas que se generen desde ahora.`);
 }
+
+const texto = (max: number) => z.string().trim().max(max, `Máximo ${max} caracteres`).transform((v) => v || null);
+const empresaSchema = z.object({
+  representanteLegal: texto(120),
+  representanteDocumento: texto(60),
+  domicilio: texto(250),
+  ciudad: z.string().trim().min(2, "Ingresa la ciudad").max(60),
+});
+
+/** Datos del vendedor/acreedor que se imprimen en contratos, pagaré y recibos (clave privada empresa_documentos). */
+export async function guardarDatosDocumentos(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
+  const sesion = await requerirSesion("SUPERADMIN");
+  const parsed = empresaSchema.safeParse(datosDe(fd));
+  if (!parsed.success) return fallo("Revisa los datos.", erroresZod(parsed.error));
+  const d = parsed.data;
+  const valor = { representante_legal: d.representanteLegal, representante_documento: d.representanteDocumento, domicilio: d.domicilio, ciudad: d.ciudad };
+  const validados = fd.get("validados") === "on";
+  try {
+    await comoUsuario(sesion, async (tx) => {
+      await tx`
+        insert into public.configuracion (clave, valor, descripcion, publica, updated_by)
+        values ('empresa_documentos', ${tx.json(valor)}, 'Datos del vendedor/acreedor que se imprimen en contratos, pagaré y recibos', false, ${sesion.usuarioId})
+        on conflict (clave) do update set valor = excluded.valor, updated_by = excluded.updated_by, updated_at = now()`;
+      await tx`
+        insert into public.configuracion (clave, valor, descripcion, publica, updated_by)
+        values ('documentos_validados', ${tx.json(validados)}, 'true cuando un abogado validó los textos de los contratos, la cláusula de bloqueo y el pagaré', false, ${sesion.usuarioId})
+        on conflict (clave) do update set valor = excluded.valor, updated_by = excluded.updated_by, updated_at = now()`;
+    });
+  } catch (e) {
+    return fallo(mensajeErrorBD(e));
+  }
+  revalidatePath("/admin/tasas");
+  return exito(validados ? "Datos guardados. Los documentos ya no muestran el aviso de modelo referencial." : "Datos guardados. Se usan en los próximos documentos que se generen.");
+}
