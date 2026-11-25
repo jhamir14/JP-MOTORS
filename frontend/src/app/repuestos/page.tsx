@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { mockRepuestos } from "@/data/mockRepuestos";
+import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
 
 export default function RepuestosPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -127,13 +127,14 @@ export default function RepuestosPage() {
                       </div>
                       
                       <a 
-                        href={`https://wa.me/51902423015?text=Hola,%20estoy%20interesado%20en%20comprar%20el%20repuesto:%20${encodeURIComponent(repuesto.name)}%20(S/%20${repuesto.price})`}
+                        href={whatsappLink(whatsappMessages.repuesto(`${repuesto.name} (${formatSoles(repuesto.price)})`))}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ backgroundColor: "white", color: "black", border: "none", borderRadius: "50%", width: "40px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform 0.2s" }}
                         onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.1)"}
                         onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
                         title="Comprar por WhatsApp"
+                        aria-label={`Pedir ${repuesto.name} por WhatsApp`}
                       >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21"/><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/></svg>
                       </a>

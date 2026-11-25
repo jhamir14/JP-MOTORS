@@ -144,6 +144,8 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 - Rebranding a **Inversiones JP** (metadatos, logo, textos).
 - ESLint + `tsc` + build en GitHub Actions.
 
+**Estado (2026-11-25): implementada.** Bugs 1.2.1–1.2.4 y 1.2.7–1.2.10 corregidos; Tailwind v4 con tokens en `@theme` y `components/ui`; Navbar, BottomNav, Footer, portada, catálogo, ficha de moto y formulario migrados (repuestos y nosotros quedan para la Fase 2); imágenes en WebP (26 MB → 3 MB) con `next/image`; formulario validado con Zod en cliente y servidor (`/api/solicitudes`, el correo receptor ya no está en el bundle) y consentimiento Ley 29733; CI con lint, typecheck, Vitest y build. Pendiente: LEADS_EMAIL en Vercel y fotos de galería propias por modelo.
+
 ### Fase 1 — Backend base (≈ 1–1.5 semanas)
 - Supabase (proyecto dev + prod), Prisma con el **esquema corregido** (§1.3), migración inicial y seed con catálogo real.
 - Auth admin con roles, middleware que protege `/admin`, layout del panel.

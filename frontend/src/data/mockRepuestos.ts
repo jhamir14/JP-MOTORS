@@ -17,7 +17,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Lubricantes",
     description: "Aceite 100% sintético de última generación, ideal para modelos deportivos y motores de inyección electrónica. Máxima protección térmica.",
-    image: "/repuestos/aceite_sintetico.png",
+    image: "/repuestos/aceite_sintetico.webp",
     price: 55.00,
     stock: true
   },
@@ -27,7 +27,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Lubricantes",
     description: "Aceite mineral original Honda 4 tiempos, formulado para motores de trabajo rudo, motokars y motos de alto kilometraje.",
-    image: "/repuestos/aceite.png",
+    image: "/repuestos/aceite.webp",
     price: 40.00,
     stock: true
   },
@@ -37,7 +37,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Lubricantes",
     description: "El equilibrio perfecto para scooters urbanas como la Navi o Dio. Protege el embrague automático de fricción extrema.",
-    image: "/repuestos/aceite_scooter.png",
+    image: "/repuestos/aceite_scooter.webp",
     price: 48.00,
     stock: true
   },
@@ -49,7 +49,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Neumáticos",
     description: "Cauchos traseros reforzados con lona de alta dureza para soportar carga pesada y terreno agreste en trimóviles comerciales.",
-    image: "/repuestos/llantas.png",
+    image: "/repuestos/llantas.webp",
     price: 135.00,
     stock: true
   },
@@ -59,7 +59,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Neumáticos",
     description: "Neumático con cocada profunda estilo enduro. Diseñado para ofrecer agarre máximo en barro, tierra y trocha.",
-    image: "/repuestos/llanta_offroad.png",
+    image: "/repuestos/llanta_offroad.webp",
     price: 180.00,
     stock: true
   },
@@ -69,7 +69,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Generico Premium",
     category: "Neumáticos",
     description: "Neumático de pista de perfil ancho, ideal para modelos tipo Pulsar NS200 o CB190R. Excelente agarre en asfalto seco y mojado.",
-    image: "/repuestos/llanta_sport.png",
+    image: "/repuestos/llanta_sport.webp",
     price: 165.00,
     stock: true
   },
@@ -79,7 +79,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Neumáticos",
     description: "Neumático aro pequeño diseñado específicamente para Honda Navi, Dio o Yamaha NMAX. Alta maniobrabilidad urbana.",
-    image: "/repuestos/llanta_scooter.png",
+    image: "/repuestos/llanta_scooter.webp",
     price: 95.00,
     stock: true
   },
@@ -91,7 +91,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Filtros",
     description: "Filtro de aire de celulosa de alta densidad para retener impurezas y proteger el carburador e inyección.",
-    image: "/repuestos/filtro.png",
+    image: "/repuestos/filtro.webp",
     price: 35.00,
     stock: true
   },
@@ -101,7 +101,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Filtros",
     description: "Filtro de aceite magnético que retiene micro-partículas de metal del motor para extender la vida útil de la máquina.",
-    image: "/repuestos/filtro_aceite.png",
+    image: "/repuestos/filtro_aceite.webp",
     price: 25.00,
     stock: true
   },
@@ -113,7 +113,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Frenos",
     description: "Pastillas de freno de disco sinterizadas. Ofrecen una frenada potente y disipación de calor inmediata.",
-    image: "/repuestos/zapatas.png",
+    image: "/repuestos/zapatas.webp",
     price: 55.00,
     stock: true
   },
@@ -123,7 +123,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Frenos",
     description: "Zapatas traseras originales que aseguran una frenada precisa y sin chirridos mecánicos. Larga duración.",
-    image: "/repuestos/zapatas.png",
+    image: "/repuestos/zapatas.webp",
     price: 40.00,
     stock: true
   },
@@ -135,7 +135,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Transmisión",
     description: "Kit completo original. Cadena reforzada con O-Rings, corona y piñón de acero de alta resistencia.",
-    image: "/repuestos/cadena.png",
+    image: "/repuestos/cadena.webp",
     price: 155.00,
     stock: true
   },
@@ -145,7 +145,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Generico Premium",
     category: "Transmisión",
     description: "Cadena de pase 428H con eslabones dorados y tratamiento térmico antidesgaste. Estética y rendimiento deportivo.",
-    image: "/repuestos/cadena.png",
+    image: "/repuestos/cadena.webp",
     price: 85.00,
     stock: true
   },
@@ -155,7 +155,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Transmisión",
     description: "Kit de discos de fricción Honda originales para garantizar una transferencia de potencia sin patinajes.",
-    image: "/repuestos/disco.png",
+    image: "/repuestos/disco.webp",
     price: 65.00,
     stock: true
   },
@@ -167,7 +167,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Seguridad",
     description: "Casco cerrado aerodinámico, certificación DOT. Visor anti-rayaduras y ventilación dinámica para pistas rápidas.",
-    image: "/repuestos/casco.png",
+    image: "/repuestos/casco.webp",
     price: 185.00,
     stock: true
   },
@@ -177,7 +177,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Generico Premium",
     category: "Seguridad",
     description: "Casco 3/4 ideal para ciudad y clima cálido. Excelente visión periférica y gran comodidad interna.",
-    image: "/repuestos/casco_abierto.png",
+    image: "/repuestos/casco_abierto.webp",
     price: 120.00,
     stock: true
   },
@@ -187,7 +187,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Generico Premium",
     category: "Seguridad",
     description: "Casco agresivo off-road con mentonera prominente y visera extendida. Máxima protección contra piedras y barro.",
-    image: "/repuestos/casco_motocross.png",
+    image: "/repuestos/casco_motocross.webp",
     price: 210.00,
     stock: true
   },
@@ -199,7 +199,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "NGK",
     category: "Eléctrico",
     description: "Bujía de punta de iridio. Arranque más rápido, mejor aceleración y combustión eficiente. Triplica la vida útil.",
-    image: "/repuestos/bujia.png",
+    image: "/repuestos/bujia.webp",
     price: 45.00,
     stock: true
   },
@@ -209,7 +209,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Eléctrico",
     description: "Bujía original Honda de núcleo de cobre, reemplazo económico y confiable para uso diario.",
-    image: "/repuestos/bujia.png",
+    image: "/repuestos/bujia.webp",
     price: 18.00,
     stock: true
   },
@@ -219,7 +219,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Cables",
     description: "Cable original trenzado con funda recubierta en teflón para un accionamiento de embrague suave y preciso.",
-    image: "/repuestos/cable.png",
+    image: "/repuestos/cable.webp",
     price: 28.00,
     stock: true
   },
@@ -229,7 +229,7 @@ export const mockRepuestos: Repuesto[] = [
     brand: "Honda",
     category: "Cables",
     description: "Conjunto de cables de aceleración (push/pull) originales para una respuesta instantánea al puño.",
-    image: "/repuestos/cable.png",
+    image: "/repuestos/cable.webp",
     price: 32.00,
     stock: true
   }

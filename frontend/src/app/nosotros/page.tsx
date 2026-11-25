@@ -1,6 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function NosotrosPage() {
   return (
@@ -13,13 +12,13 @@ export default function NosotrosPage() {
         
         <div className="container" style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
           <span style={{ color: "var(--accent-primary)", fontSize: "0.9rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "2px", marginBottom: "16px", display: "inline-block" }}>
-            Conoce JP Motors
+            Conoce Inversiones JP
           </span>
           <h1 style={{ fontSize: "3.5rem", fontWeight: 900, textTransform: "uppercase", marginBottom: "24px", lineHeight: 1.1 }}>
             Nuestra Pasión son las <span style={{ color: "var(--bg-primary)", WebkitTextStroke: "1px var(--accent-primary)" }}>Motocicletas</span>
           </h1>
           <p style={{ color: "var(--text-secondary)", fontSize: "1.2rem", maxWidth: "700px", margin: "0 auto", lineHeight: 1.6 }}>
-            En Inversiones Multimarca JP nacimos con una premisa inquebrantable: Acercar el transporte de calidad y las herramientas de trabajo ideales a las manos de cada peruano, a través de opciones justas y plataformas tecnológicas eficientes.
+            En Inversiones JP nacimos con una premisa inquebrantable: Acercar el transporte de calidad y las herramientas de trabajo ideales a las manos de cada peruano, a través de opciones justas y plataformas tecnológicas eficientes.
           </p>
         </div>
       </section>
@@ -27,7 +26,7 @@ export default function NosotrosPage() {
       {/* Misión y Visión (Grid de 2 Columnas) */}
       <section style={{ padding: "80px 0" }}>
         <div className="container">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "40px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 400px), 1fr))", gap: "40px" }}>
             
             {/* Tarjeta Misión */}
             <div style={{ backgroundColor: "rgba(15,17,21,0.5)", border: "1px solid rgba(255,255,255,0.05)", padding: "40px", borderRadius: "16px", position: "relative", overflow: "hidden" }}>
