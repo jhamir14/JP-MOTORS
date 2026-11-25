@@ -7,9 +7,7 @@ export function whatsappLink(message: string, phone: string = siteConfig.whatsap
 }
 
 export const whatsappMessages = {
-  general: () => "Hola, quisiera información sobre los créditos y préstamos de Inversiones JP.",
-  prestamo: (monto?: number) =>
-    monto ? `Hola, quisiera solicitar un préstamo de ${formatSoles(monto)}.` : "Hola, quisiera información sobre los préstamos en efectivo.",
+  general: () => "Hola, quisiera información sobre el financiamiento de motos, mototaxis y celulares de Inversiones JP.",
   moto: (modelo: string) => `Hola, tengo interés en el crédito vehicular para la ${modelo} que vi en la web.`,
   celular: (modelo: string) => `Hola, quisiera el ${modelo} a crédito. ¿Qué requisitos necesito?`,
   simulacion: (p: { producto: string; inicial: number; plazo: string; cuota: number }) =>

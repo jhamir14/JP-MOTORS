@@ -14,10 +14,9 @@ const tipoDocumentoBD = { DNI: "DNI", CE: "CARNET_EXTRANJERIA", Pasaporte: "PASA
 const montoONull = (v: string) => (v === "" ? null : Number(v));
 
 function filaSolicitud(d: SolicitudCredito) {
-  const esPrestamo = d.servicio === "PRESTAMO_EFECTIVO";
   return {
     servicio: d.servicio,
-    producto_interes: esPrestamo ? null : d.productoInteres,
+    producto_interes: d.productoInteres,
     nombres: d.nombres,
     apellidos: d.apellidos,
     tipo_documento: tipoDocumentoBD[d.tipoDocumento],
@@ -33,9 +32,9 @@ function filaSolicitud(d: SolicitudCredito) {
     distrito: d.distrito,
     situacion_laboral: d.situacionLaboral,
     ingreso_mensual: Number(d.ingresoMensual),
-    monto_solicitado: esPrestamo ? montoONull(d.montoSolicitado) : null,
-    cuota_inicial: esPrestamo ? null : montoONull(d.montoInicial),
-    datos_extra: esPrestamo ? { frecuencia_preferida: d.frecuenciaPago } : {},
+    monto_solicitado: null,
+    cuota_inicial: montoONull(d.montoInicial),
+    datos_extra: {},
     acepta_datos: true,
     origen: "web",
   };
@@ -48,7 +47,6 @@ async function guardarEnBD(d: SolicitudCredito) {
 }
 
 async function enviarCorreo(d: SolicitudCredito, leadsEmail: string) {
-  const esPrestamo = d.servicio === "PRESTAMO_EFECTIVO";
   const res = await fetch(`https://formsubmit.co/ajax/${leadsEmail}`, {
     method: "POST",
     headers: {
@@ -61,9 +59,8 @@ async function enviarCorreo(d: SolicitudCredito, leadsEmail: string) {
       _subject: `Nueva solicitud: ${ETIQUETAS_SERVICIO[d.servicio]} — ${d.nombres} ${d.apellidos}`,
       _template: "table",
       Servicio: ETIQUETAS_SERVICIO[d.servicio],
-      ...(esPrestamo
-        ? { "Monto solicitado (S/)": d.montoSolicitado, "Frecuencia preferida": d.frecuenciaPago }
-        : { "Producto de interés": d.productoInteres, "Inicial disponible (S/)": d.montoInicial || "—" }),
+      "Producto de interés": d.productoInteres,
+      "Inicial disponible (S/)": d.montoInicial || "—",
       Nombres: d.nombres,
       Apellidos: d.apellidos,
       Documento: `${d.tipoDocumento} ${d.numeroDocumento}`,

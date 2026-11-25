@@ -27,15 +27,15 @@ const confianza = [
 ];
 
 const pasos = [
-  { Icon: IconUser, titulo: "Elige tu servicio", texto: "Préstamo en efectivo, vehículo o celular. Simula tu cuota en segundos." },
+  { Icon: IconUser, titulo: "Elige tu producto", texto: "Moto, mototaxi o celular. Simula tu cuota en segundos." },
   { Icon: IconFile, titulo: "Envía tu solicitud", texto: "Solo tu DNI y datos de contacto. Sin boletas de pago ni trámites bancarios." },
   { Icon: IconShield, titulo: "Te evaluamos", texto: "Un asesor revisa tu perfil y te llama o escribe por WhatsApp en menos de 24 h." },
-  { Icon: IconTrend, titulo: "Recibe y crece", texto: "Paga a tu ritmo. Con buen historial accedes a montos mayores y mejores condiciones." },
+  { Icon: IconTrend, titulo: "Llévatelo y trabaja", texto: "Recibe tu producto y págalo en cuotas. Con buen historial accedes a mejores condiciones." },
 ];
 
 const frecuencias = [
-  { nombre: "Diario", detalle: "Lunes a sábado", uso: "Préstamos para comerciantes" },
-  { nombre: "Semanal", detalle: "Cada 7 días", uso: "Préstamos y celulares" },
+  { nombre: "Diario", detalle: "Lunes a sábado (sin feriados)", uso: "Mototaxis y trabajo diario" },
+  { nombre: "Semanal", detalle: "Cada 7 días", uso: "Celulares" },
   { nombre: "Quincenal", detalle: "Cada 15 días", uso: "Celulares" },
   { nombre: "Mensual", detalle: "Cada 30 días", uso: "Motos y mototaxis" },
 ];
@@ -61,8 +61,12 @@ const preguntas = [
     r: "Puedes pagar en efectivo con nuestro cobrador, por Yape, Plin o transferencia. Te enviamos un recordatorio por WhatsApp antes de cada vencimiento.",
   },
   {
-    p: "¿Quién puede acceder a un préstamo en efectivo?",
-    r: "Los préstamos en efectivo están pensados para clientes que ya trabajan con nosotros. Si es tu primera vez, empieza con un monto pequeño y, al pagar puntualmente, tu línea crece.",
+    p: "¿Prestan dinero en efectivo?",
+    r: "No. Inversiones JP financia productos: motos, mototaxis y celulares. Te llevas el producto y lo pagas en cuotas.",
+  },
+  {
+    p: "¿Qué pasa si una cuota vence en feriado?",
+    r: "Los domingos y feriados no se cobran: el cronograma de pagos los excluye y la cuota pasa al siguiente día hábil.",
   },
 ];
 
@@ -89,15 +93,15 @@ export default async function Home() {
         <div className="container relative grid items-center gap-10 pt-12 pb-14 md:grid-cols-[1.1fr_1fr] md:gap-14 md:pt-20 md:pb-24">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-[#7ff0c4]">
-              <span className="size-1.5 rounded-full bg-[#2fd39b]" /> Financiera para emprendedores
+              <span className="size-1.5 rounded-full bg-[#2fd39b]" /> Financiamiento para emprendedores
             </span>
             <h1 className="mt-5 text-[2.3rem] leading-[1.08] text-white md:text-[3.4rem]">
               Financiamos tu trabajo
               <br className="hidden md:block" /> y <span className="text-[#7ff0c4]">tus proyectos</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-white/75">
-              Préstamos en efectivo, motos y mototaxis para trabajar y celulares en cuotas. Crédito directo, sin bancos y
-              con pagos que se adaptan a cómo generas tus ingresos.
+              Motos y mototaxis para trabajar y celulares en cuotas. Crédito directo, sin bancos y con pagos que se
+              adaptan a cómo generas tus ingresos.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -134,7 +138,7 @@ export default async function Home() {
             Elige el producto que mejor se ajusta a tu momento. Todos con evaluación rápida y atención personalizada.
           </SectionHeading>
 
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {servicios.map(({ id, titulo, resumen, href, cta, Icon, puntos, etiqueta }) => (
               <Card key={id} interactive className="flex flex-col p-6">
                 <div className="flex items-start justify-between">
@@ -220,20 +224,20 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ───────────── Préstamos + requisitos ───────────── */}
+      {/* ───────────── Historial + requisitos ───────────── */}
       <section className="py-16 md:py-24">
         <div className="container grid gap-6 md:grid-cols-[1.3fr_1fr]">
           <div className="relative overflow-hidden rounded-3xl bg-brand p-8 text-white md:p-12">
             <div aria-hidden className="absolute -right-16 -bottom-20 size-72 rounded-full bg-[#2fd39b]/20 blur-2xl" />
-            <span className="eyebrow text-[#7ff0c4]">Préstamos en efectivo</span>
+            <span className="eyebrow text-[#7ff0c4]">Clientes puntuales</span>
             <h2 className="mt-3 text-[1.9rem] text-white md:text-[2.3rem]">Tu puntualidad abre más puertas</h2>
             <p className="mt-4 max-w-lg text-white/80">
-              Empieza con un préstamo pequeño y, a medida que pagas a tiempo, accedes a montos mayores. Ideal para
-              capital de trabajo, mercadería o una emergencia.
+              Empieza con tu primer producto y, a medida que pagas a tiempo, accedes a mejores condiciones para tu
+              siguiente moto, mototaxi o celular.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/prestamos" variant="light">Conocer préstamos</ButtonLink>
-              <ButtonLink href="/financiamiento?servicio=PRESTAMO_EFECTIVO" variant="primary">Solicitar préstamo</ButtonLink>
+              <ButtonLink href="/vehiculos" variant="light">Ver vehículos</ButtonLink>
+              <ButtonLink href="/celulares" variant="primary">Ver celulares</ButtonLink>
             </div>
           </div>
 

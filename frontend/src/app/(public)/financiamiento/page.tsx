@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { IconClock, IconShield, IconWhatsApp } from "@/components/icons";
-import { FRECUENCIAS_PRESTAMO, SERVICIOS, type Servicio } from "@/schemas/solicitudCredito";
+import { SERVICIOS, type Servicio } from "@/schemas/solicitudCredito";
 import { FormularioCredito, type ValoresIniciales } from "./FormularioCredito";
 
 export const metadata: Metadata = {
   title: "Solicita tu crédito",
   description:
-    "Solicita tu préstamo en efectivo, crédito vehicular o celular en cuotas. Un asesor te contactará por WhatsApp en menos de 24 horas.",
+    "Solicita el financiamiento de tu moto, mototaxi o celular en cuotas. Un asesor te contactará por WhatsApp en menos de 24 horas.",
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -23,16 +23,12 @@ export default async function FinanciamientoPage({ searchParams }: { searchParam
   // Compatibilidad con enlaces antiguos: /financiamiento?modelo=Navi → crédito vehicular
   const servicio = first(sp.servicio) as Servicio;
   const producto = (first(sp.producto) || first(sp.modelo)).slice(0, 80);
-  const monto = first(sp.monto);
   const cuotaInicial = first(sp.inicial);
-  const frecuencia = first(sp.frecuencia) as (typeof FRECUENCIAS_PRESTAMO)[number];
 
   const inicial: ValoresIniciales = {
     servicio: SERVICIOS.includes(servicio) ? servicio : first(sp.modelo) ? "CREDITO_VEHICULAR" : undefined,
     producto,
-    monto: /^\d{1,6}$/.test(monto) ? monto : undefined,
     inicial: /^\d{1,6}(\.\d{1,2})?$/.test(cuotaInicial) && Number(cuotaInicial) > 0 ? cuotaInicial : undefined,
-    frecuencia: FRECUENCIAS_PRESTAMO.includes(frecuencia) ? frecuencia : undefined,
   };
 
   return (

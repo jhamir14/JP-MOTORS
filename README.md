@@ -1,6 +1,6 @@
 # Inversiones JP
 
-Web pública y base de datos (PostgreSQL en Railway) de **Inversiones JP**, financiera para emprendedores: préstamos en efectivo, crédito vehicular (motos y mototaxis), celulares a crédito y repuestos.
+Web pública, panel y base de datos (PostgreSQL en Railway) de **Inversiones JP**: financiamiento de motos, mototaxis y celulares, y venta de repuestos. No otorga préstamos de dinero en efectivo.
 
 - Especificación: [`INVERSIONES_JP_MASTER_CONTEXT.md`](INVERSIONES_JP_MASTER_CONTEXT.md)
 - Plan y roadmap: [`docs/PLAN_ACTUALIZACION_V2.md`](docs/PLAN_ACTUALIZACION_V2.md)
@@ -37,13 +37,13 @@ CI (GitHub Actions, `.github/workflows/ci.yml`) ejecuta lint, typecheck, tests y
 | `database/migrations/` | Esquema PostgreSQL, RLS, funciones de negocio y datos iniciales (sin datos personales) |
 | `database/importar_legado.py` | Migra el backup del sistema anterior (Django/MySQL) al esquema nuevo |
 | `database/railway/` | Railway Function que aplica migraciones y copia los datos desde el MySQL en vivo |
-| `frontend/src/app/(public)/` | Web: `/`, `/prestamos`, `/vehiculos` (+ `[slug]`, `torito-bajaj`), `/celulares` (+ `[slug]`), `/repuestos`, `/financiamiento`, `/nosotros`, `/libro-reclamaciones`, `/privacidad`, `/terminos` |
-| `frontend/src/app/admin/` | Panel: login, inicio, solicitudes, clientes, catálogo, inventario, tasas, reclamos, personal |
+| `frontend/src/app/(public)/` | Web: `/`, `/vehiculos` (+ `[slug]`, `torito-bajaj`), `/celulares` (+ `[slug]`), `/repuestos`, `/financiamiento`, `/nosotros`, `/libro-reclamaciones`, `/privacidad`, `/terminos` |
+| `frontend/src/app/admin/` | Panel: login, inicio, solicitudes, clientes, cobranzas (recordatorios por WhatsApp), catálogo, inventario, tasas y feriados, reclamos, personal |
 | `frontend/src/app/api/` | `solicitudes`, `reclamos`, `archivos/[id]` (fotos del catálogo), `kyc/[id]` (documentos privados, con sesión y auditoría), `salud` |
 | `frontend/src/components/ui/` | Componentes base: `Button`, `Card`, `Badge`, `Field` |
 | `frontend/src/components/public/` | `Simulador`, `MotoCard`, `CelularCard`, `SectionHeading`… |
 | `frontend/src/components/admin/` | Formularios y piezas del panel |
-| `frontend/src/lib/` | `config.ts`, `finance.ts` (cuotas/TEA/cronograma), `clientes.ts` (documentos, duplicados, completitud y permisos KYC), `catalogo.ts`, `validaciones.ts`, `server/` (BD, catálogo, auth, contraseñas, límite de intentos) |
+| `frontend/src/lib/` | `config.ts`, `finance.ts` (cuotas/TEA/cronograma), `clientes.ts` (documentos, duplicados, completitud y permisos KYC), `calendario.ts` (días hábiles y feriados), `recordatorios.ts` (mensajes de cobranza), `catalogo.ts`, `validaciones.ts`, `server/` (BD, catálogo, auth, contraseñas, límite de intentos) |
 | `frontend/src/schemas/` | Esquemas Zod compartidos cliente/servidor |
 | `frontend/src/data/` | Respaldo estático del catálogo (solo si no hay base de datos) |
 

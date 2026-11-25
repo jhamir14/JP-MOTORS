@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
     return [
       ...Object.entries(motosLegado).map(([id, slug]) => ({ source: `/motos/${id}`, destination: `/vehiculos/${slug}`, permanent: true })),
       { source: "/motos", destination: "/vehiculos", permanent: true },
+      // La web ya no ofrece préstamos en efectivo: solo financia motos, mototaxis y celulares.
+      { source: "/prestamos", destination: "/", permanent: true },
       // Solo ids numéricos: /motos/*.webp son fotos de public/ y no deben redirigirse.
       { source: "/motos/:id(\\d+)", destination: "/vehiculos", permanent: true },
     ];

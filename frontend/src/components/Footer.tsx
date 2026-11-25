@@ -8,7 +8,6 @@ const columnas = [
   {
     titulo: "Servicios",
     links: [
-      { href: "/prestamos", label: "Préstamos en efectivo" },
       { href: "/vehiculos", label: "Crédito vehicular" },
       { href: "/celulares", label: "Celulares a crédito" },
       { href: "/repuestos", label: "Repuestos y accesorios" },
@@ -37,7 +36,7 @@ export default function Footer() {
         <div>
           <Logo tone="light" />
           <p className="mt-5 max-w-xs text-sm">
-            Financiamos el trabajo y los proyectos de emprendedores peruanos: préstamos en efectivo, vehículos y
+            Financiamos el trabajo y los proyectos de emprendedores peruanos: motos, mototaxis y
             celulares en cuotas a tu medida.
           </p>
           <div className="mt-6 flex gap-3">

@@ -170,7 +170,7 @@ export function FormularioReclamo() {
       <Bloque titulo="2. Identificación del bien contratado">
         <Field label="Tipo" htmlFor="lr-bienTipo">
           <Select {...campo("bienTipo")}>
-            <option value="SERVICIO">Servicio (crédito o préstamo)</option>
+            <option value="SERVICIO">Servicio (financiamiento)</option>
             <option value="PRODUCTO">Producto (moto, celular, repuesto)</option>
           </Select>
         </Field>

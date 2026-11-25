@@ -13,10 +13,12 @@ export const PLATAFORMAS_BLOQUEO = ["NINGUNA", "PAYJOY", "KNOX_GUARD", "TRUSTONI
 export const SISTEMAS_OPERATIVOS = ["ANDROID", "IOS", "OTRO"] as const;
 
 export const SERVICIOS_CREDITO = ["CREDITO_VEHICULAR", "CREDITO_CELULAR", "PRESTAMO_EFECTIVO"] as const;
+/** Lo que la empresa financia hoy. PRESTAMO_EFECTIVO solo existe en créditos migrados del sistema anterior. */
+export const SERVICIOS_FINANCIAMIENTO = ["CREDITO_VEHICULAR", "CREDITO_CELULAR"] as const;
 export const ETIQUETA_SERVICIO: Record<(typeof SERVICIOS_CREDITO)[number], string> = {
   CREDITO_VEHICULAR: "Crédito vehicular",
   CREDITO_CELULAR: "Crédito celular",
-  PRESTAMO_EFECTIVO: "Préstamo en efectivo",
+  PRESTAMO_EFECTIVO: "Préstamo en efectivo (sistema anterior)",
 };
 
 export const legible = (v: string) => v.charAt(0) + v.slice(1).toLowerCase().replace(/_/g, " ");

@@ -17,8 +17,6 @@ const valida = {
   distrito: "San Juan de Lurigancho",
   servicio: "CREDITO_VEHICULAR",
   productoInteres: "Honda Navi",
-  montoSolicitado: "",
-  frecuenciaPago: "Semanal",
   situacionLaboral: "Independiente",
   ingresoMensual: "1800",
   montoInicial: "500",
@@ -72,11 +70,8 @@ describe("solicitudCreditoSchema", () => {
     expect(errores({ montoInicial: "0" })).toEqual({});
   });
 
-  it("en préstamos exige el monto y no el producto", () => {
-    const prestamo = { servicio: "PRESTAMO_EFECTIVO", productoInteres: "", montoInicial: "" };
-    expect(errores({ ...prestamo, montoSolicitado: "" }).montoSolicitado).toBeDefined();
-    expect(errores({ ...prestamo, montoSolicitado: "50" }).montoSolicitado).toMatch(/100/);
-    expect(errores({ ...prestamo, montoSolicitado: "800" })).toEqual({});
+  it("no acepta solicitudes de préstamo en efectivo (la web solo financia productos)", () => {
+    expect(errores({ servicio: "PRESTAMO_EFECTIVO" }).servicio).toBeDefined();
   });
 
   it("en vehículos y celulares exige el producto de interés", () => {

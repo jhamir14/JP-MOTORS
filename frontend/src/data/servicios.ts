@@ -1,10 +1,10 @@
 import type { ComponentType, SVGProps } from "react";
-import { IconBanknote, IconMoto, IconPhone, IconWrench } from "@/components/icons";
+import { IconMoto, IconPhone, IconWrench } from "@/components/icons";
 
 type Icon = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>;
 
 export interface Servicio {
-  id: "prestamos" | "vehicular" | "celulares" | "repuestos";
+  id: "vehicular" | "celulares" | "repuestos";
   titulo: string;
   resumen: string;
   href: string;
@@ -17,16 +17,6 @@ export interface Servicio {
 /** Los servicios que ofrece Inversiones JP, en el orden en que se muestran en la web. */
 export const servicios: Servicio[] = [
   {
-    id: "prestamos",
-    titulo: "Préstamos en efectivo",
-    resumen: "Capital de trabajo o una emergencia: dinero en tus manos con pagos diarios o semanales.",
-    href: "/prestamos",
-    cta: "Ver préstamos",
-    Icon: IconBanknote,
-    puntos: ["Desembolso rápido", "Pagos diarios o semanales", "Montos que crecen con tu historial"],
-    etiqueta: "Más solicitado",
-  },
-  {
     id: "vehicular",
     titulo: "Crédito vehicular",
     resumen: "Motos lineales y mototaxis para trabajar, con cuotas mensuales y crédito directo, sin bancos.",
@@ -34,6 +24,7 @@ export const servicios: Servicio[] = [
     cta: "Ver vehículos",
     Icon: IconMoto,
     puntos: ["Motos Honda y Motokar", "Hasta 36 meses", "Inicial flexible"],
+    etiqueta: "Más solicitado",
   },
   {
     id: "celulares",

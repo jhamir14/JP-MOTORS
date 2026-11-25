@@ -8,7 +8,7 @@ import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
 export const metadata: Metadata = {
   title: "Nosotros",
   description:
-    "Inversiones JP es una empresa de financiamiento para emprendedores peruanos: préstamos en efectivo, crédito vehicular y celulares en cuotas.",
+    "Inversiones JP es una empresa de financiamiento para emprendedores peruanos: crédito vehicular (motos y mototaxis) y celulares en cuotas.",
 };
 
 const valores = [
@@ -20,7 +20,7 @@ const valores = [
 const preguntas = [
   {
     p: "¿Qué es Inversiones JP?",
-    r: "Somos una empresa de financiamiento directo. Nacimos vendiendo motos a crédito y hoy ofrecemos préstamos en efectivo, crédito vehicular y celulares en cuotas.",
+    r: "Somos una empresa de financiamiento directo. Nacimos vendiendo motos a crédito y hoy financiamos motos, mototaxis y celulares en cuotas. No prestamos dinero en efectivo.",
   },
   {
     p: "¿Revisan centrales de riesgo?",

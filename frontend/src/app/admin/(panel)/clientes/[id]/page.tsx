@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { AdminForm, BotonEnviar } from "@/components/admin/AdminForm";
 import { CapturarUbicacion } from "@/components/admin/Gps";
 import { SubirDocumento } from "@/components/admin/SubirDocumento";
+import { BotonRecordatorio } from "@/components/admin/BotonRecordatorio";
 import { CampoArea, CampoSelect, CampoTexto, Encabezado, Estado, Panel, Tabla, Vacio, fechaCorta } from "@/components/admin/ui";
 import { Badge, ButtonLink } from "@/components/ui";
 import { ETIQUETA_SERVICIO, legible } from "@/lib/admin/constantes";
@@ -31,6 +32,8 @@ import { formatSoles } from "@/lib/format";
 import { whatsappLink } from "@/lib/whatsapp";
 import { requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
+import { creditosPorCobrar } from "@/lib/server/cobranza";
+import { registrarRecordatorio } from "../../cobranzas/actions";
 import { cambiarBloqueo, desvincularGarante, eliminarDocumento, guardarGarante, guardarUbicacion, subirDocumento } from "../actions";
 
 export const metadata = { title: "Ficha del cliente" };
@@ -93,7 +96,7 @@ export default async function FichaClientePage({
     where c.id = ${id}`;
   if (!cliente) notFound();
 
-  const [garantes, creditos, cuotas, solicitudes, historial] = await Promise.all([
+  const [garantes, creditos, cuotas, solicitudes, historial, cobranza] = await Promise.all([
     db<Garante[]>`
       select g.id, g.nombres, g.apellidos, g.tipo_documento, g.numero_documento, g.telefono, g.direccion,
              coalesce(cg.parentesco, g.parentesco) as parentesco, cg.notas,
@@ -132,7 +135,9 @@ export default async function FichaClientePage({
              or (a.tabla = 'documento_kyc' and coalesce(a.despues, a.antes) ->> 'cliente_id' = ${id})
           order by a.created_at desc limit 15`
       : Promise.resolve([]),
+    creditosPorCobrar(db, { clienteId: id }),
   ]);
+  const porCobrar = new Map(cobranza.creditos.map((c) => [c.id, c]));
 
   const garanteIds = garantes.map((g) => g.id);
   const documentos = await db<Documento[]>`
@@ -386,6 +391,7 @@ export default async function FichaClientePage({
           <ul className="grid gap-3">
             {creditos.map((cr) => {
               const cs = cuotasDe(cr.id);
+              const pc = porCobrar.get(cr.id);
               const saldo = Math.max(cr.monto_total_pagar - cr.pagado, 0);
               return (
                 <li key={cr.id}>
@@ -408,6 +414,24 @@ export default async function FichaClientePage({
                       </div>
                     </summary>
                     <div className="border-t border-line-soft p-3">
+                      {pc && (
+                        <div className="mb-3 flex flex-wrap items-start justify-between gap-3 rounded-xl bg-surface-2 p-3">
+                          <p className="text-sm">
+                            {pc.situacion === "MORA"
+                              ? `Vencido: ${formatSoles(pc.vencido, true)} (${pc.diasAtraso} días de atraso)`
+                              : pc.proxima
+                                ? `Próxima cuota: ${formatSoles(pc.proxima!.saldo, true)} el ${fecha(pc.proxima!.fecha)}`
+                                : "Al día"}
+                          </p>
+                          <BotonRecordatorio
+                            href={pc.whatsapp}
+                            creditoId={cr.id}
+                            tipo={pc.situacion}
+                            registrar={registrarRecordatorio}
+                            ultimo={pc.ultimoRecordatorio}
+                          />
+                        </div>
+                      )}
                       <dl className="mb-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                         <Dato k="Precio / capital">{formatSoles(cr.monto_total, true)}</Dato>
                         <Dato k="Inicial">{formatSoles(cr.cuota_inicial, true)}</Dato>
