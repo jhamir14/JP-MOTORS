@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Migra el backup de la base anterior (Django + MySQL, volcado de HeidiSQL) al
-esquema nuevo de Supabase (supabase/migrations).
+esquema nuevo de Supabase (database/migrations).
 
 Uso:
     python3 database/importar_legado.py RUTA/prestamos_backup.sql [SALIDA.sql]
@@ -138,6 +138,12 @@ def insert(tabla: str, filas: list[dict], conflicto: str = "do nothing") -> str:
     return f"insert into public.{tabla} ({', '.join(cols)}) values\n{valores}\non conflict {conflicto};\n\n"
 
 
+def num(v) -> str:
+    """Número sin ceros sobrantes ni notación científica: 20.000 → '20', 76.10 → '76.1'."""
+    t = f"{Decimal(str(v)):f}"
+    return t.rstrip("0").rstrip(".") if "." in t else t
+
+
 def limpiar_telefono(t: str) -> str | None:
     dig = re.sub(r"\D", "", t or "")
     if len(dig) == 11 and dig.startswith("51"):
@@ -271,7 +277,7 @@ def main() -> None:
         ultima = max((r["fecha_pago"] for r in filas_cuota if r["fecha_pago"]), default=None)
         nota = f"Migrado del sistema anterior ({origen} #{cab['id']})."
         if abs(tasa - dec(cab["interes"])) > Decimal("0.5"):
-            nota += f" La cabecera original indicaba {cab['interes']} % de interés; el cronograma cobrado equivale a {tasa.normalize()} %."
+            nota += f" La cabecera original indicaba {num(cab['interes'])} % de interés; el cronograma cobrado equivale a {num(tasa)} %."
         creditos.append({
             "id": cid,
             "codigo": f"JP-{'PE' if tipo == 'PRESTAMO_EFECTIVO' else 'CC'}-L{cab['id']:05d}",

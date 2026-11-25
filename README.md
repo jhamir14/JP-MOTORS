@@ -31,7 +31,7 @@ CI (GitHub Actions, `.github/workflows/ci.yml`) ejecuta lint, typecheck, tests y
 
 | Carpeta | Contenido |
 |---|---|
-| `supabase/migrations/` | Esquema PostgreSQL, RLS, funciones de negocio y datos iniciales (sin datos personales) |
+| `database/migrations/` | Esquema PostgreSQL, RLS, funciones de negocio y datos iniciales (sin datos personales) |
 | `database/importar_legado.py` | Migra el backup del sistema anterior (Django/MySQL) al esquema nuevo |
 | `frontend/src/app/` | Rutas: `/`, `/prestamos`, `/motos`, `/celulares`, `/repuestos`, `/financiamiento`, `/nosotros`, `api/solicitudes` |
 | `frontend/src/components/ui/` | Componentes base: `Button`, `Card`, `Badge`, `Field` |

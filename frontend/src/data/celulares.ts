@@ -1,6 +1,6 @@
 /**
  * Catálogo de celulares (temporal: es el mismo que siembra la migración
- * supabase/migrations/20261125000400_datos_iniciales.sql; en la Fase 2 la web lo leerá de la BD).
+ * database/migrations/20261125000400_datos_iniciales.sql; en la Fase 2 la web lo leerá de la BD).
  * Precios tomados del inventario real del sistema anterior.
  */
 

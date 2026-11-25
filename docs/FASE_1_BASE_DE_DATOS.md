@@ -4,7 +4,7 @@ Fecha: 2026-11-25
 
 ## 1. Decisión: migraciones SQL en lugar de Prisma
 
-El plan v2 proponía Prisma. Se optó por **migraciones SQL nativas de Supabase** (`supabase/migrations/`) porque:
+El plan v2 proponía Prisma. Se optó por **migraciones SQL nativas de Supabase** (`database/migrations/`) porque:
 
 - La seguridad se apoya en **Row Level Security** de Postgres (políticas, funciones `security definer`, triggers), que Prisma no modela.
 - Supabase CLI y el panel aplican estas migraciones directamente; no hay un paso de generación extra.
