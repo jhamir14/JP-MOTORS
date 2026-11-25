@@ -55,6 +55,13 @@ Migración `database/migrations/20261201000100_fase6_documentos.sql` (idempotent
 | `pago.token_recibo` + `nuevo_token_recibo()` | Token del enlace público; los pagos existentes reciben uno al aplicar la migración |
 | `credito.contrato_pdf` | Marcado en desuso |
 
+**Aplicada en Railway el 2026-11-25** (registrada en `public._migraciones`; comprobado: `/r/<token>` responde 404 en lugar del error
+«column token_recibo does not exist»). Procedimiento usado, útil para las próximas fases: se reemplazó temporalmente el código de la
+función `jp-proceso-diario` por un script de migración con el cliente **`bun:SQL`** integrado (la versión con el paquete `pg` no llegó
+a ejecutarse en el runtime de funciones), que descarga cada SQL de GitHub fijado a un commit y verifica su SHA-256; se le quitó el cron
+para que corriera al desplegar y luego se restauraron su código original y el cron `15 5 * * *`. Los logs de funciones no aparecen
+por la API de Railway: verificar el resultado desde la app.
+
 ## 4. Verificación
 - `npm run lint`, `npm run typecheck`, `npm test` (**213 pruebas; 40 nuevas**: montos en letras —incluye «VEINTIÚN MIL», «UN MILLÓN», céntimos—, fechas, enmascarado, que cada contrato vuelque partes, bien, condiciones, días de gracia, fianza, firmas y anexo; plantilla según el tipo; pagaré sin protesto con aval; cronograma con saldo; recibo público sin el DNI completo; mensaje de WhatsApp; caracteres no imprimibles; y que todos los PDF se generen válidos y con varias páginas) y `npm run build`.
 - Migración aplicada dos veces sobre PostgreSQL 16 local con todas las anteriores. RLS: el cobrador ve metadatos pero no los bytes, no puede subir ni borrar.
