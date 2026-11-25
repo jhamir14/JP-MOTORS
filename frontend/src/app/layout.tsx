@@ -1,11 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import BottomNav from "@/components/BottomNav";
-import WhatsAppFloat from "@/components/WhatsAppFloat";
 import { siteConfig } from "@/lib/config";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -43,25 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${jakarta.variable} pb-[72px] md:pb-0`}>
-        {siteConfig.gaId && (
-          <>
-            <Script strategy="afterInteractive" src={`https://www.googletagmanager.com/gtag/js?id=${siteConfig.gaId}`} />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', '${siteConfig.gaId}');`}
-            </Script>
-          </>
-        )}
-
-        <Navbar />
-        {children}
-        <Footer />
-        <BottomNav />
-        <WhatsAppFloat />
-      </body>
+      <body className={jakarta.variable}>{children}</body>
     </html>
   );
 }

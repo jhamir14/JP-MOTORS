@@ -1,18 +1,16 @@
 /**
  * Configuración pública centralizada del sitio.
  * Se puede sobrescribir con variables de entorno (ver `.env.example`).
- * Las tasas reales de cada servicio viven en la tabla `tasa_servicio` de la base de datos;
- * estos valores son el respaldo mientras la web pública no lee de la base de datos.
+ * Las tasas de cada servicio y los planes de crédito se administran desde el panel (/admin)
+ * y viven en las tablas `tasa_servicio` y `plan_credito`.
  */
-
-const num = (value: string | undefined, fallback: number) => {
-  const n = Number(value);
-  return Number.isFinite(n) && value !== undefined && value !== "" ? n : fallback;
-};
 
 export const siteConfig = {
   name: "Inversiones JP",
   legalName: "Inversiones Multimarca JP",
+  /** RUC de la razón social (se muestra en el Libro de Reclamaciones y páginas legales). */
+  ruc: process.env.NEXT_PUBLIC_RUC ?? "",
+  emailContacto: process.env.NEXT_PUBLIC_EMAIL_CONTACTO ?? "contacto@jpmotorshonda.com",
   tagline: "Créditos y préstamos para emprendedores",
   description:
     "Inversiones JP: préstamos en efectivo, crédito vehicular para motos y mototaxis, y celulares en cuotas semanales. Evaluación rápida y pagos diarios, semanales o mensuales.",
@@ -30,14 +28,6 @@ export const siteConfig = {
 } as const;
 
 export const creditConfig = {
-  /** Crédito vehicular: tasa referencial mensual (2% = 0.02), cuota fija (francés). */
-  tasaVehicularMensual: num(process.env.NEXT_PUBLIC_TASA_VEHICULAR_MENSUAL, 0.02),
-  plazosVehicularMeses: [6, 12, 18, 24, 36],
-  plazoVehicularPorDefecto: 12,
-  /** Celulares: tasa referencial semanal (1.2% = 0.012), cuota fija. */
-  tasaCelularSemanal: num(process.env.NEXT_PUBLIC_TASA_CELULAR_SEMANAL, 0.012),
-  plazosCelularSemanas: [8, 12, 16, 26, 39, 52],
-  plazoCelularPorDefecto: 16,
   /** Préstamos en efectivo: montos de referencia (la tasa se informa en la evaluación). */
   prestamoMontoMin: 100,
   prestamoMontoMax: 5000,

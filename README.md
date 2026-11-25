@@ -5,6 +5,7 @@ Web pública y base de datos (PostgreSQL en Railway) de **Inversiones JP**, fina
 - Especificación: [`INVERSIONES_JP_MASTER_CONTEXT.md`](INVERSIONES_JP_MASTER_CONTEXT.md)
 - Plan y roadmap: [`docs/PLAN_ACTUALIZACION_V2.md`](docs/PLAN_ACTUALIZACION_V2.md)
 - Base de datos (Fase 1): [`docs/FASE_1_BASE_DE_DATOS.md`](docs/FASE_1_BASE_DE_DATOS.md)
+- Catálogo y panel `/admin` (Fase 2): [`docs/FASE_2_CATALOGO_Y_PANEL.md`](docs/FASE_2_CATALOGO_Y_PANEL.md)
 
 ## Desarrollo local
 
@@ -24,6 +25,7 @@ npm run dev                  # http://localhost:3000
 | `npm run typecheck` | Verificación de tipos (TypeScript) |
 | `npm test` | Pruebas unitarias (Vitest) |
 | `npm run build` | Build de producción |
+| `npm run admin:crear -- correo "Nombres" "Apellidos" [ROL]` | Crea/restablece una cuenta del panel (requiere `DATABASE_URL`) |
 
 CI (GitHub Actions, `.github/workflows/ci.yml`) ejecuta lint, typecheck, tests y build en cada push y PR.
 
@@ -34,14 +36,17 @@ CI (GitHub Actions, `.github/workflows/ci.yml`) ejecuta lint, typecheck, tests y
 | `database/migrations/` | Esquema PostgreSQL, RLS, funciones de negocio y datos iniciales (sin datos personales) |
 | `database/importar_legado.py` | Migra el backup del sistema anterior (Django/MySQL) al esquema nuevo |
 | `database/railway/` | Railway Function que aplica migraciones y copia los datos desde el MySQL en vivo |
-| `frontend/src/app/` | Rutas: `/`, `/prestamos`, `/motos`, `/celulares`, `/repuestos`, `/financiamiento`, `/nosotros`, `api/solicitudes` |
+| `frontend/src/app/(public)/` | Web: `/`, `/prestamos`, `/vehiculos` (+ `[slug]`, `torito-bajaj`), `/celulares` (+ `[slug]`), `/repuestos`, `/financiamiento`, `/nosotros`, `/libro-reclamaciones`, `/privacidad`, `/terminos` |
+| `frontend/src/app/admin/` | Panel: login, inicio, solicitudes, catálogo, inventario, tasas, reclamos, personal |
+| `frontend/src/app/api/` | `solicitudes`, `reclamos`, `archivos/[id]` (fotos), `salud` |
 | `frontend/src/components/ui/` | Componentes base: `Button`, `Card`, `Badge`, `Field` |
 | `frontend/src/components/public/` | `Simulador`, `MotoCard`, `CelularCard`, `SectionHeading`… |
-| `frontend/src/lib/` | `config.ts`, `finance.ts` (cuotas/TEA), `whatsapp.ts`, `server/db.ts` (conexión a PostgreSQL, solo servidor) |
+| `frontend/src/components/admin/` | Formularios y piezas del panel |
+| `frontend/src/lib/` | `config.ts`, `finance.ts` (cuotas/TEA/cronograma), `catalogo.ts`, `validaciones.ts`, `server/` (BD, catálogo, auth, contraseñas, límite de intentos) |
 | `frontend/src/schemas/` | Esquemas Zod compartidos cliente/servidor |
-| `frontend/src/data/` | Catálogo estático (espejo de los datos iniciales; en la Fase 2 se lee de la BD) |
+| `frontend/src/data/` | Respaldo estático del catálogo (solo si no hay base de datos) |
 
 ## Variables de entorno
 
-Ver [`frontend/.env.example`](frontend/.env.example). Para que el formulario guarde solicitudes hace falta
-`DATABASE_URL` (PostgreSQL en Railway) y/o `LEADS_EMAIL`; ambas solo de servidor.
+Ver [`frontend/.env.example`](frontend/.env.example). `DATABASE_URL` (PostgreSQL en Railway, solo servidor) es necesaria
+para el catálogo administrable, el Libro de Reclamaciones y el panel; sin ella la web pública muestra el catálogo de respaldo.
