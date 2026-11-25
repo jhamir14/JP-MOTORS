@@ -223,10 +223,12 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 
 ## 5. Siguiente paso: Fase 4 — Motor de créditos
 
-Fases 0 a 3 implementadas (2026-11-25). Para producción falta aplicar en Railway la migración `20261127000100_fase3_clientes.sql`.
+Fases 0 a 3 en producción (2026-11-25): las 7 migraciones aplicadas en Railway (`_migraciones`), web y panel publicados en Vercel desde `main`.
 
 **Ya resuelto (no repetir):** clientes con KYC completo, garantes (`cliente_garante`), documentos privados, geolocalización, conversión de solicitudes, inventario serializado y `lib/finance.ts` (FLAT/FRANCÉS, TEA, cronograma con ajuste de redondeo).
 
 **Alcance de la Fase 4:** alta de crédito desde la ficha del cliente (cliente + garante + unidad en stock o préstamo en efectivo, plan publicado o personalizado, tope de TEA), cronograma diario lun–sáb sin feriados / semanal / quincenal / mensual, vista previa, confirmación en una transacción (reserva la unidad), anulación con motivo y auditoría, y bloqueo de clientes `BLOQUEADO_LEGAL`. Tests de todas las combinaciones de cálculo.
 
-**Pendientes operativos:** borrar en Railway el servicio temporal `migrar-fase2`, activar backups del volumen Postgres, fijar el tope de TEA, completar `NEXT_PUBLIC_RUC`, validar los textos legales y subir fotos reales de celulares y del Torito Bajaj.
+**Hecho en Railway (2026-11-25):** servicio temporal `migrar-fase2` eliminado y backups programados del volumen `postgres-volume` (diario, semanal y mensual).
+
+**Pendientes que dependen del negocio** (no bloquean la Fase 4, pero sí el alta de créditos reales): fijar el tope de TEA (`configuracion.tope_tea_porcentaje`) con el área legal, completar `NEXT_PUBLIC_RUC` en Vercel, validar los textos legales y subir fotos reales de celulares y del Torito Bajaj. Decisiones abiertas del §4: tipo de cálculo por defecto (FLAT o FRANCÉS) por servicio y feriados a excluir del cronograma diario.

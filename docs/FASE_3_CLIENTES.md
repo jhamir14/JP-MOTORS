@@ -75,7 +75,8 @@ Migración `database/migrations/20261127000100_fase3_clientes.sql` (idempotente)
 - `audit_log` acepta `DESCARGA`; auditoría de `cliente`, `garante`, `cliente_garante`, `solicitud_credito` y `documento_kyc`.
 - Las columnas `foto_*` / `recibo_servicio` de la Fase 1 quedan en desuso (los documentos viven en `documento_kyc`).
 
-Aplicar en Railway:
+**Aplicada en Railway el 2026-11-25** (registrada en `public._migraciones`): 93 clientes, 92 con `datos_incompletos`.
+Para otro entorno:
 ```bash
 psql "$DATABASE_PUBLIC_URL" -v ON_ERROR_STOP=1 -f database/migrations/20261127000100_fase3_clientes.sql
 ```
