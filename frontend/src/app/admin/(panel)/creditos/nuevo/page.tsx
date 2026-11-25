@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Encabezado, Panel, Vacio } from "@/components/admin/ui";
 import { FormCredito } from "@/components/admin/FormCredito";
+import { ScoreCliente } from "@/components/admin/ScoreCliente";
 import { Badge } from "@/components/ui";
 import { ROLES_CREDITOS } from "@/lib/creditos";
 import { ETIQUETA_ESTADO_CLIENTE, faltantesCliente, type DatosKyc, type EstadoCliente } from "@/lib/clientes";
@@ -9,6 +10,8 @@ import { COLUMNAS_KYC } from "@/lib/server/clientes";
 import { hoyLima } from "@/lib/server/cobranza";
 import { configCreditos, opcionesAltaCredito } from "@/lib/server/creditos";
 import { sql } from "@/lib/server/db";
+import { evaluarCliente, describirBeneficio } from "@/lib/scoring";
+import { configBeneficios, perfilParaCredito, perfilScore } from "@/lib/server/scoring";
 import { crearCredito } from "../actions";
 
 export const metadata = { title: "Nuevo crédito" };
@@ -65,7 +68,7 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
     select id, nombres, apellidos, estado, ${db(COLUMNAS_KYC as unknown as string[])} from public.cliente where id = ${clienteId}`;
   if (!cliente) return <Vacio>El cliente no existe.</Vacio>;
 
-  const [config, opciones, hoy, garantes, docs, activos] = await Promise.all([
+  const [config, opciones, hoy, garantes, docs, activos, score, perfil, beneficios] = await Promise.all([
     configCreditos(db),
     opcionesAltaCredito(db),
     hoyLima(db),
@@ -75,7 +78,11 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
       where cg.cliente_id = ${clienteId} order by cg.created_at`,
     db<{ tipo: string }[]>`select distinct tipo from public.documento_kyc where cliente_id = ${clienteId}`,
     db<{ n: number }[]>`select count(*)::int as n from public.credito where cliente_id = ${clienteId} and estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO')`,
+    perfilScore(db, clienteId, 5),
+    perfilParaCredito(db, clienteId),
+    configBeneficios(db),
   ]);
+  const evaluacion = evaluarCliente(perfil, beneficios);
   const faltan = faltantesCliente(cliente, docs.map((d) => d.tipo));
   const bloqueado = cliente.estado === "BLOQUEADO_LEGAL";
   const bloqueaExpediente = config.exigeExpedienteCompleto && faltan.length > 0;
@@ -88,10 +95,35 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
         {activos[0].n > 0 && ` · ya tiene ${activos[0].n} crédito${activos[0].n > 1 ? "s" : ""} activo${activos[0].n > 1 ? "s" : ""}`}
       </Encabezado>
 
+      <details className="mb-5 rounded-2xl border border-line-soft bg-surface shadow-card" open={evaluacion.alertaRiesgo != null || evaluacion.bloqueo != null}>
+        <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 p-4 [&::-webkit-details-marker]:hidden">
+          <h2 className="text-base">Score del cliente: {perfil.puntaje != null ? `${perfil.puntaje} de 5` : "sin historial"}</h2>
+          {evaluacion.nivel ? (
+            <Badge tone="accent">🎁 {evaluacion.nivel.nombre}: {describirBeneficio(evaluacion.nivel)}</Badge>
+          ) : (
+            evaluacion.motivoSinBeneficio && <span className="text-xs text-muted">Sin beneficio: {evaluacion.motivoSinBeneficio.toLowerCase()}</span>
+          )}
+          <span className="ml-auto text-xs font-semibold text-brand">Ver detalle</span>
+        </summary>
+        <div className="border-t border-line-soft p-4">
+          <ScoreCliente perfil={score} bloqueado={bloqueado} historial={5} />
+        </div>
+      </details>
+
       {bloqueado ? (
         <Vacio>El cliente tiene bloqueo legal: no puede recibir créditos.</Vacio>
+      ) : evaluacion.bloqueo ? (
+        <p role="alert" className="rounded-xl border border-danger/40 bg-danger/5 px-4 py-3 text-sm text-danger">
+          <strong>No se puede registrar un nuevo crédito.</strong> {evaluacion.bloqueo}{" "}
+          <Link href={`/admin/clientes/${clienteId}`} className="font-semibold underline">Ver sus créditos</Link>
+        </p>
       ) : (
         <>
+          {evaluacion.alertaRiesgo && (
+            <p role="alert" className="mb-5 rounded-xl border border-danger/40 bg-danger/5 px-4 py-3 text-sm text-danger">
+              <strong>Cliente de riesgo.</strong> {evaluacion.alertaRiesgo}
+            </p>
+          )}
           {faltan.length > 0 && (
             <p role={bloqueaExpediente ? "alert" : "status"} className="mb-5 rounded-xl border border-gold bg-gold-soft/60 px-4 py-3 text-sm text-[#8a5d00]">
               <strong>{bloqueaExpediente ? "No se puede registrar: expediente incompleto." : "Advertencia: expediente incompleto."}</strong>{" "}
@@ -111,6 +143,9 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
               hoy={hoy}
               topeTea={config.topeTea}
               vehicularExigeGarante={config.vehicularExigeGarante}
+              beneficio={evaluacion.nivel}
+              puntaje={perfil.puntaje}
+              alertaRiesgo={evaluacion.alertaRiesgo}
             />
           )}
         </>

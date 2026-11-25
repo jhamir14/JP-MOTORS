@@ -8,6 +8,8 @@ import { FRECUENCIAS, TIPOS_CALCULO } from "@/lib/finance";
 import { comoUsuario, requerirSesion } from "@/lib/server/auth";
 import { configCreditos } from "@/lib/server/creditos";
 import { sql } from "@/lib/server/db";
+import { evaluarCliente } from "@/lib/scoring";
+import { configBeneficios, perfilParaCredito } from "@/lib/server/scoring";
 
 const uuid = z.string().uuid();
 const uuidOpcional = z.union([uuid, z.literal("").transform(() => null)]);
@@ -44,6 +46,8 @@ const altaSchema = z.object({
   primerVencimiento: z.string().trim(),
   notas: z.string().trim().max(1000, "Máximo 1000 caracteres").transform((v) => v || null),
   confirmo: z.literal("on", { errorMap: () => ({ message: "Confirma que revisaste el cronograma con el cliente" }) }),
+  beneficio: z.enum(["", "1"]).default(""),
+  confirmoRiesgo: z.string().optional(),
 });
 
 const mensajeP0001 = (e: unknown) => {
@@ -83,7 +87,7 @@ export async function crearCredito(_prev: EstadoAccion, fd: FormData): Promise<E
   };
   if (d.modo === "cuota" && d.montoCuota == null) return fallo("Revisa los campos marcados.", { montoCuota: "Ingresa la cuota pactada" });
 
-  const [config, [cliente], [unidad], tasa, garante] = await Promise.all([
+  const [config, [cliente], [unidad], tasa, garante, perfil, beneficios] = await Promise.all([
     configCreditos(db),
     db<{ estado: string; datos_incompletos: boolean }[]>`select estado, datos_incompletos from public.cliente where id = ${d.clienteId}`,
     d.tipo === "CREDITO_VEHICULAR"
@@ -96,9 +100,19 @@ export async function crearCredito(_prev: EstadoAccion, fd: FormData): Promise<E
     d.garanteId
       ? db`select 1 from public.cliente_garante where cliente_id = ${d.clienteId} and garante_id = ${d.garanteId}`
       : Promise.resolve([]),
+    perfilParaCredito(db, d.clienteId),
+    configBeneficios(db),
   ]);
 
   if (!cliente) return fallo("El cliente no existe.");
+  // Score: mora vigente (bloqueo), score bajo (confirmar) y beneficio (debe seguir calificando)
+  const evaluacion = evaluarCliente(perfil, beneficios);
+  if (evaluacion.bloqueo) return fallo(evaluacion.bloqueo, undefined, { href: `/admin/clientes/${d.clienteId}`, texto: "Ver sus créditos" });
+  if (evaluacion.alertaRiesgo && d.confirmoRiesgo !== "on")
+    return fallo("Revisa los campos marcados.", { confirmoRiesgo: "Confirma que apruebas el crédito pese al score bajo" });
+  const nivel = d.beneficio === "1" ? evaluacion.nivel : null;
+  if (d.beneficio === "1" && !nivel)
+    return fallo(`El cliente ya no califica para el beneficio${evaluacion.motivoSinBeneficio ? ` (${evaluacion.motivoSinBeneficio.toLowerCase()})` : ""}. Quítalo y revisa las condiciones.`);
   if (cliente.estado === "BLOQUEADO_LEGAL") return fallo("El cliente tiene bloqueo legal: no puede recibir créditos.");
   if (config.exigeExpedienteCompleto && cliente.datos_incompletos)
     return fallo("El expediente del cliente está incompleto. Complétalo antes de registrar el crédito.", undefined, {
@@ -115,8 +129,14 @@ export async function crearCredito(_prev: EstadoAccion, fd: FormData): Promise<E
   const t = tasa[0];
   const reglas: ReglasCredito = {
     topeTea: config.topeTea,
-    ...(t && !d.planId && t.servicio === d.tipo && t.frecuencia === d.frecuencia ? { cuotasMin: t.cuotas_min, cuotasMax: t.cuotas_max } : {}),
+    ...(t && !d.planId && t.servicio === d.tipo && t.frecuencia === d.frecuencia
+      ? { cuotasMin: t.cuotas_min, cuotasMax: t.cuotas_max + (nivel?.cuotasExtra ?? 0) }
+      : {}),
   };
+  const beneficioScore = nivel
+    ? { nivel: nivel.nombre, scoreMin: nivel.scoreMin, score: perfil.puntaje, descuentoTasaPct: nivel.descuentoTasaPct,
+        reduccionInicialPct: nivel.reduccionInicialPct, cuotasExtra: nivel.cuotasExtra }
+    : null;
   const errores = validarCredito(entrada, reglas);
   if (Object.keys(errores).length) return fallo("Revisa los campos marcados.", errores);
 
@@ -131,13 +151,13 @@ export async function crearCredito(_prev: EstadoAccion, fd: FormData): Promise<E
           tipo, cliente_id, garante_id, unidad_vehiculo_id, unidad_celular_id, plan_credito_id, creado_por,
           monto_total, cuota_inicial, tasa_porcentaje, tipo_calculo, total_intereses, monto_total_pagar,
           frecuencia, numero_cuotas, valor_cuota, penalidad_diaria, tea_porcentaje,
-          fecha_desembolso, fecha_primer_vencimiento, estado, notas)
+          fecha_desembolso, fecha_primer_vencimiento, estado, notas, beneficio_score)
         values (
           ${d.tipo}, ${d.clienteId}, ${d.garanteId}, ${d.tipo === "CREDITO_VEHICULAR" ? d.unidadId : null},
           ${d.tipo === "CREDITO_CELULAR" ? d.unidadId : null}, ${d.planId}, ${sesion.usuarioId},
           ${entrada.precio}, ${entrada.cuotaInicial}, ${plan.tasaPorcentaje}, ${d.tipoCalculo}, ${plan.totalIntereses}, ${plan.totalPagar},
           ${d.frecuencia}, ${d.numeroCuotas}, ${plan.valorCuota}, ${entrada.penalidadDiaria}, ${tea},
-          ${entrada.fechaDesembolso}, ${plan.cuotas[0].fecha}, 'VIGENTE', ${d.notas})
+          ${entrada.fechaDesembolso}, ${plan.cuotas[0].fecha}, 'VIGENTE', ${d.notas}, ${beneficioScore ? tx.json(beneficioScore) : null})
         returning id`;
       const filas = plan.cuotas.map((c) => ({
         credito_id: cr.id,

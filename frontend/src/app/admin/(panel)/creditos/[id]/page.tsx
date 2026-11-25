@@ -13,6 +13,7 @@ import { buttonClasses } from "@/components/ui/Button";
 import { registrarEventoBloqueo } from "../../pagos/actions";
 import { puede, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
+import { describirBeneficio } from "@/lib/scoring";
 import { anularCredito } from "../actions";
 import { eliminarDocumentoCredito, subirDocumentoCredito } from "../documentosActions";
 import { SubirDocumentoCredito } from "@/components/admin/SubirDocumentoCredito";
@@ -28,6 +29,7 @@ interface Credito {
   penalidad_diaria: number; tea_porcentaje: number | null; fecha_desembolso: string; fecha_primer_vencimiento: string;
   fecha_cancelacion: string | null; motivo_anulacion: string | null; anulado_at: Date | null; anulado_por: string | null;
   creado_por: string | null; created_at: Date; notas: string | null; legado_origen: string | null;
+  beneficio_score: { nivel: string; score: number | null; descuentoTasaPct: number; reduccionInicialPct: number; cuotasExtra: number } | null;
   estado_unidad_bloqueo: string | null;
 }
 interface Cuota { numero: number; fecha_vencimiento: string; monto_cuota: number; capital: number; interes: number; mora: number; monto_pagado: number; saldo_capital: number | null; estado: string; fecha_pago: string | null }
@@ -65,7 +67,7 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
            cr.penalidad_diaria::float8, cr.tea_porcentaje::float8,
            to_char(cr.fecha_desembolso, 'YYYY-MM-DD') as fecha_desembolso, to_char(cr.fecha_primer_vencimiento, 'YYYY-MM-DD') as fecha_primer_vencimiento,
            to_char(cr.fecha_cancelacion, 'YYYY-MM-DD') as fecha_cancelacion, cr.motivo_anulacion, cr.anulado_at,
-           ${nombre("pa")} as anulado_por, ${nombre("pc")} as creado_por, cr.created_at, cr.notas, cr.legado_origen
+           ${nombre("pa")} as anulado_por, ${nombre("pc")} as creado_por, cr.created_at, cr.notas, cr.legado_origen, cr.beneficio_score
     from public.credito cr
     join public.cliente cl on cl.id = cr.cliente_id
     left join public.garante g on g.id = cr.garante_id
@@ -163,6 +165,12 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
             <Dato k="Primer vencimiento">{fecha(cr.fecha_primer_vencimiento)}</Dato>
             <Dato k="Cancelado el">{fecha(cr.fecha_cancelacion)}</Dato>
           </dl>
+          {cr.beneficio_score && (
+            <p className="mt-4 rounded-xl bg-accent-soft p-3 text-sm text-accent">
+              🎁 <strong>{cr.beneficio_score.nivel}</strong>{cr.beneficio_score.score != null ? ` (score ${cr.beneficio_score.score})` : ""}: {describirBeneficio({ ...cr.beneficio_score, scoreMin: 0, nombre: cr.beneficio_score.nivel })}.
+              Condiciones aplicadas al registrar el crédito.
+            </p>
+          )}
           {cr.notas && <p className="mt-4 rounded-xl bg-surface-2 p-3 text-sm whitespace-pre-line">{cr.notas}</p>}
         </Panel>
         <Panel titulo="Partes y bien">

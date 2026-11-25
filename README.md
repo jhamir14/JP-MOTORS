@@ -10,6 +10,7 @@ Web pública, panel y base de datos (PostgreSQL en Railway) de **Inversiones JP*
 - Motor de créditos y web con imágenes (Fase 4): [`docs/FASE_4_CREDITOS.md`](docs/FASE_4_CREDITOS.md)
 - Pagos, mora, cobranzas y cierre de caja (Fase 5): [`docs/FASE_5_PAGOS.md`](docs/FASE_5_PAGOS.md)
 - Documentos: contratos, pagaré, cronograma y recibos en PDF (Fase 6): [`docs/FASE_6_DOCUMENTOS.md`](docs/FASE_6_DOCUMENTOS.md)
+- Scoring de clientes y beneficios por puntualidad (Fase 7): [`docs/FASE_7_SCORING.md`](docs/FASE_7_SCORING.md)
 
 ## Desarrollo local
 

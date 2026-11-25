@@ -416,7 +416,6 @@ export async function cambiarBloqueo(_prev: EstadoAccion, fd: FormData): Promise
     await comoUsuario(sesion, (tx) => tx`
       update public.cliente
       set estado = ${bloquear === "si" ? "BLOQUEADO_LEGAL" : "NUEVO"},
-          apto_prestamo_efectivo = case when ${bloquear === "si"}::boolean then false else apto_prestamo_efectivo end,
           notas = concat_ws(E'\n', nullif(notas, ''), ${nota}::text)
       where id = ${clienteId}`);
   } catch (e) {
