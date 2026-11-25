@@ -187,9 +187,9 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 - PDFs: contrato vehicular con reserva de propiedad, contrato de celular con cláusula de bloqueo, mutuo + pagaré, cronograma, recibo de pago.
 - Recibo compartible por WhatsApp tras cada pago. Textos legales **validados por abogado**.
 
-### Fase 7 — Préstamos en efectivo y scoring (≈ 1 semana)
-- Cálculo de `scoreInterno` según historial; `aptoPrestamoEfectivo` automático al liquidar a tiempo un primer crédito.
-- Módulo `/admin/prestamos-efectivo` restringido a clientes aptos, con garante obligatorio y pagaré.
+### Fase 7 — Scoring de clientes (≈ 0.5 semana)
+- Cálculo de `scoreInterno` según historial y beneficios para clientes puntuales en su siguiente financiamiento.
+- ~~Préstamos en efectivo~~: **descartado (decisión 2026-11-25)**. La empresa solo financia productos; los préstamos migrados del sistema anterior se conservan únicamente para su cobranza.
 
 ### Fase 8 — Dashboard y reportes (≈ 1 semana)
 - KPIs: cartera vigente, colocado del mes, cobrado hoy/mes, % mora por tramo, intereses ganados.
@@ -210,10 +210,15 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 - **BD/Auth/Storage**: Supabase.
 - **Estilos**: Tailwind CSS v4 (recomendación aceptada).
 - **Intereses**: variables por servicio y configurables desde el panel; stock, inicial y cuotas de venta a crédito también se definen desde el panel (§2.4).
+- **Solo financiamiento de productos** (motos, mototaxis y celulares): la web **no** ofrece préstamos de dinero en efectivo. Se quitaron `/prestamos` (redirige a `/`), la opción del formulario, la API y las tasas de préstamo (inactivas). Los préstamos migrados siguen en el panel para su cobranza.
+- **Tope de TEA**: no se requiere; el campo queda opcional en `/admin/tasas`.
+- **RUC**: 10479269217 (en `siteConfig.ruc` y `configuracion.empresa`).
+- **Avisos de pago por WhatsApp** con enlaces `wa.me` desde el panel (gratis): botón en la ficha del cliente y en `/admin/cobranzas`; cada envío queda en `recordatorio_pago`.
+- **Domingos y feriados no se cobran**: ningún vencimiento cae en esos días (pasa al siguiente día hábil) en todas las frecuencias. Lista editable en `/admin/tasas` (`configuracion.feriados`, cargada 2026–2028); reglas en `src/lib/calendario.ts`.
+- **Textos legales** (`/privacidad`, `/terminos`) redactados en el sistema.
 
 ### Pendientes
 3. **Tipo de cálculo por defecto**: ¿FLAT o FRANCÉS para cada servicio? (el sistema soportará ambos)
-4. **WhatsApp**: ¿links `wa.me` manuales (gratis, Fase 5) o WhatsApp Business Cloud API con envío automático (costo por mensaje, fase posterior)?
 5. **Sucursales y usuarios**: ¿cuántas tiendas y cuántos usuarios por rol al inicio?
 6. **Bloqueo de equipos y GPS**: ¿ya hay contrato con PayJoy / Knox Guard / proveedor GPS? Define si se integra por API o queda manual.
 7. **Dominio y marca**: ¿se mantiene `jpmotorshonda.com` o se migra a un dominio de Inversiones JP?
@@ -223,12 +228,15 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 
 ## 5. Siguiente paso: Fase 4 — Motor de créditos
 
-Fases 0 a 3 en producción (2026-11-25): las 7 migraciones aplicadas en Railway (`_migraciones`), web y panel publicados en Vercel desde `main`.
+Fases 0 a 3 en producción (2026-11-25): migraciones aplicadas en Railway (`_migraciones`), web y panel publicados en Vercel desde `main`, backups diarios/semanales/mensuales del volumen de Postgres.
 
-**Ya resuelto (no repetir):** clientes con KYC completo, garantes (`cliente_garante`), documentos privados, geolocalización, conversión de solicitudes, inventario serializado y `lib/finance.ts` (FLAT/FRANCÉS, TEA, cronograma con ajuste de redondeo).
+**Ya resuelto (no repetir):** clientes con KYC, garantes, documentos privados, geolocalización, conversión de solicitudes, inventario serializado, `lib/finance.ts` (FLAT/FRANCÉS, TEA, cronograma con ajuste de redondeo), **`lib/calendario.ts`** (`fechasCronograma()` sin domingos ni feriados, con tests), feriados en `configuracion.feriados` y recordatorios de pago por WhatsApp (`/admin/cobranzas`).
 
-**Alcance de la Fase 4:** alta de crédito desde la ficha del cliente (cliente + garante + unidad en stock o préstamo en efectivo, plan publicado o personalizado, tope de TEA), cronograma diario lun–sáb sin feriados / semanal / quincenal / mensual, vista previa, confirmación en una transacción (reserva la unidad), anulación con motivo y auditoría, y bloqueo de clientes `BLOQUEADO_LEGAL`. Tests de todas las combinaciones de cálculo.
+**Alcance de la Fase 4** (solo crédito vehicular y de celular):
+1. Alta de crédito desde la ficha del cliente: unidad en stock, garante (obligatorio en vehicular), plan publicado o condiciones personalizadas (precio, inicial, tasa o cuota, FLAT/FRANCÉS, frecuencia, n.º de cuotas, penalidad).
+2. Cronograma: montos con `cronograma()` y fechas con `fechasCronograma()` leyendo `configuracion.feriados`.
+3. Vista previa (cuotas, fechas, total, TEA) y confirmación en una transacción: inserta `credito` + `cuota`, reserva la unidad (`VENDIDO_CREDITO`) y bloquea clientes `BLOQUEADO_LEGAL` o con expediente incompleto (decidir si es bloqueo o advertencia).
+4. Anulación con motivo y auditoría (la unidad vuelve a stock).
+5. Tests de todas las combinaciones de cálculo y fechas.
 
-**Hecho en Railway (2026-11-25):** servicio temporal `migrar-fase2` eliminado y backups programados del volumen `postgres-volume` (diario, semanal y mensual).
-
-**Pendientes que dependen del negocio** (no bloquean la Fase 4, pero sí el alta de créditos reales): fijar el tope de TEA (`configuracion.tope_tea_porcentaje`) con el área legal, completar `NEXT_PUBLIC_RUC` en Vercel, validar los textos legales y subir fotos reales de celulares y del Torito Bajaj. Decisiones abiertas del §4: tipo de cálculo por defecto (FLAT o FRANCÉS) por servicio y feriados a excluir del cronograma diario.
+**Pendientes del negocio:** tipo de cálculo por defecto (FLAT o FRANCÉS) por servicio, si el expediente incompleto bloquea el alta de un crédito, y las fotos reales de celulares y del Torito Bajaj.

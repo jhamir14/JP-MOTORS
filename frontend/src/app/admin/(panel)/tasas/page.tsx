@@ -1,12 +1,13 @@
 import { AdminForm, BotonEnviar } from "@/components/admin/AdminForm";
-import { CampoSelect, CampoTexto, Check, Encabezado, Panel } from "@/components/admin/ui";
+import { CampoArea, CampoSelect, CampoTexto, Check, Encabezado, Panel } from "@/components/admin/ui";
 import { Badge } from "@/components/ui";
-import { ETIQUETA_SERVICIO, SERVICIOS_CREDITO } from "@/lib/admin/constantes";
+import { ETIQUETA_SERVICIO, SERVICIOS_CREDITO, SERVICIOS_FINANCIAMIENTO } from "@/lib/admin/constantes";
+import { feriadosNacionales } from "@/lib/calendario";
 import { CATEGORIAS, ETIQUETA_CATEGORIA, type CategoriaProducto } from "@/lib/catalogo";
 import { ETIQUETA_FRECUENCIA, FRECUENCIAS, PERIODOS_POR_ANIO, calcularCredito, type Frecuencia, type TipoCalculo } from "@/lib/finance";
 import { puede, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
-import { guardarTasa, guardarTopeTea } from "./actions";
+import { guardarFeriados, guardarTasa, guardarTopeTea } from "./actions";
 
 export const metadata = { title: "Tasas por servicio" };
 
@@ -29,7 +30,7 @@ function FormTasa({ tasa }: { tasa?: Tasa }) {
     <AdminForm action={guardarTasa} resetOnSuccess={!tasa} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <input type="hidden" name="id" value={tasa?.id ?? ""} />
       <CampoTexto label="Nombre" name="nombre" id={`nombre-${k}`} defaultValue={tasa?.nombre} className="sm:col-span-2" required />
-      <CampoSelect label="Servicio" name="servicio" id={`servicio-${k}`} defaultValue={tasa?.servicio} opciones={SERVICIOS_CREDITO.map((s) => ({ value: s, label: ETIQUETA_SERVICIO[s] }))} />
+      <CampoSelect label="Servicio" name="servicio" id={`servicio-${k}`} defaultValue={tasa?.servicio} opciones={SERVICIOS_FINANCIAMIENTO.map((s) => ({ value: s, label: ETIQUETA_SERVICIO[s] }))} />
       <CampoSelect
         label="Categoría"
         name="categoria"
@@ -64,15 +65,22 @@ export default async function TasasPage() {
   const sesion = await requerirSesion();
   const editable = puede(sesion, "SUPERADMIN", "ADMIN_CREDITOS");
   const db = sql();
-  const [tasas, [conf]] = await Promise.all([
+  const [tasas, [conf], [fer]] = await Promise.all([
     db<Tasa[]>`
       select id, servicio, categoria, nombre, frecuencia, tipo_calculo, tasa_porcentaje::float8 as tasa, cuotas_min, cuotas_max,
              penalidad_diaria::float8 as penalidad, publica, activa
-      from public.tasa_servicio order by activa desc, servicio, frecuencia`,
+      from public.tasa_servicio where servicio <> 'PRESTAMO_EFECTIVO' order by activa desc, servicio, frecuencia`,
     db<{ tope: number | null }[]>`
       select case when jsonb_typeof(valor) = 'number' then (valor #>> '{}')::numeric::float8 end as tope
       from public.configuracion where clave = 'tope_tea_porcentaje'`,
+    db<{ fechas: string[] | null }[]>`
+      select case when jsonb_typeof(valor) = 'array' then valor end as fechas from public.configuracion where clave = 'feriados'`,
   ]);
+  const fechasFeriados = fer?.fechas ?? [];
+  const anioActual = new Date().getFullYear();
+  const nombres = new Map([anioActual - 1, anioActual, anioActual + 1, anioActual + 2].flatMap((a) => feriadosNacionales(a)).map((f) => [f.fecha, f.nombre]));
+  const textoFeriados = fechasFeriados.map((f) => `${f}${nombres.has(f) ? ` ${nombres.get(f)}` : ""}`).join("\n");
+  const faltanAnios = [anioActual, anioActual + 1].filter((a) => !fechasFeriados.some((f) => f.startsWith(String(a))));
 
   return (
     <>
@@ -110,9 +118,45 @@ export default async function TasasPage() {
         </Panel>
       )}
 
-      <Panel titulo="Tope de TEA" className="mt-6">
+      <Panel titulo={`Feriados (${fechasFeriados.length})`} className="mt-6">
         <p className="mb-3 text-sm text-muted">
-          Límite legal (Ley 31143 / BCRP) que debe fijar el área legal. Si está definido, el panel no deja publicar planes con una TEA mayor.
+          Los domingos y feriados <strong className="text-fg">no se cobran</strong>: ninguna cuota del cronograma vence en esas fechas (pasa al
+          siguiente día hábil) y los cronogramas diarios los saltan. Agrega aquí los feriados que decrete el Gobierno.
+        </p>
+        {faltanAnios.length > 0 && (
+          <p role="alert" className="mb-3 rounded-xl bg-gold-soft px-4 py-2 text-sm font-medium text-[#8a5d00]">
+            Faltan los feriados de {faltanAnios.join(" y ")}. Puedes copiarlos de la lista sugerida de abajo.
+          </p>
+        )}
+        {puede(sesion, "SUPERADMIN") ? (
+          <AdminForm action={guardarFeriados} className="grid gap-3">
+            <CampoArea
+              label="Una fecha por línea (AAAA-MM-DD y nombre opcional)"
+              name="feriados"
+              defaultValue={textoFeriados}
+              rows={10}
+              className="font-mono"
+            />
+            <BotonEnviar size="sm" className="justify-self-start">Guardar feriados</BotonEnviar>
+          </AdminForm>
+        ) : (
+          <ul className="grid gap-1 text-sm sm:grid-cols-2">
+            {fechasFeriados.filter((f) => f.startsWith(String(anioActual)) || f.startsWith(String(anioActual + 1))).map((f) => (
+              <li key={f} className="tabular">{f} {nombres.get(f) ?? ""}</li>
+            ))}
+          </ul>
+        )}
+        <details className="mt-3 text-xs text-muted">
+          <summary className="cursor-pointer font-semibold text-brand">Feriados nacionales sugeridos {anioActual + 1}–{anioActual + 2}</summary>
+          <pre className="mt-2 overflow-x-auto rounded-lg bg-surface-2 p-3">
+            {[anioActual + 1, anioActual + 2].flatMap((a) => feriadosNacionales(a)).map((f) => `${f.fecha} ${f.nombre}`).join("\n")}
+          </pre>
+        </details>
+      </Panel>
+
+      <Panel titulo="Tope de TEA (opcional)" className="mt-6">
+        <p className="mb-3 text-sm text-muted">
+          Opcional. Si se define, el panel no deja publicar planes con una TEA mayor.
           Valor actual: <strong className="text-fg">{conf?.tope != null ? `${conf.tope} %` : "sin tope"}</strong>.
         </p>
         {puede(sesion, "SUPERADMIN") ? (

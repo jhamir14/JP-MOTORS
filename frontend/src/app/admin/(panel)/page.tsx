@@ -37,7 +37,7 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
 
   const tarjetas = [
     { titulo: "Solicitudes nuevas", valor: kpis.solicitudes_nuevas, href: "/admin/solicitudes?estado=NUEVA" },
-    { titulo: "Cuotas que vencen hoy", valor: kpis.cuotas_hoy, href: null },
+    { titulo: "Cuotas que vencen hoy", valor: kpis.cuotas_hoy, href: "/admin/cobranzas?ver=hoy" },
     { titulo: "Expedientes por completar", valor: `${kpis.incompletos} / ${kpis.clientes}`, href: "/admin/clientes?incompletos=1" },
     { titulo: "Productos publicados", valor: `${kpis.publicados} / ${kpis.productos}`, href: "/admin/catalogo" },
     { titulo: "Unidades en stock", valor: kpis.en_stock, href: "/admin/inventario" },

@@ -13,14 +13,19 @@ export const metadata: Metadata = {
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const sesion = await requerirSesion();
-  const [pendientes] = await sql()<{ solicitudes: number; reclamos: number }[]>`
+  const [pendientes] = await sql()<{ solicitudes: number; reclamos: number; mora: number }[]>`
     select (select count(*) from public.solicitud_credito where estado = 'NUEVA')::int as solicitudes,
+           (select count(distinct cu.credito_id) from public.cuota cu join public.credito cr on cr.id = cu.credito_id
+            where cr.estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO') and cu.estado <> 'PAGADA'
+              and cu.monto_cuota + cu.mora - cu.monto_pagado > 0
+              and cu.fecha_vencimiento < (now() at time zone 'America/Lima')::date)::int as mora,
            (select count(*) from public.reclamo where estado <> 'RESPONDIDO')::int as reclamos`;
 
   const items: ItemNav[] = [
     { href: "/admin", label: "Inicio" },
     { href: "/admin/solicitudes", label: "Solicitudes web", badge: pendientes.solicitudes },
     { href: "/admin/clientes", label: "Clientes" },
+    { href: "/admin/cobranzas", label: "Cobranzas", badge: pendientes.mora },
     { href: "/admin/catalogo", label: "Catálogo" },
     { href: "/admin/inventario", label: "Inventario" },
     { href: "/admin/tasas", label: "Tasas por servicio" },

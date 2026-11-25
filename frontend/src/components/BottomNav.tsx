@@ -1,12 +1,11 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IconBanknote, IconHome, IconMoto, IconPhone, IconWrench } from "@/components/icons";
+import { IconHome, IconMoto, IconPhone, IconWrench } from "@/components/icons";
 import { cn } from "@/lib/cn";
 
 const items = [
   { href: "/", label: "Inicio", Icon: IconHome, exact: true },
-  { href: "/prestamos", label: "Préstamos", Icon: IconBanknote },
   { href: "/vehiculos", label: "Vehículos", Icon: IconMoto },
   { href: "/celulares", label: "Celulares", Icon: IconPhone },
   { href: "/repuestos", label: "Repuestos", Icon: IconWrench },

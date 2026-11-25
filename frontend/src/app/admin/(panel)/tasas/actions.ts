@@ -2,7 +2,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { datosDe, erroresZod, exito, fallo, mensajeErrorBD, type EstadoAccion } from "@/lib/admin/accion";
-import { SERVICIOS_CREDITO } from "@/lib/admin/constantes";
+import { SERVICIOS_FINANCIAMIENTO } from "@/lib/admin/constantes";
+import { parsearFeriados } from "@/lib/calendario";
 import { CATEGORIAS } from "@/lib/catalogo";
 import { FRECUENCIAS, TIPOS_CALCULO } from "@/lib/finance";
 import { comoUsuario, requerirSesion } from "@/lib/server/auth";
@@ -12,7 +13,7 @@ const entero = (campo: string) => z.string().trim().regex(/^\d{1,3}$/, `${campo}
 const tasaSchema = z
   .object({
     id: z.string().uuid().optional().or(z.literal("").transform(() => undefined)),
-    servicio: z.enum(SERVICIOS_CREDITO),
+    servicio: z.enum(SERVICIOS_FINANCIAMIENTO),
     categoria: z.enum(CATEGORIAS).or(z.literal("").transform(() => null)),
     nombre: z.string().trim().min(3, "Ingresa un nombre").max(80),
     frecuencia: z.enum(FRECUENCIAS),
@@ -39,8 +40,7 @@ export async function guardarTasa(_prev: EstadoAccion, fd: FormData): Promise<Es
     cuotas_min: d.cuotasMin,
     cuotas_max: d.cuotasMax,
     penalidad_diaria: d.penalidadDiaria,
-    // La web solo publica tasas de crédito vehicular y celular; los préstamos en efectivo se informan en la evaluación.
-    publica: fd.get("publica") === "on" && d.servicio !== "PRESTAMO_EFECTIVO",
+    publica: fd.get("publica") === "on",
     activa: fd.get("activa") === "on",
   };
   try {
@@ -74,4 +74,21 @@ export async function guardarTopeTea(_prev: EstadoAccion, fd: FormData): Promise
   }
   revalidatePath("/admin", "layout");
   return exito(valor == null ? "Tope de TEA desactivado." : `Tope de TEA fijado en ${valor} %.`);
+}
+
+/** Feriados: no se cobran. Ninguna cuota del cronograma vence en domingo ni en feriado (pasa al siguiente día hábil). */
+export async function guardarFeriados(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
+  const sesion = await requerirSesion("SUPERADMIN");
+  const r = parsearFeriados(String(fd.get("feriados") ?? ""));
+  if ("error" in r) return fallo(r.error, { feriados: r.error });
+  try {
+    await comoUsuario(sesion, (tx) => tx`
+      insert into public.configuracion (clave, valor, descripcion, updated_by)
+      values ('feriados', ${tx.json(r.fechas)}, 'Feriados (AAAA-MM-DD): no se cobran. Ninguna cuota vence en domingo ni feriado; pasa al siguiente día hábil.', ${sesion.usuarioId})
+      on conflict (clave) do update set valor = excluded.valor, updated_by = excluded.updated_by, updated_at = now()`);
+  } catch (e) {
+    return fallo(mensajeErrorBD(e));
+  }
+  revalidatePath("/admin/tasas");
+  return exito(`Feriados guardados (${r.fechas.length} fechas). Se aplican a los cronogramas que se generen desde ahora.`);
 }

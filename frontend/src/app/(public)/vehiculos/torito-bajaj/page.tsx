@@ -39,7 +39,7 @@ const porQue = [
   "No pedimos boletas de pago: evaluamos tu trabajo como transportista",
   "Inicial flexible y cuotas mensuales que se ajustan a tus ingresos",
   "Te acompañamos con placas, tarjeta de propiedad y GPS",
-  "Si pagas puntual, accedes a préstamos en efectivo para tu negocio",
+  "Si pagas puntual, accedes a mejores condiciones en tu próximo crédito",
 ];
 
 export default async function ToritoBajajPage() {

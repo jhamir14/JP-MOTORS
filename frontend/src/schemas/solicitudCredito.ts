@@ -9,15 +9,16 @@ export const TIPOS_DOCUMENTO = ["DNI", "CE", "Pasaporte"] as const;
 export const ESTADOS_CIVILES = ["Soltero(a)", "Casado(a)", "Conviviente", "Divorciado(a)", "Viudo(a)"] as const;
 export const NIVELES_EDUCACION = ["Primaria", "Secundaria", "Técnico", "Universitario"] as const;
 export const PREFERENCIAS_CONTACTO = ["WhatsApp", "Llamada", "Correo"] as const;
-/** Mismos códigos que el enum `servicio_solicitud` de la base de datos. */
-export const SERVICIOS = ["PRESTAMO_EFECTIVO", "CREDITO_VEHICULAR", "CREDITO_CELULAR"] as const;
+/**
+ * Mismos códigos que el enum `servicio_solicitud` de la base de datos.
+ * La web solo financia productos (motos, mototaxis y celulares): no recibe solicitudes de préstamo en efectivo.
+ */
+export const SERVICIOS = ["CREDITO_VEHICULAR", "CREDITO_CELULAR"] as const;
 export type Servicio = (typeof SERVICIOS)[number];
 export const ETIQUETAS_SERVICIO: Record<Servicio, string> = {
-  PRESTAMO_EFECTIVO: "Préstamo en efectivo",
   CREDITO_VEHICULAR: "Crédito vehicular (moto o mototaxi)",
   CREDITO_CELULAR: "Celular a crédito",
 };
-export const FRECUENCIAS_PRESTAMO = ["Diario", "Semanal"] as const;
 export const SITUACIONES_LABORALES = ["Independiente", "Comerciante", "Transportista", "Dependiente"] as const;
 
 const texto = (campo: string, max = 60) =>
@@ -75,8 +76,6 @@ export const solicitudCreditoSchema = z
     // 3. Servicio solicitado
     servicio: z.enum(SERVICIOS),
     productoInteres: z.string().trim().max(80, "Máximo 80 caracteres"),
-    montoSolicitado: montoOpcional,
-    frecuenciaPago: z.enum(FRECUENCIAS_PRESTAMO),
     montoInicial: montoOpcional,
     // 4. Perfil
     situacionLaboral: z.enum(SITUACIONES_LABORALES),
@@ -93,14 +92,7 @@ export const solicitudCreditoSchema = z
     const [re, msg] = reglas[d.tipoDocumento];
     if (!re.test(d.numeroDocumento)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["numeroDocumento"], message: msg });
 
-    if (d.servicio === "PRESTAMO_EFECTIVO") {
-      const monto = Number(d.montoSolicitado);
-      if (d.montoSolicitado === "") {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["montoSolicitado"], message: "Indica cuánto necesitas" });
-      } else if (monto < 100) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["montoSolicitado"], message: "El monto mínimo es S/ 100" });
-      }
-    } else if (d.productoInteres.length < 2) {
+    if (d.productoInteres.length < 2) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["productoInteres"],

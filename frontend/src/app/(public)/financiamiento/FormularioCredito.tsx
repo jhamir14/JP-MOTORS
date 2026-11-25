@@ -1,13 +1,12 @@
 "use client";
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { Button, ButtonLink, ExternalButton, Field, Input, Select } from "@/components/ui";
-import { IconBanknote, IconCheck, IconMoto, IconPhone } from "@/components/icons";
+import { IconCheck, IconMoto, IconPhone } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { whatsappLink } from "@/lib/whatsapp";
 import {
   ESTADOS_CIVILES,
   ETIQUETAS_SERVICIO,
-  FRECUENCIAS_PRESTAMO,
   NIVELES_EDUCACION,
   PREFERENCIAS_CONTACTO,
   SITUACIONES_LABORALES,
@@ -30,8 +29,7 @@ const etiquetasEducacion: Record<string, string> = {
 };
 const placeholderDocumento: Record<string, string> = { DNI: "8 dígitos", CE: "9 dígitos", Pasaporte: "6 a 12 caracteres" };
 
-const opcionesServicio: { id: Servicio; titulo: string; detalle: string; Icon: typeof IconBanknote }[] = [
-  { id: "PRESTAMO_EFECTIVO", titulo: "Préstamo en efectivo", detalle: "Pagos diarios o semanales", Icon: IconBanknote },
+const opcionesServicio: { id: Servicio; titulo: string; detalle: string; Icon: typeof IconMoto }[] = [
   { id: "CREDITO_VEHICULAR", titulo: "Moto o mototaxi", detalle: "Cuotas mensuales", Icon: IconMoto },
   { id: "CREDITO_CELULAR", titulo: "Celular", detalle: "Cuotas semanales", Icon: IconPhone },
 ];
@@ -53,16 +51,12 @@ export interface ValoresIniciales {
   servicio?: Servicio;
   producto?: string;
   inicial?: string;
-  monto?: string;
-  frecuencia?: (typeof FRECUENCIAS_PRESTAMO)[number];
 }
 
 export function FormularioCredito({ inicial = {} }: { inicial?: ValoresIniciales }) {
   const [datos, setDatos] = useState<Datos>({
-    servicio: inicial.servicio ?? "PRESTAMO_EFECTIVO",
+    servicio: inicial.servicio ?? "CREDITO_VEHICULAR",
     productoInteres: inicial.producto ?? "",
-    montoSolicitado: inicial.monto ?? "",
-    frecuenciaPago: inicial.frecuencia ?? "Semanal",
     montoInicial: inicial.inicial ?? "",
     nombres: "",
     apellidos: "",
@@ -102,7 +96,6 @@ export function FormularioCredito({ inicial = {} }: { inicial?: ValoresIniciales
   const elegirServicio = (s: Servicio) => {
     setDatos((d) => ({ ...d, servicio: s }));
     quitarError("productoInteres");
-    quitarError("montoSolicitado");
   };
 
   /** Props comunes de cada control: valor, error y atributos accesibles. */
@@ -146,12 +139,10 @@ export function FormularioCredito({ inicial = {} }: { inicial?: ValoresIniciales
     }
   };
 
-  const esPrestamo = datos.servicio === "PRESTAMO_EFECTIVO";
-
   // Respaldo: si el envío falla, el cliente puede mandar sus datos por WhatsApp y no se pierde la solicitud.
   const mensajeRespaldo = [
     `Hola, quiero solicitar: ${ETIQUETAS_SERVICIO[datos.servicio]}.`,
-    esPrestamo ? `Monto: S/ ${datos.montoSolicitado} · Pago ${datos.frecuenciaPago.toLowerCase()}` : `Producto: ${datos.productoInteres}`,
+    `Producto: ${datos.productoInteres}`,
     `Nombre: ${datos.nombres} ${datos.apellidos}`,
     `${datos.tipoDocumento}: ${datos.numeroDocumento}`,
     `Celular: ${datos.celular}`,
@@ -183,8 +174,8 @@ export function FormularioCredito({ inicial = {} }: { inicial?: ValoresIniciales
         <input id="empresa_web" tabIndex={-1} autoComplete="off" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} />
       </div>
 
-      <Seccion numero={1} titulo="¿Qué necesitas?">
-        <div className="col-span-full grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Servicio">
+      <Seccion numero={1} titulo="¿Qué quieres financiar?">
+        <div className="col-span-full grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Producto a financiar">
           {opcionesServicio.map(({ id, titulo, detalle, Icon }) => {
             const activo = datos.servicio === id;
             return (
@@ -215,36 +206,19 @@ export function FormularioCredito({ inicial = {} }: { inicial?: ValoresIniciales
           })}
         </div>
 
-        {esPrestamo ? (
-          <>
-            <Field label="¿Cuánto necesitas? (S/)" htmlFor="montoSolicitado" error={errores.montoSolicitado}>
-              <Input {...campo("montoSolicitado")} inputMode="decimal" placeholder="Ej. 1000" />
-            </Field>
-            <Field label="Frecuencia de pago preferida" htmlFor="frecuenciaPago">
-              <Select {...campo("frecuenciaPago")}>
-                {FRECUENCIAS_PRESTAMO.map((f) => (
-                  <option key={f} value={f}>{f === "Diario" ? "Diario (lunes a sábado)" : "Semanal"}</option>
-                ))}
-              </Select>
-            </Field>
-          </>
-        ) : (
-          <>
-            <Field
-              label={datos.servicio === "CREDITO_VEHICULAR" ? "Moto o mototaxi de interés" : "Celular de interés"}
-              htmlFor="productoInteres"
-              error={errores.productoInteres}
-            >
-              <Input
-                {...campo("productoInteres")}
-                placeholder={datos.servicio === "CREDITO_VEHICULAR" ? "Ej. Honda Navi" : "Ej. Samsung Galaxy A56"}
-              />
-            </Field>
-            <Field label="Cuota inicial disponible (S/)" htmlFor="montoInicial" error={errores.montoInicial} hint="Opcional. Una inicial mayor reduce tus cuotas.">
-              <Input {...campo("montoInicial")} inputMode="decimal" placeholder="Ej. 500" />
-            </Field>
-          </>
-        )}
+        <Field
+          label={datos.servicio === "CREDITO_VEHICULAR" ? "Moto o mototaxi de interés" : "Celular de interés"}
+          htmlFor="productoInteres"
+          error={errores.productoInteres}
+        >
+          <Input
+            {...campo("productoInteres")}
+            placeholder={datos.servicio === "CREDITO_VEHICULAR" ? "Ej. Honda Navi" : "Ej. Samsung Galaxy A56"}
+          />
+        </Field>
+        <Field label="Cuota inicial disponible (S/)" htmlFor="montoInicial" error={errores.montoInicial} hint="Opcional. Una inicial mayor reduce tus cuotas.">
+          <Input {...campo("montoInicial")} inputMode="decimal" placeholder="Ej. 500" />
+        </Field>
       </Seccion>
 
       <Seccion numero={2} titulo="Tus datos">
@@ -345,7 +319,7 @@ export function FormularioCredito({ inicial = {} }: { inicial?: ValoresIniciales
             className="mt-0.5 size-[18px] shrink-0 accent-brand"
           />
           <span>
-            Autorizo a Inversiones JP a tratar mis datos personales para evaluar mi solicitud y contactarme, conforme a
+            Autorizo a Inversiones JP a tratar mis datos personales para evaluar mi solicitud y contactarme (incluso por WhatsApp), conforme a
             la Ley N.° 29733 de Protección de Datos Personales y la{" "}
             <a href="/privacidad" target="_blank" className="font-semibold text-brand underline">política de privacidad</a>.
           </span>

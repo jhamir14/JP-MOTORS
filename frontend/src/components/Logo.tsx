@@ -20,7 +20,7 @@ export function Logo({ tone = "dark", className, compact = false }: { tone?: "da
       {!compact && (
         <span className="flex flex-col leading-none">
           <span className={cn("text-[1.05rem] font-extrabold tracking-tight", ink)}>Inversiones JP</span>
-          <span className={cn("mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em]", sub)}>Créditos y préstamos</span>
+          <span className={cn("mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em]", sub)}>Financiamiento</span>
         </span>
       )}
     </span>

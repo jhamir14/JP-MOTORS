@@ -142,3 +142,10 @@ describe("documentos provisionales de la migración", () => {
     expect(faltantesCliente({ ...base, numero_documento: "SINDOC7" }, [])).toContain("Número de documento válido");
   });
 });
+
+describe("RUC de la empresa", () => {
+  it("el RUC configurado es válido (dígito verificador de SUNAT)", async () => {
+    const { siteConfig } = await import("@/lib/config");
+    expect(esRucValido(siteConfig.ruc)).toBe(true);
+  });
+});
