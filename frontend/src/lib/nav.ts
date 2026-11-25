@@ -1,6 +1,7 @@
 export const mainNav = [
-  { href: "/motos", label: "Catálogo de Motos", short: "Motos" },
-  { href: "/repuestos", label: "Repuestos", short: "Repuestos" },
-  { href: "/financiamiento", label: "Financiamiento", short: "Crédito" },
-  { href: "/nosotros", label: "Nosotros", short: "Nosotros" },
+  { href: "/prestamos", label: "Préstamos" },
+  { href: "/motos", label: "Vehículos" },
+  { href: "/celulares", label: "Celulares" },
+  { href: "/repuestos", label: "Repuestos" },
+  { href: "/nosotros", label: "Nosotros" },
 ] as const;

@@ -3,8 +3,8 @@ import { cn } from "@/lib/cn";
 
 export const inputClasses = (invalid?: boolean) =>
   cn(
-    "w-full rounded-lg border bg-white/[0.03] px-3.5 py-3.5 text-fg outline-none transition-colors placeholder:text-muted/60 focus:border-accent",
-    invalid ? "border-red-400" : "border-line",
+    "w-full rounded-xl border bg-surface px-3.5 py-3 text-fg outline-none transition-colors placeholder:text-muted/60 focus:border-brand focus:ring-4 focus:ring-brand/10",
+    invalid ? "border-danger" : "border-line",
   );
 
 interface FieldProps {
@@ -20,16 +20,16 @@ interface FieldProps {
 export function Field({ label, htmlFor, error, hint, className, children }: FieldProps) {
   return (
     <div className={className}>
-      <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-bold text-muted">
+      <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-semibold text-fg">
         {label}
       </label>
       {children}
       {error ? (
-        <p id={`${htmlFor}-error`} role="alert" className="mt-1 text-xs text-red-400">
+        <p id={`${htmlFor}-error`} role="alert" className="mt-1 text-xs text-danger">
           {error}
         </p>
       ) : hint ? (
-        <p className="mt-1 text-xs">{hint}</p>
+        <p className="mt-1 text-xs text-muted">{hint}</p>
       ) : null}
     </div>
   );

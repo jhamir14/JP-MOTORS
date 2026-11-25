@@ -3,8 +3,8 @@ import { CatalogoMotos } from "./CatalogoMotos";
 import { PRECIO_MAXIMO_CATALOGO, getCategoriasConStock, motos } from "@/data/motos";
 
 export const metadata: Metadata = {
-  title: "Catálogo de motos",
-  description: "Motos Honda nuevas con precio al contado y financiamiento directo. Filtra por categoría, precio y modelo.",
+  title: "Crédito vehicular: motos y mototaxis",
+  description: "Motos Honda y mototaxis 0 km con crédito vehicular directo: inicial flexible y cuotas mensuales hasta 36 meses.",
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -16,13 +16,30 @@ export default async function MotosPage({ searchParams }: { searchParams: Search
   const precioMax = Number(first(sp.precioMax));
 
   return (
-    <main className="min-h-screen bg-bg">
-      <section className="border-b border-line-soft bg-surface py-15">
-        <div className="container">
-          <h1 className="mb-2 text-5xl font-black uppercase">
-            Catálogo de <span className="text-accent [-webkit-text-fill-color:currentColor]">motos</span>
-          </h1>
-          <p className="text-lg">Modelos Honda con entrega inmediata, al contado o con financiamiento directo.</p>
+    <main>
+      <section className="border-b border-line-soft bg-surface">
+        <div className="container grid items-center gap-8 py-12 md:grid-cols-[1.2fr_1fr] md:py-16">
+          <div>
+            <span className="eyebrow">Crédito vehicular</span>
+            <h1 className="mt-3 text-[2.2rem] md:text-[3rem]">Motos y mototaxis para trabajar</h1>
+            <p className="mt-4 max-w-xl text-lg text-muted">
+              Modelos Honda 0 km con crédito directo: inicial flexible, cuotas mensuales hasta 36 meses y sin
+              boletas de pago.
+            </p>
+          </div>
+          <dl className="grid grid-cols-3 gap-3">
+            {[
+              ["36", "meses de plazo"],
+              ["20%", "inicial sugerida"],
+              ["24 h", "respuesta"],
+            ].map(([n, t]) => (
+              <div key={t} className="rounded-2xl bg-brand-soft p-4 text-center">
+                <dt className="sr-only">{t}</dt>
+                <dd className="text-2xl font-extrabold text-brand">{n}</dd>
+                <dd className="mt-1 text-xs font-medium text-muted">{t}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 

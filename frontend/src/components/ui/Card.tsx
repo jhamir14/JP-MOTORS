@@ -5,9 +5,8 @@ export function Card({ className, interactive, ...props }: ComponentProps<"div">
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-line-soft bg-surface",
-        interactive &&
-          "transition-all duration-300 hover:-translate-y-1.5 hover:border-accent/30 hover:shadow-[0_10px_20px_rgba(0,229,255,0.1)]",
+        "relative overflow-hidden rounded-2xl border border-line-soft bg-surface shadow-card",
+        interactive && "transition-all duration-200 hover:-translate-y-1 hover:border-line hover:shadow-lift",
         className,
       )}
       {...props}

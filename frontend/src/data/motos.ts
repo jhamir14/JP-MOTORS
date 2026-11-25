@@ -97,6 +97,27 @@ export const motos: Moto[] = [
     },
     galeria: GALERIA_GENERICA,
   },
+  {
+    id: 5,
+    nombre: "Motokar GL150",
+    marca: "Honda",
+    categoria: "Trimóvil",
+    cc: 150,
+    peso: "—",
+    precio: 14700,
+    precioUsd: 3868,
+    imagen: "/motos/nl150.webp",
+    descripcion:
+      "El clásico motokar de pasajeros para trabajar en provincia y selva: motor Honda de 150 cc confiable y carreta techada lista para el servicio.",
+    destacado: true,
+    specs: {
+      Uso: "Transporte de pasajeros",
+      Motor: "150 cc, 4 tiempos",
+      Condición: "0 km",
+      Garantía: "De fábrica Honda",
+    },
+    galeria: [], // sin fotos propias todavía
+  },
 ];
 
 export const getMotoById = (id: number) => motos.find((m) => m.id === id);

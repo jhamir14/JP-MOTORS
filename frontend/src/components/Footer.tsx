@@ -1,102 +1,101 @@
-import Image from "next/image";
 import Link from "next/link";
-import { IconCheck, IconFacebook, IconInstagram, IconYoutube } from "@/components/icons";
+import { IconFacebook, IconInstagram, IconMapPin, IconWhatsApp, IconClock } from "@/components/icons";
+import { Logo } from "@/components/Logo";
 import { siteConfig } from "@/lib/config";
+import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
 
-const explorar = [
-  { href: "/motos", label: "Catálogo de Motos" },
-  { href: "/repuestos", label: "Tienda de Repuestos" },
-  { href: "/financiamiento", label: "Créditos y Financiamiento" },
-  { href: "/nosotros", label: "Nosotros" },
+const columnas = [
+  {
+    titulo: "Servicios",
+    links: [
+      { href: "/prestamos", label: "Préstamos en efectivo" },
+      { href: "/motos", label: "Crédito vehicular" },
+      { href: "/celulares", label: "Celulares a crédito" },
+      { href: "/repuestos", label: "Repuestos y accesorios" },
+    ],
+  },
+  {
+    titulo: "Empresa",
+    links: [
+      { href: "/nosotros", label: "Quiénes somos" },
+      { href: "/financiamiento", label: "Solicitar evaluación" },
+      { href: "/nosotros#preguntas", label: "Preguntas frecuentes" },
+    ],
+  },
 ];
 
 // Páginas legales: se implementan en la Fase 2 (Libro de Reclamaciones es obligatorio antes del go-live).
-const soporte = ["Políticas de Privacidad", "Términos y Condiciones", "Libro de Reclamaciones", "Talleres Autorizados"];
-
-const redes = [
-  { label: "Facebook", Icon: IconFacebook },
-  { label: "YouTube", Icon: IconYoutube },
-  { label: "Instagram", Icon: IconInstagram },
-];
-
-const colTitle = "mb-3 text-[0.85rem] font-extrabold uppercase tracking-[1px] text-white md:mb-6";
+const legales = ["Políticas de privacidad", "Términos y condiciones", "Libro de Reclamaciones"];
 
 export default function Footer() {
   return (
-    <footer className="border-t border-line-soft bg-surface pt-10 pb-8 md:pt-20 md:pb-15">
-      <div className="container">
-        <div className="mb-15 hidden flex-wrap justify-center gap-8 border-b border-line-soft pb-10 text-[0.85rem] font-bold uppercase md:flex">
-          {["Fácil y rápido", "100% confiable", "Crédito directo sin bancos"].map((t) => (
-            <span key={t} className="flex items-center gap-2">
-              <IconCheck size={16} className="text-accent" /> {t}
-            </span>
-          ))}
+    <footer className="bg-brand-ink text-white/75">
+      <div className="container grid gap-10 py-14 md:grid-cols-[1.4fr_1fr_1fr_1.2fr] md:py-16">
+        <div>
+          <Logo tone="light" />
+          <p className="mt-5 max-w-xs text-sm">
+            Financiamos el trabajo y los proyectos de emprendedores peruanos: préstamos en efectivo, vehículos y
+            celulares en cuotas a tu medida.
+          </p>
+          <div className="mt-6 flex gap-3">
+            {[
+              { label: "Facebook", Icon: IconFacebook },
+              { label: "Instagram", Icon: IconInstagram },
+            ].map(({ label, Icon }) => (
+              <span key={label} title={`${label} (próximamente)`} className="flex size-9 items-center justify-center rounded-lg bg-white/10">
+                <Icon size={18} />
+                <span className="sr-only">{label}</span>
+              </span>
+            ))}
+          </div>
         </div>
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6 md:gap-12">
-          <div className="flex flex-col items-start">
-            <Image
-              src="/logo-jp.webp"
-              alt={`${siteConfig.name} logo`}
-              width={480}
-              height={465}
-              className="mb-5 h-[60px] w-auto"
-            />
-            <p className="mb-6 hidden text-[0.85rem] md:block">
-              Motos Honda, repuestos originales y créditos directos con cuotas a tu medida en todo el Perú.
-            </p>
-            <div className="flex gap-4">
-              {redes.map(({ label, Icon }) => (
-                <span key={label} title={`${label} (próximamente)`} className="text-white/70">
-                  <Icon size={20} />
-                  <span className="sr-only">{label}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h4 className={colTitle}>Explorar</h4>
-            <ul className="flex list-none flex-col gap-2 text-[0.85rem] text-muted md:gap-4">
-              {explorar.map((l) => (
-                <li key={l.href}>
-                  <Link href={l.href} className="transition-colors hover:text-white">
-                    {l.label}
-                  </Link>
+        {columnas.map((col) => (
+          <div key={col.titulo}>
+            <h2 className="mb-4 text-sm font-bold text-white">{col.titulo}</h2>
+            <ul className="flex flex-col gap-2.5 text-sm">
+              {col.links.map((l) => (
+                <li key={l.label}>
+                  <Link href={l.href} className="transition-colors hover:text-white">{l.label}</Link>
                 </li>
               ))}
             </ul>
           </div>
+        ))}
 
-          <div>
-            <h4 className={colTitle}>Soporte</h4>
-            <ul className="flex list-none flex-col gap-2 text-[0.85rem] text-muted md:gap-4">
-              {soporte.map((label) => (
-                <li key={label} title="Próximamente">{label}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className={colTitle}>Contacto</h4>
-            <address className="text-[0.85rem] leading-relaxed not-italic text-muted">
-              <strong>{siteConfig.address.name}</strong>
-              <br />
-              {siteConfig.address.lines.map((l) => (
-                <span key={l}>
-                  {l}
-                  <br />
-                </span>
-              ))}
-              Referencia: {siteConfig.address.reference}
-            </address>
-          </div>
+        <div>
+          <h2 className="mb-4 text-sm font-bold text-white">Contacto</h2>
+          <ul className="flex flex-col gap-3 text-sm">
+            <li className="flex gap-2.5">
+              <IconWhatsApp size={18} className="mt-0.5 shrink-0 text-[#7ff0c4]" />
+              <a href={whatsappLink(whatsappMessages.general())} target="_blank" rel="noopener noreferrer" className="hover:text-white">
+                +51 {siteConfig.telefonoVisible}
+              </a>
+            </li>
+            <li className="flex gap-2.5">
+              <IconClock size={18} className="mt-0.5 shrink-0 text-[#7ff0c4]" />
+              {siteConfig.horario}
+            </li>
+            <li className="flex gap-2.5">
+              <IconMapPin size={18} className="mt-0.5 shrink-0 text-[#7ff0c4]" />
+              <span>
+                {siteConfig.address.lines.join(" ")}
+                <br />
+                <span className="text-white/55">{siteConfig.address.reference}</span>
+              </span>
+            </li>
+          </ul>
         </div>
+      </div>
 
-        <div className="mt-15 flex justify-center border-t border-line-soft pt-6 pb-5 text-xs text-muted">
-          <span>
-            © {siteConfig.legalName} {new Date().getFullYear()}. Todos los derechos reservados.
-          </span>
+      <div className="border-t border-white/10">
+        <div className="container flex flex-col gap-3 py-6 text-xs text-white/55 md:flex-row md:items-center md:justify-between">
+          <span>© {new Date().getFullYear()} {siteConfig.legalName}. Todos los derechos reservados.</span>
+          <ul className="flex flex-wrap gap-x-5 gap-y-1">
+            {legales.map((l) => (
+              <li key={l} title="Próximamente">{l}</li>
+            ))}
+          </ul>
         </div>
       </div>
     </footer>

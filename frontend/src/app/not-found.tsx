@@ -2,10 +2,14 @@ import { ButtonLink } from "@/components/ui";
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-[70vh] flex-col items-center justify-center px-5 text-center">
-      <h1 className="text-5xl text-accent [-webkit-text-fill-color:currentColor]">404</h1>
-      <p className="mt-4 text-xl">No encontramos la página que buscas.</p>
-      <ButtonLink href="/motos" className="mt-8">Ver catálogo de motos</ButtonLink>
+    <main className="flex min-h-[60vh] flex-col items-center justify-center px-5 text-center">
+      <span className="eyebrow">Error 404</span>
+      <h1 className="mt-3 text-[2.4rem]">No encontramos esta página</h1>
+      <p className="mt-3 text-muted">Puede que el enlace haya cambiado. Te ayudamos a encontrar lo que buscas.</p>
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <ButtonLink href="/">Ir al inicio</ButtonLink>
+        <ButtonLink href="/financiamiento" variant="outline">Solicitar crédito</ButtonLink>
+      </div>
     </main>
   );
 }

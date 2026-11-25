@@ -8,9 +8,9 @@ export default function WhatsAppFloat() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Escríbenos por WhatsApp"
-      className="fixed right-5 bottom-20 z-[1000] flex size-[60px] items-center justify-center rounded-full bg-whatsapp text-white shadow-[0_4px_12px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 md:right-8 md:bottom-8"
+      className="fixed right-5 bottom-24 z-[999] flex size-14 items-center justify-center rounded-full bg-whatsapp text-white shadow-[0_8px_20px_rgba(31,168,85,0.35)] transition-transform hover:scale-105 md:right-8 md:bottom-8"
     >
-      <IconWhatsApp size={32} />
+      <IconWhatsApp size={28} />
     </a>
   );
 }

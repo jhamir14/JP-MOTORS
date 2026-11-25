@@ -9,9 +9,16 @@ export const TIPOS_DOCUMENTO = ["DNI", "CE", "Pasaporte"] as const;
 export const ESTADOS_CIVILES = ["Soltero(a)", "Casado(a)", "Conviviente", "Divorciado(a)", "Viudo(a)"] as const;
 export const NIVELES_EDUCACION = ["Primaria", "Secundaria", "Técnico", "Universitario"] as const;
 export const PREFERENCIAS_CONTACTO = ["WhatsApp", "Llamada", "Correo"] as const;
-export const MARCAS_MOTO = ["Honda", "Yamaha", "Bajaj", "Otra"] as const;
-export const USOS_MOTO = ["Trabajo", "Urbano", "Paseo"] as const;
-export const SITUACIONES_LABORALES = ["Dependiente", "Independiente", "Informal"] as const;
+/** Mismos códigos que el enum `servicio_solicitud` de la base de datos. */
+export const SERVICIOS = ["PRESTAMO_EFECTIVO", "CREDITO_VEHICULAR", "CREDITO_CELULAR"] as const;
+export type Servicio = (typeof SERVICIOS)[number];
+export const ETIQUETAS_SERVICIO: Record<Servicio, string> = {
+  PRESTAMO_EFECTIVO: "Préstamo en efectivo",
+  CREDITO_VEHICULAR: "Crédito vehicular (moto o mototaxi)",
+  CREDITO_CELULAR: "Celular a crédito",
+};
+export const FRECUENCIAS_PRESTAMO = ["Diario", "Semanal"] as const;
+export const SITUACIONES_LABORALES = ["Independiente", "Comerciante", "Transportista", "Dependiente"] as const;
 
 const texto = (campo: string, max = 60) =>
   z.string().trim().min(2, `Ingresa ${campo}`).max(max, `${campo} es demasiado largo`);
@@ -24,6 +31,13 @@ const montoSoles = (campo: string, min: number) =>
     .refine((v) => /^\d+(\.\d{1,2})?$/.test(v), "Usa solo números (ej. 1500 o 1500.50)")
     .refine((v) => Number(v) >= min, min > 0 ? `Debe ser mayor a S/ ${min - 1}` : "No puede ser negativo")
     .refine((v) => Number(v) <= 1_000_000, "Monto fuera de rango");
+
+/** Monto que puede quedar vacío (se valida solo si se llena). */
+const montoOpcional = z
+  .string()
+  .trim()
+  .refine((v) => v === "" || /^\d+(\.\d{1,2})?$/.test(v), "Usa solo números (ej. 1500 o 1500.50)")
+  .refine((v) => v === "" || Number(v) <= 1_000_000, "Monto fuera de rango");
 
 const edad = (fechaIso: string, hoy = new Date()) => {
   const f = new Date(`${fechaIso}T00:00:00`);
@@ -58,14 +72,15 @@ export const solicitudCreditoSchema = z
     departamento: texto("el departamento", 40),
     provincia: texto("la provincia", 40),
     distrito: texto("el distrito", 60),
-    // 3. Vehículo
-    marcaMoto: z.enum(MARCAS_MOTO),
-    modeloMoto: texto("el modelo", 60),
-    usoMoto: z.enum(USOS_MOTO),
-    // 4. Crédito
+    // 3. Servicio solicitado
+    servicio: z.enum(SERVICIOS),
+    productoInteres: z.string().trim().max(80, "Máximo 80 caracteres"),
+    montoSolicitado: montoOpcional,
+    frecuenciaPago: z.enum(FRECUENCIAS_PRESTAMO),
+    montoInicial: montoOpcional,
+    // 4. Perfil
     situacionLaboral: z.enum(SITUACIONES_LABORALES),
     ingresoMensual: montoSoles("tu ingreso mensual", 1),
-    montoInicial: montoSoles("el monto inicial", 0),
     // Consentimiento (Ley 29733 de Protección de Datos Personales)
     aceptaDatos: z.literal(true, { errorMap: () => ({ message: "Debes autorizar el tratamiento de tus datos" }) }),
   })
@@ -77,6 +92,21 @@ export const solicitudCreditoSchema = z
     };
     const [re, msg] = reglas[d.tipoDocumento];
     if (!re.test(d.numeroDocumento)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["numeroDocumento"], message: msg });
+
+    if (d.servicio === "PRESTAMO_EFECTIVO") {
+      const monto = Number(d.montoSolicitado);
+      if (d.montoSolicitado === "") {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["montoSolicitado"], message: "Indica cuánto necesitas" });
+      } else if (monto < 100) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["montoSolicitado"], message: "El monto mínimo es S/ 100" });
+      }
+    } else if (d.productoInteres.length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["productoInteres"],
+        message: d.servicio === "CREDITO_VEHICULAR" ? "Indica el modelo de moto o mototaxi" : "Indica el modelo de celular",
+      });
+    }
   });
 
 export type SolicitudCreditoInput = z.input<typeof solicitudCreditoSchema>;

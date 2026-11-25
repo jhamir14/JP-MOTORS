@@ -15,9 +15,10 @@ const valida = {
   departamento: "Lima",
   provincia: "Lima",
   distrito: "San Juan de Lurigancho",
-  marcaMoto: "Honda",
-  modeloMoto: "Navi",
-  usoMoto: "Trabajo",
+  servicio: "CREDITO_VEHICULAR",
+  productoInteres: "Honda Navi",
+  montoSolicitado: "",
+  frecuenciaPago: "Semanal",
   situacionLaboral: "Independiente",
   ingresoMensual: "1800",
   montoInicial: "500",
@@ -69,6 +70,19 @@ describe("solicitudCreditoSchema", () => {
     expect(errores({ ingresoMensual: "mil" }).ingresoMensual).toBeDefined();
     expect(errores({ ingresoMensual: "0" }).ingresoMensual).toBeDefined();
     expect(errores({ montoInicial: "0" })).toEqual({});
+  });
+
+  it("en préstamos exige el monto y no el producto", () => {
+    const prestamo = { servicio: "PRESTAMO_EFECTIVO", productoInteres: "", montoInicial: "" };
+    expect(errores({ ...prestamo, montoSolicitado: "" }).montoSolicitado).toBeDefined();
+    expect(errores({ ...prestamo, montoSolicitado: "50" }).montoSolicitado).toMatch(/100/);
+    expect(errores({ ...prestamo, montoSolicitado: "800" })).toEqual({});
+  });
+
+  it("en vehículos y celulares exige el producto de interés", () => {
+    expect(errores({ productoInteres: "" }).productoInteres).toMatch(/moto/);
+    expect(errores({ servicio: "CREDITO_CELULAR", productoInteres: "" }).productoInteres).toMatch(/celular/);
+    expect(errores({ montoInicial: "" })).toEqual({});
   });
 
   it("exige el consentimiento de datos personales", () => {
