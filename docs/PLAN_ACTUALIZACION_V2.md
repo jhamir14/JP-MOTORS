@@ -234,26 +234,18 @@ Objetivo: la web actual queda correcta y lista para crecer, **sin cambiar aún d
 
 ---
 
-## 5. Siguiente paso: Fase 8 — Dashboard y reportes
+## 5. Estado: fases 0 a 9 implementadas (2026-11-26)
 
-Fases 0 a 7 terminadas (2026-11-25). **Fase 7** (ver [`FASE_7_SCORING.md`](FASE_7_SCORING.md)): score explicable con historial, beneficios
-para el siguiente financiamiento y alertas de riesgo. Migración `20261202000100_fase7_scoring.sql`.
+**Fase 8** ([`FASE_8_REPORTES.md`](FASE_8_REPORTES.md)): indicadores en el inicio (cartera vigente y en mora, cobrado hoy/mes, colocado,
+intereses ganados vs. pactados, mora por tramo, clientes por score) y `/admin/reportes` (colocaciones, cobranzas, mora, cancelados) con filtros
+por fecha, tipo, asesor y sucursal y exportación a Excel/CSV auditada. Migración `20261203000100_fase8_reportes.sql`.
 
-**Ya resuelto (no repetir):** todo lo anterior + `lib/scoring.ts` (`calcularScore`, `explicarScore`, `metricasDesdeHistorial`, `evaluarCliente`,
-`aplicarBeneficio`, con tests), `lib/server/scoring.ts` (`perfilScore`, `perfilParaCredito`, `configBeneficios`), `components/admin/ScoreCliente.tsx`,
-`cliente_score`, `score_historial`, `configuracion.beneficios_score` y `credito.beneficio_score`.
+**Fase 9** ([`FASE_9_PRODUCCION.md`](FASE_9_PRODUCCION.md)): matriz de permisos por rol, rate-limit compartido en PostgreSQL, registro de errores
+sin datos personales y `/admin/sistema`, cabeceras de seguridad, script de respaldo, checklist de salida a producción y
+[`MANUAL_DEL_PANEL.md`](MANUAL_DEL_PANEL.md) para capacitar al personal. Migración `20261204000100_fase9_endurecimiento.sql`.
 
-**Datos que ya existen para el dashboard:** vistas `v_cobranza` (cuotas por cobrar con tramo de mora) y `v_resumen_cartera` (por tipo: activos, en mora,
-finalizados, colocado, intereses pactados, saldo por cobrar); `pago` + `aplicacion_pago` (mora / interés / capital cobrados por fecha y cajero);
-`cierre_caja`; `credito.creado_por` (asesor), `sucursal_id`; `cliente_score` (distribución de score).
+**Para terminar la salida a producción** (ver la checklist de la Fase 9): aplicar las migraciones 8 y 9 en Railway, dominio definitivo y
+`NEXT_PUBLIC_SITE_URL`, monitoreo de `/api/salud`, validación legal, registro ANPDP, carga del inventario real y capacitación.
 
-**Alcance de la Fase 8:**
-1. `/admin` (inicio) con KPIs: cartera vigente y en mora, colocado del mes, cobrado hoy y en el mes, % de mora por tramo, intereses ganados
-   (cobrados) vs. pactados, distribución de clientes por score.
-2. Reportes con filtros por fecha, tipo de crédito, asesor y sucursal: colocaciones, cobranzas, mora por tramo, créditos cancelados.
-3. Exportación a Excel (CSV o .xlsx generado en el servidor) con auditoría de la descarga.
-4. Consultas agregadas en SQL (vistas o funciones) con tests de las fórmulas en TypeScript.
-
-**Pendientes del negocio:** validar las reglas del score y los porcentajes de los beneficios; validación legal de los textos de la Fase 6;
-representante legal y domicilio en `/admin/tasas`; si la mora debe contar solo días hábiles o tener tope; si se permite condonar mora;
-fotos reales de celulares y del Torito Bajaj; qué KPIs y reportes necesita ver la gerencia primero.
+**Pendientes del negocio:** validar reglas del score y beneficios; textos legales de la Fase 6; representante legal y domicilio; mora en días
+hábiles o con tope; condonación de mora; fotos reales; KPIs prioritarios y metas mensuales para la gerencia.

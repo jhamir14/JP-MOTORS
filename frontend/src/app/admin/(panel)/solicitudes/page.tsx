@@ -4,7 +4,7 @@ import { CampoArea, CampoSelect, Encabezado, Estado, Vacio, fechaCorta } from "@
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
 import { whatsappLink } from "@/lib/whatsapp";
-import { requerirSesion } from "@/lib/server/auth";
+import { requerirSeccion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { ESTADOS_SOLICITUD } from "@/lib/admin/constantes";
 import { puedeEditarKyc } from "@/lib/clientes";
@@ -28,7 +28,7 @@ interface Fila {
 }
 
 export default async function SolicitudesPage({ searchParams }: { searchParams: Promise<{ estado?: string }> }) {
-  const sesion = await requerirSesion();
+  const sesion = await requerirSeccion("solicitudes");
   const convierte = puedeEditarKyc(sesion.rol);
   const { estado } = await searchParams;
   const filtro = (ESTADOS_SOLICITUD as readonly string[]).includes(estado ?? "") ? estado! : null;

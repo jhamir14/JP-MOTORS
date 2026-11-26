@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ETIQUETAS_SERVICIO, erroresPorCampo, solicitudCreditoSchema, type SolicitudCredito } from "@/schemas/solicitudCredito";
 import { siteConfig } from "@/lib/config";
 import { dbConfigurada, sql } from "@/lib/server/db";
+import { ipDe, permitirIntentoCompartido } from "@/lib/server/limite";
 
 /**
  * Recibe la solicitud de la web, la valida en el servidor y:
@@ -81,6 +82,10 @@ async function enviarCorreo(d: SolicitudCredito, leadsEmail: string) {
 }
 
 export async function POST(request: Request) {
+  // Fase 9: máximo 5 solicitudes por IP cada hora (compartido entre instancias).
+  if (!(await permitirIntentoCompartido(`solicitud:${ipDe(request.headers)}`, 5, 60 * 60 * 1000))) {
+    return NextResponse.json({ ok: false, error: "Demasiadas solicitudes seguidas. Inténtalo más tarde o escríbenos por WhatsApp." }, { status: 429 });
+  }
   let body: unknown;
   try {
     body = await request.json();

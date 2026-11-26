@@ -3,7 +3,7 @@ import { CampoArea, CampoSelect, Encabezado, Estado, Vacio, fechaCorta } from "@
 import { Badge } from "@/components/ui";
 import { ESTADOS_RECLAMO, opcionesLegibles } from "@/lib/admin/constantes";
 import { formatSoles } from "@/lib/format";
-import { puede, requerirSesion } from "@/lib/server/auth";
+import { puede, requerirSeccion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { atenderReclamo } from "./actions";
 
@@ -18,7 +18,7 @@ interface Reclamo {
 
 /** Plazo legal: 15 días hábiles (lunes a viernes) desde el registro. */
 export default async function ReclamosPage() {
-  const sesion = await requerirSesion();
+  const sesion = await requerirSeccion("reclamos");
   const editable = puede(sesion, "SUPERADMIN", "ADMIN_CREDITOS");
   const reclamos = await sql()<Reclamo[]>`
     select r.*, r.email::text as email, r.bien_monto::float8 as bien_monto,

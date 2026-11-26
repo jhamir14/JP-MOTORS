@@ -1,8 +1,11 @@
 import Link from "next/link";
-import { Encabezado, Panel, Estado, fechaCorta } from "@/components/admin/ui";
+import { Barra, Encabezado, Estado, Kpi, Panel, fechaCorta } from "@/components/admin/ui";
 import { formatSoles } from "@/lib/format";
+import { puedeVerSeccion } from "@/lib/permisos";
+import { ETIQUETA_TRAMO, TRAMOS_MORA, distribucionScore, indicadores, porcentaje } from "@/lib/reportes";
 import { requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
+import { AVISO_MIGRACION, distribucionScoreClientes, kpis as leerKpis, moraPorTramoHoy, reportesDisponibles } from "@/lib/server/reportes";
 
 export const metadata = { title: "Inicio" };
 
@@ -35,6 +38,14 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
       from public.solicitud_credito order by created_at desc limit 5`,
   ]);
 
+  // Fase 8: indicadores financieros (solo quienes ven Reportes).
+  const verFinanzas = puedeVerSeccion(sesion.rol, "reportes");
+  const faltaMigracion = verFinanzas && !(await reportesDisponibles(db));
+  const [kpi, tramos, scores] = verFinanzas && !faltaMigracion
+    ? await Promise.all([leerKpis(db), moraPorTramoHoy(db), distribucionScoreClientes(db)])
+    : [null, [], []];
+  const k = kpi ? indicadores(kpi) : null;
+
   const tarjetas = [
     { titulo: "Solicitudes nuevas", valor: kpis.solicitudes_nuevas, href: "/admin/solicitudes?estado=NUEVA" },
     { titulo: "Cuotas que vencen hoy", valor: kpis.cuotas_hoy, href: "/admin/cobranzas?ver=hoy" },
@@ -66,6 +77,63 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
           </Link>
         ))}
       </nav>
+
+      {faltaMigracion && (
+        <p role="status" className="mb-6 rounded-xl bg-gold-soft px-4 py-3 text-sm">{AVISO_MIGRACION}</p>
+      )}
+      {k && (
+        <section aria-labelledby="kpi-titulo" className="mb-6">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <h2 id="kpi-titulo" className="text-lg">Indicadores</h2>
+            <Link href="/admin/reportes" className="text-sm font-semibold text-brand">Ver reportes →</Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Kpi titulo="Cartera vigente" valor={formatSoles(k.cartera_vigente)} detalle={`${k.creditos_activos} créditos activos`} href="/admin/creditos" />
+            <Kpi titulo="Cartera en mora" valor={formatSoles(k.saldo_vencido)} tono={k.saldo_vencido ? "danger" : undefined}
+              detalle={`${k.porcentajeMoraCartera} % de la cartera · ${k.creditos_en_mora} créditos (${k.porcentajeCreditosEnMora} %)`} href="/admin/reportes?ver=mora" />
+            <Kpi titulo="Cobrado hoy" valor={formatSoles(k.cobrado_hoy, true)} detalle={`${k.pagos_hoy} pagos`} href="/admin/pagos" />
+            <Kpi titulo="Cobrado en el mes" valor={formatSoles(k.cobrado_mes)} detalle={`Capital ${formatSoles(k.capital_cobrado_mes)}`} href="/admin/reportes?ver=cobranzas" />
+            <Kpi titulo="Colocado en el mes" valor={formatSoles(k.colocado_mes)} detalle={`${k.creditos_mes} ${k.creditos_mes === 1 ? "crédito nuevo" : "créditos nuevos"}`} href="/admin/reportes?ver=colocaciones" />
+            <Kpi titulo="Intereses ganados (mes)" valor={formatSoles(k.ingresosMes)} tono="accent" detalle={`Interés ${formatSoles(k.interes_cobrado_mes)} · mora ${formatSoles(k.mora_cobrada_mes)}`} />
+            <Kpi titulo="Intereses cobrados vs. pactados" valor={`${k.porcentajeInteresCobrado} %`}
+              detalle={`${formatSoles(k.intereses_cobrados_activos)} de ${formatSoles(k.intereses_pactados_activos)} (créditos activos)`} />
+            <Kpi titulo="Capital por cobrar" valor={formatSoles(k.capital_pendiente)} detalle="Sin intereses ni mora" />
+          </div>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <Panel titulo="Mora por tramo">
+              <ul className="grid gap-3 text-sm">
+                {TRAMOS_MORA.map((t) => {
+                  const f = tramos.find((x) => x.tramo === t);
+                  return (
+                    <li key={t}>
+                      <div className="mb-1 flex justify-between gap-2">
+                        <span className="font-medium">{ETIQUETA_TRAMO[t]}</span>
+                        <span className="tabular">{f?.creditos ?? 0} · {formatSoles(f?.saldo ?? 0)} · {porcentaje(f?.saldo ?? 0, k.cartera_vigente)} %</span>
+                      </div>
+                      <Barra porcentaje={k.saldo_vencido ? ((f?.saldo ?? 0) / k.saldo_vencido) * 100 : 0} tono={t === "MORA_MAS_30" ? "danger" : t === "MORA_1_7" ? "gold" : "brand"} />
+                    </li>
+                  );
+                })}
+              </ul>
+            </Panel>
+            <Panel titulo="Clientes por score">
+              <ul className="grid gap-3 text-sm">
+                {distribucionScore(scores).map((d) => (
+                  <li key={String(d.score)}>
+                    <div className="mb-1 flex justify-between gap-2">
+                      <Link href={`/admin/clientes?score=${d.score ?? "sin"}`} className="font-medium hover:text-brand">
+                        {d.score ? `${"★".repeat(d.score)}${"☆".repeat(5 - d.score)} ${d.score}` : "Sin historial"}
+                      </Link>
+                      <span className="tabular">{d.clientes} · {d.porcentaje} %</span>
+                    </div>
+                    <Barra porcentaje={d.porcentaje} tono={d.score === null ? "brand" : d.score >= 4 ? "accent" : d.score <= 2 ? "danger" : "gold"} />
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          </div>
+        </section>
+      )}
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         {tarjetas.map((t) => {
@@ -101,7 +169,6 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-xs text-muted">El módulo de créditos y cobranzas llega en las Fases 4 y 5.</p>
         </Panel>
 
         <Panel titulo="Últimas solicitudes" acciones={<Link href="/admin/solicitudes" className="text-sm font-semibold text-brand">Ver todas</Link>}>

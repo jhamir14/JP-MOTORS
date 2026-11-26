@@ -13,7 +13,7 @@ import {
 } from "@/lib/admin/constantes";
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
-import { puede, requerirSesion } from "@/lib/server/auth";
+import { puede, requerirSeccion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { cambiarEstadoUnidad, ingresarCelular, ingresarVehiculo } from "./actions";
 
@@ -43,7 +43,7 @@ function FormEstado({ id, tipo, estado }: { id: string; tipo: "vehiculo" | "celu
 }
 
 export default async function InventarioPage({ searchParams }: { searchParams: Promise<{ tipo?: string; producto?: string; estado?: string }> }) {
-  const sesion = await requerirSesion();
+  const sesion = await requerirSeccion("inventario");
   const sp = await searchParams;
   const tipo = sp.tipo === "celulares" ? "celulares" : "vehiculos";
   const producto = /^[0-9a-f-]{36}$/.test(sp.producto ?? "") ? sp.producto! : null;

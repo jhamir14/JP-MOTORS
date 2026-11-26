@@ -9,7 +9,30 @@ const motosLegado: Record<string, string> = {
   "5": "honda-motokar-gl150",
 };
 
+/**
+ * Fase 9 · Cabeceras de seguridad para todo el sitio. No se usa una CSP completa porque Google Tag Manager /
+ * GA4 inyectan scripts de terceros; se limita al menos quién puede incrustar la web (anti-clickjacking).
+ * La geolocalización y la cámara quedan solo para el propio sitio (GPS del domicilio y fotos KYC en el panel).
+ */
+const cabecerasSeguridad = [
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "Content-Security-Policy", value: "frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://formsubmit.co; object-src 'none'" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(self), payment=(), usb=(), interest-cohort=()" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+];
+
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  async headers() {
+    return [
+      { source: "/:path*", headers: cabecerasSeguridad },
+      // El panel y las APIs privadas nunca se incrustan ni se indexan.
+      { source: "/admin/:path*", headers: [{ key: "X-Frame-Options", value: "DENY" }, { key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+    ];
+  },
   images: {
     formats: ["image/avif", "image/webp"],
   },

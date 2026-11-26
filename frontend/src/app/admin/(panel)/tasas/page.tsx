@@ -5,7 +5,7 @@ import { ETIQUETA_SERVICIO, SERVICIOS_CREDITO, SERVICIOS_FINANCIAMIENTO } from "
 import { feriadosNacionales } from "@/lib/calendario";
 import { CATEGORIAS, ETIQUETA_CATEGORIA, type CategoriaProducto } from "@/lib/catalogo";
 import { ETIQUETA_FRECUENCIA, FRECUENCIAS, PERIODOS_POR_ANIO, calcularCredito, type Frecuencia, type TipoCalculo } from "@/lib/finance";
-import { puede, requerirSesion } from "@/lib/server/auth";
+import { puede, requerirSeccion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { datosEmpresa } from "@/lib/server/documentos";
 import { describirBeneficio } from "@/lib/scoring";
@@ -65,7 +65,7 @@ function FormTasa({ tasa }: { tasa?: Tasa }) {
 }
 
 export default async function TasasPage() {
-  const sesion = await requerirSesion();
+  const sesion = await requerirSeccion("tasas");
   const editable = puede(sesion, "SUPERADMIN", "ADMIN_CREDITOS");
   const db = sql();
   const [tasas, [conf], [fer], empresa, beneficios] = await Promise.all([
