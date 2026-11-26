@@ -46,7 +46,7 @@ const altaSchema = z.object({
   fechaDesembolso: z.string().trim(),
   primerVencimiento: z.string().trim(),
   notas: z.string().trim().max(1000, "Máximo 1000 caracteres").transform((v) => v || null),
-  confirmo: z.literal("on", { errorMap: () => ({ message: "Confirma que revisaste el cronograma con el cliente" }) }),
+  confirmo: z.literal("on", { error: "Confirma que revisaste el cronograma con el cliente" }),
   beneficio: z.enum(["", "1"]).default(""),
   confirmoRiesgo: z.string().optional(),
 });
@@ -206,7 +206,7 @@ const prestamoSchema = z.object({
   fechaDesembolso: z.string().trim(),
   primerVencimiento: z.string().trim(),
   notas: z.string().trim().max(1000, "Máximo 1000 caracteres").transform((v) => v || null),
-  confirmo: z.literal("on", { errorMap: () => ({ message: "Confirma que revisaste el cronograma con el cliente" }) }),
+  confirmo: z.literal("on", { error: "Confirma que revisaste el cronograma con el cliente" }),
   confirmoRiesgo: z.string().optional(),
 });
 

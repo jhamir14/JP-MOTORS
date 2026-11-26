@@ -81,7 +81,7 @@ export const solicitudCreditoSchema = z
     situacionLaboral: z.enum(SITUACIONES_LABORALES),
     ingresoMensual: montoSoles("tu ingreso mensual", 1),
     // Consentimiento (Ley 29733 de Protección de Datos Personales)
-    aceptaDatos: z.literal(true, { errorMap: () => ({ message: "Debes autorizar el tratamiento de tus datos" }) }),
+    aceptaDatos: z.literal(true, { error: "Debes autorizar el tratamiento de tus datos" }),
   })
   .superRefine((d, ctx) => {
     const reglas: Record<(typeof TIPOS_DOCUMENTO)[number], [RegExp, string]> = {

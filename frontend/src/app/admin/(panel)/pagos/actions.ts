@@ -49,7 +49,7 @@ const pagoSchema = z.object({
     .trim()
     .refine((v) => /^\d+(\.\d{1,2})?$/.test(v), "Usa solo números con hasta 2 decimales (ej. 150.50)")
     .transform(Number),
-  metodo: z.enum(METODOS_PAGO, { errorMap: () => ({ message: "Elige el método de pago" }) }),
+  metodo: z.enum(METODOS_PAGO, { error: "Elige el método de pago" }),
   numeroOperacion: z.string().trim().max(60, "Máximo 60 caracteres").transform((v) => v || null),
   notas: z.string().trim().max(500, "Máximo 500 caracteres").transform((v) => v || null),
 });

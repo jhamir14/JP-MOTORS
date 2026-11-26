@@ -181,7 +181,7 @@ export const cotizacionSchema = z.object({
     .toLowerCase()
     .max(120, "El correo es demasiado largo")
     .refine((v) => v === "" || z.string().email().safeParse(v).success, "Revisa el correo"),
-  aceptaDatos: z.literal(true, { errorMap: () => ({ message: "Marca la casilla para poder contactarte" }) }),
+  aceptaDatos: z.literal(true, { error: "Marca la casilla para poder contactarte" }),
 });
 
 export type CotizacionInput = z.input<typeof cotizacionSchema>;

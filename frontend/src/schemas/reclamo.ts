@@ -35,7 +35,7 @@ export const reclamoSchema = z
     bienDescripcion: texto("qué producto o servicio contrataste", 3, 300),
     detalle: texto("el detalle", 10, 3000),
     pedido: texto("tu pedido", 5, 1500),
-    aceptaDatos: z.literal(true, { errorMap: () => ({ message: "Debes autorizar el tratamiento de tus datos para registrar el reclamo" }) }),
+    aceptaDatos: z.literal(true, { error: "Debes autorizar el tratamiento de tus datos para registrar el reclamo" }),
   })
   .superRefine((d, ctx) => {
     const reglas: Record<(typeof TIPOS_DOC_RECLAMO)[number], [RegExp, string]> = {
