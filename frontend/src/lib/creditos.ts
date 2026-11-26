@@ -10,6 +10,9 @@ import { calcularCredito, cronograma, FRECUENCIAS, PERIODOS_POR_ANIO, TIPOS_CALC
 
 export const TIPOS_CREDITO_NUEVO = ["CREDITO_VEHICULAR", "CREDITO_CELULAR"] as const;
 export type TipoCreditoNuevo = (typeof TIPOS_CREDITO_NUEVO)[number];
+/** Todo lo que se puede registrar desde el panel: créditos de productos y préstamos de dinero. */
+export const TIPOS_CREDITO_ALTA = [...TIPOS_CREDITO_NUEVO, "PRESTAMO_EFECTIVO"] as const;
+export type TipoCreditoAlta = (typeof TIPOS_CREDITO_ALTA)[number];
 
 /** Roles que registran y anulan créditos (igual que las políticas RLS de `credito` y `cuota`). */
 export const ROLES_CREDITOS = ["SUPERADMIN", "ADMIN_CREDITOS"] as const;
@@ -21,8 +24,8 @@ export const ESTADOS_CREDITO_ACTIVO = ["VIGENTE", "EN_MORA", "APROBADO", "REFINA
 export const MAX_CUOTAS: Record<Frecuencia, number> = { DIARIO: 600, SEMANAL: 156, QUINCENAL: 72, MENSUAL: 48 };
 
 export interface EntradaCredito {
-  tipo: TipoCreditoNuevo;
-  /** Precio del bien. */
+  tipo: TipoCreditoAlta;
+  /** Precio del bien (o monto prestado en un préstamo de dinero). */
   precio: number;
   cuotaInicial: number;
   numeroCuotas: number;
@@ -87,12 +90,14 @@ export function primerVencimientoSugerido(desembolso: string, frecuencia: Frecue
  */
 export function validarCredito(e: EntradaCredito, reglas: ReglasCredito = {}): Record<string, string> {
   const err: Record<string, string> = {};
-  if (!(TIPOS_CREDITO_NUEVO as readonly string[]).includes(e.tipo)) err.tipo = "Tipo de crédito no válido";
+  if (!(TIPOS_CREDITO_ALTA as readonly string[]).includes(e.tipo)) err.tipo = "Tipo de crédito no válido";
+  const prestamo = e.tipo === "PRESTAMO_EFECTIVO";
   if (!(FRECUENCIAS as readonly string[]).includes(e.frecuencia)) err.frecuencia = "Frecuencia no válida";
   if (!(TIPOS_CALCULO as readonly string[]).includes(e.tipoCalculo)) err.tipoCalculo = "Tipo de cálculo no válido";
 
-  if (!(e.precio > 0) || !conDosDecimales(e.precio)) err.precio = "Precio mayor que 0, con hasta 2 decimales";
-  else if (e.precio > 1_000_000) err.precio = "Revisa el precio";
+  if (!(e.precio > 0) || !conDosDecimales(e.precio)) err.precio = prestamo ? "Monto mayor que 0, con hasta 2 decimales" : "Precio mayor que 0, con hasta 2 decimales";
+  else if (e.precio > 1_000_000) err.precio = prestamo ? "Revisa el monto" : "Revisa el precio";
+  if (prestamo && e.cuotaInicial !== 0) err.cuotaInicial = "Un préstamo de dinero no lleva inicial";
   if (!(e.cuotaInicial >= 0) || !conDosDecimales(e.cuotaInicial)) err.cuotaInicial = "Inicial de 0 o más, con hasta 2 decimales";
   else if (e.precio > 0 && e.cuotaInicial >= e.precio) err.cuotaInicial = "La inicial debe ser menor que el precio";
 

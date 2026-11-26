@@ -188,6 +188,107 @@ export async function crearCredito(_prev: EstadoAccion, fd: FormData): Promise<E
   redirect(`/admin/creditos/${creditoId}?creado=1`);
 }
 
+// -----------------------------------------------------------------------------
+// Préstamo de dinero: monto, cuotas e interés (sin unidad ni inicial)
+// -----------------------------------------------------------------------------
+const prestamoSchema = z.object({
+  clienteId: uuid,
+  garanteId: uuidOpcional,
+  tasaId: uuidOpcional,
+  monto: numero("Monto"),
+  numeroCuotas: z.string().trim().regex(/^\d+$/, "Número de cuotas entero").transform(Number),
+  frecuencia: z.enum(FRECUENCIAS),
+  tipoCalculo: z.enum(TIPOS_CALCULO),
+  tasaPorcentaje: numero("Interés"),
+  penalidadDiaria: numero("Penalidad"),
+  fechaDesembolso: z.string().trim(),
+  primerVencimiento: z.string().trim(),
+  notas: z.string().trim().max(1000, "Máximo 1000 caracteres").transform((v) => v || null),
+  confirmo: z.literal("on", { errorMap: () => ({ message: "Confirma que revisaste el cronograma con el cliente" }) }),
+  confirmoRiesgo: z.string().optional(),
+});
+
+export async function crearPrestamo(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
+  const sesion = await requerirSesion(...ROLES_CREDITOS);
+  const datos = datosDe(fd);
+  const p = prestamoSchema.safeParse({ ...datos, confirmo: datos.confirmo ?? "" });
+  if (!p.success) return fallo("Revisa los campos marcados.", erroresZod(p.error));
+  const d = p.data;
+  const db = sql();
+
+  const entrada: EntradaCredito = {
+    tipo: "PRESTAMO_EFECTIVO",
+    precio: d.monto,
+    cuotaInicial: 0,
+    numeroCuotas: d.numeroCuotas,
+    frecuencia: d.frecuencia,
+    tipoCalculo: d.tipoCalculo,
+    tasaPorcentaje: d.tasaPorcentaje,
+    montoCuota: null,
+    penalidadDiaria: d.penalidadDiaria,
+    fechaDesembolso: d.fechaDesembolso,
+    primerVencimiento: d.primerVencimiento,
+  };
+
+  const [config, [cliente], garante, perfil, beneficios] = await Promise.all([
+    configCreditos(db),
+    db<{ estado: string }[]>`select estado from public.cliente where id = ${d.clienteId}`,
+    d.garanteId
+      ? db`select 1 from public.cliente_garante where cliente_id = ${d.clienteId} and garante_id = ${d.garanteId}`
+      : Promise.resolve([]),
+    perfilParaCredito(db, d.clienteId),
+    configBeneficios(db),
+  ]);
+  if (!cliente) return fallo("El cliente no existe.");
+  if (cliente.estado === "BLOQUEADO_LEGAL") return fallo("El cliente tiene bloqueo legal: no puede recibir préstamos.");
+  const evaluacion = evaluarCliente(perfil, beneficios);
+  if (evaluacion.bloqueo) return fallo(evaluacion.bloqueo, undefined, { href: `/admin/clientes/${d.clienteId}`, texto: "Ver sus créditos" });
+  if (evaluacion.alertaRiesgo && d.confirmoRiesgo !== "on")
+    return fallo("Revisa los campos marcados.", { confirmoRiesgo: "Confirma que apruebas el préstamo pese al score bajo" });
+  if (d.garanteId && garante.length === 0) return fallo("Revisa los campos marcados.", { garanteId: "El garante no está vinculado a este cliente" });
+
+  const reglas: ReglasCredito = { topeTea: config.topeTea };
+  const errores = validarCredito(entrada, reglas);
+  if (Object.keys(errores).length) return fallo("Revisa los campos marcados.", { ...errores, ...(errores.precio ? { monto: errores.precio } : {}) });
+  const plan = planCredito(entrada, new Set(config.feriados), reglas);
+  const tea = Number.isFinite(plan.teaPorcentaje) && plan.teaPorcentaje < 9_999_999 ? plan.teaPorcentaje : null;
+
+  let creditoId: string;
+  try {
+    creditoId = await comoUsuario(sesion, async (tx) => {
+      const [cr] = await tx<{ id: string }[]>`
+        insert into public.credito (
+          tipo, cliente_id, garante_id, creado_por,
+          monto_total, cuota_inicial, tasa_porcentaje, tipo_calculo, total_intereses, monto_total_pagar,
+          frecuencia, numero_cuotas, valor_cuota, penalidad_diaria, tea_porcentaje,
+          fecha_desembolso, fecha_primer_vencimiento, estado, notas)
+        values (
+          'PRESTAMO_EFECTIVO', ${d.clienteId}, ${d.garanteId}, ${sesion.usuarioId},
+          ${entrada.precio}, 0, ${plan.tasaPorcentaje}, ${d.tipoCalculo}, ${plan.totalIntereses}, ${plan.totalPagar},
+          ${d.frecuencia}, ${d.numeroCuotas}, ${plan.valorCuota}, ${entrada.penalidadDiaria}, ${tea},
+          ${entrada.fechaDesembolso}, ${plan.cuotas[0].fecha}, 'VIGENTE', ${d.notas})
+        returning id`;
+      const filas = plan.cuotas.map((c) => ({
+        credito_id: cr.id,
+        numero: c.numero,
+        fecha_vencimiento: c.fecha,
+        monto_cuota: c.cuota,
+        capital: c.capital,
+        interes: c.interes,
+        saldo_capital: c.saldo,
+      }));
+      for (let i = 0; i < filas.length; i += 200) await tx`insert into public.cuota ${tx(filas.slice(i, i + 200))}`;
+      return cr.id;
+    });
+  } catch (e) {
+    return fallo(mensajeP0001(e) ?? mensajeErrorBD(e));
+  }
+
+  await recalcularEstados();
+  revalidatePath("/admin", "layout");
+  redirect(`/admin/creditos/${creditoId}?creado=1`);
+}
+
 const anularSchema = z.object({ creditoId: uuid, motivo: z.string().trim() });
 
 export async function anularCredito(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {

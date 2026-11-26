@@ -84,24 +84,18 @@ describe("detección de duplicados", () => {
 
 describe("faltantesCliente", () => {
   const completo: DatosKyc = {
-    tipo_documento: "DNI", numero_documento: "45678912", fecha_nacimiento: "1990-04-12", sexo: "FEMENINO",
-    estado_civil: "CASADO", telefono: "987654321", direccion: "Av. Los Ruiseñores 123", distrito: "Santa Anita",
-    provincia: "Lima", departamento: "Lima", referencia: "Frente al parque", tipo_vivienda: "PROPIA",
-    latitud: -12.04, longitud: -76.97, ocupacion: "Mototaxista", ingreso_mensual: 2500,
+    tipo_documento: "DNI", numero_documento: "45678912", fecha_nacimiento: null, sexo: "FEMENINO",
+    estado_civil: null, telefono: "987654321", email: "rosa@correo.pe", direccion: null, distrito: null,
+    provincia: null, departamento: null, referencia: null, tipo_vivienda: null,
+    latitud: null, longitud: null, ocupacion: null, ingreso_mensual: null,
   };
-  const docs = ["DNI_ANVERSO", "DNI_REVERSO", "RECIBO_SERVICIO", "FACHADA"];
 
-  it("expediente completo no tiene pendientes", () => {
-    expect(faltantesCliente(completo, docs)).toEqual([]);
+  it("con nombre, DNI, sexo, celular y correo ya está completo (domicilio, trabajo y fotos son opcionales)", () => {
+    expect(faltantesCliente(completo, [])).toEqual([]);
   });
-  it("cliente migrado: documento provisional, sin domicilio, sin GPS ni fotos", () => {
-    const f = faltantesCliente({ ...completo, numero_documento: "SIN-DOC-7", direccion: null, latitud: null, telefono: "" }, []);
-    expect(f).toContain("Número de documento válido");
-    expect(f).toContain("Dirección del domicilio");
-    expect(f).toContain("Ubicación GPS del domicilio");
-    expect(f).toContain("Celular");
-    expect(f).toContain("Foto: DNI (anverso)");
-    expect(f).toContain("Foto: Fachada del domicilio");
+  it("cliente migrado: documento provisional, sin celular ni correo", () => {
+    const f = faltantesCliente({ ...completo, numero_documento: "SIN-DOC-7", telefono: "", email: null, sexo: null }, []);
+    expect(f).toEqual(["Número de DNI válido", "Sexo", "Celular", "Correo"]);
   });
 });
 
@@ -138,8 +132,8 @@ describe("utilidades", () => {
 describe("documentos provisionales de la migración", () => {
   it("se reconocen con o sin guiones", () => {
     const base = { tipo_documento: "DNI", fecha_nacimiento: null, sexo: null, estado_civil: null, telefono: null, direccion: null, distrito: null, provincia: null, departamento: null, referencia: null, tipo_vivienda: null, latitud: null, longitud: null, ocupacion: null, ingreso_mensual: null };
-    expect(faltantesCliente({ ...base, numero_documento: "SIN-DOC-7" }, [])).toContain("Número de documento válido");
-    expect(faltantesCliente({ ...base, numero_documento: "SINDOC7" }, [])).toContain("Número de documento válido");
+    expect(faltantesCliente({ ...base, numero_documento: "SIN-DOC-7" }, [])).toContain("Número de DNI válido");
+    expect(faltantesCliente({ ...base, numero_documento: "SINDOC7" }, [])).toContain("Número de DNI válido");
   });
 });
 

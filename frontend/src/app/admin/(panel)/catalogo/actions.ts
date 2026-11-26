@@ -65,6 +65,8 @@ export async function guardarProducto(_prev: EstadoAccion, fd: FormData): Promis
   const etiquetas = Array.from(new Set(d.etiquetas.split(",").map((e) => e.trim()).filter(Boolean))).slice(0, 10);
   const slug = d.slug || slugify(d.nombre);
   if (!slug) return fallo("No se pudo generar el enlace; escríbelo a mano.", { slug: "Requerido" });
+  const leidas = await leerImagenes(fd);
+  if ("error" in leidas) return leidas.error;
 
   const fila = {
     categoria: d.categoria,
@@ -90,6 +92,7 @@ export async function guardarProducto(_prev: EstadoAccion, fd: FormData): Promis
         const [nuevo] = await tx<{ id: string }[]>`insert into public.producto_catalogo ${tx({ ...fila, specs: tx.json(specs) })} returning id`;
         id = nuevo.id;
       }
+      if (leidas.listos.length) await guardarImagenes(tx, sesion.usuarioId, id!, leidas.listos, d.nombre);
     });
   } catch (e) {
     if ((e as { code?: string }).code === "23505") return fallo("Ya existe un producto con ese enlace (slug).", { slug: "Elige otro enlace" });
@@ -97,6 +100,7 @@ export async function guardarProducto(_prev: EstadoAccion, fd: FormData): Promis
   }
   refrescar(id);
   if (!d.id) redirect(`/admin/catalogo/${id}?creado=1`);
+  if (leidas.listos.length) return exito(`Producto guardado con ${leidas.listos.length === 1 ? "1 foto nueva" : `${leidas.listos.length} fotos nuevas`}.`);
   return exito(fila.publicado ? "Producto guardado y publicado en la web." : "Producto guardado (no publicado).");
 }
 
@@ -113,43 +117,56 @@ export async function cambiarPublicacion(fd: FormData) {
 // -----------------------------------------------------------------------------
 const MAX_BYTES = 5 * 1024 * 1024;
 
+type ImagenLista = { nombre: string; tipo: string; datos: Buffer };
+
+/** Valida los archivos del campo `imagenes` (tipo real por sus bytes y tamaño). Devuelve el error o la lista. */
+async function leerImagenes(fd: FormData): Promise<{ error: EstadoAccion } | { listos: ImagenLista[] }> {
+  const archivos = fd.getAll("imagenes").filter((f): f is File => f instanceof File && f.size > 0);
+  if (archivos.length > 8) return { error: fallo("Sube como máximo 8 imágenes a la vez.", { imagenes: "Máximo 8" }) };
+  const listos: ImagenLista[] = [];
+  for (const f of archivos) {
+    if (f.size > MAX_BYTES) return { error: fallo(`«${f.name}» pesa más de 5 MB. Redúcela antes de subirla.`, { imagenes: "Máximo 5 MB por imagen" }) };
+    const datos = Buffer.from(await f.arrayBuffer());
+    const tipo = detectarTipo(datos);
+    if (!tipo || !(TIPOS_IMAGEN as readonly string[]).includes(tipo))
+      return { error: fallo(`«${f.name}» no es una imagen JPG, PNG, WEBP o AVIF.`, { imagenes: "Formato no permitido" }) };
+    listos.push({ nombre: f.name.slice(0, 120), tipo, datos });
+  }
+  return { listos };
+}
+
+/** Guarda las imágenes en `archivo` y las enlaza al producto (la primera es portada si aún no tiene). */
+async function guardarImagenes(tx: Parameters<Parameters<typeof comoUsuario>[1]>[0], usuarioId: string, productoId: string, listos: ImagenLista[], alt: string) {
+  const [{ nombre, tiene_portada, max_orden }] = await tx<{ nombre: string; tiene_portada: boolean; max_orden: number }[]>`
+    select p.nombre,
+           exists (select 1 from public.imagen_producto i where i.producto_id = p.id and i.es_portada) as tiene_portada,
+           coalesce((select max(orden) from public.imagen_producto i where i.producto_id = p.id), -1)::int as max_orden
+    from public.producto_catalogo p where p.id = ${productoId}`;
+  let portada = !tiene_portada;
+  let orden = max_orden;
+  for (const img of listos) {
+    const [a] = await tx<{ id: string }[]>`
+      insert into public.archivo (nombre, tipo_mime, tamano, datos, subido_por)
+      values (${img.nombre}, ${img.tipo}, ${img.datos.length}, ${img.datos}, ${usuarioId}) returning id`;
+    await tx`
+      insert into public.imagen_producto (producto_id, url, alt, orden, es_portada)
+      values (${productoId}, ${`/api/archivos/${a.id}`}, ${alt || nombre}, ${++orden}, ${portada})`;
+    portada = false;
+  }
+}
+
 export async function subirImagenes(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   const sesion = await requerirSesion(...ROLES_CATALOGO);
   const productoId = z.string().uuid().safeParse(fd.get("productoId"));
   if (!productoId.success) return fallo("Producto no válido.");
-  const archivos = fd.getAll("imagenes").filter((f): f is File => f instanceof File && f.size > 0);
-  if (archivos.length === 0) return fallo("Elige al menos una imagen.", { imagenes: "Elige una imagen" });
-  if (archivos.length > 8) return fallo("Sube como máximo 8 imágenes a la vez.");
+  const leidas = await leerImagenes(fd);
+  if ("error" in leidas) return leidas.error;
+  const { listos } = leidas;
+  if (listos.length === 0) return fallo("Elige al menos una imagen.", { imagenes: "Elige una imagen" });
   const alt = String(fd.get("alt") ?? "").trim().slice(0, 150);
 
-  const listos: { nombre: string; tipo: string; datos: Buffer }[] = [];
-  for (const f of archivos) {
-    if (f.size > MAX_BYTES) return fallo(`«${f.name}» pesa más de 5 MB. Redúcela antes de subirla.`, { imagenes: "Máximo 5 MB por imagen" });
-    const datos = Buffer.from(await f.arrayBuffer());
-    const tipo = detectarTipo(datos);
-    if (!tipo || !(TIPOS_IMAGEN as readonly string[]).includes(tipo)) return fallo(`«${f.name}» no es una imagen JPG, PNG, WEBP o AVIF.`, { imagenes: "Formato no permitido" });
-    listos.push({ nombre: f.name.slice(0, 120), tipo, datos });
-  }
-
   try {
-    await comoUsuario(sesion, async (tx) => {
-      const [{ nombre, tiene_portada, max_orden }] = await tx<{ nombre: string; tiene_portada: boolean; max_orden: number }[]>`
-        select p.nombre,
-               exists (select 1 from public.imagen_producto i where i.producto_id = p.id and i.es_portada) as tiene_portada,
-               coalesce((select max(orden) from public.imagen_producto i where i.producto_id = p.id), -1)::int as max_orden
-        from public.producto_catalogo p where p.id = ${productoId.data}`;
-      let portada = !tiene_portada;
-      let orden = max_orden;
-      for (const img of listos) {
-        const [a] = await tx<{ id: string }[]>`
-          insert into public.archivo (nombre, tipo_mime, tamano, datos, subido_por)
-          values (${img.nombre}, ${img.tipo}, ${img.datos.length}, ${img.datos}, ${sesion.usuarioId}) returning id`;
-        await tx`
-          insert into public.imagen_producto (producto_id, url, alt, orden, es_portada)
-          values (${productoId.data}, ${`/api/archivos/${a.id}`}, ${alt || nombre}, ${++orden}, ${portada})`;
-        portada = false;
-      }
-    });
+    await comoUsuario(sesion, (tx) => guardarImagenes(tx, sesion.usuarioId, productoId.data, listos, alt));
   } catch (e) {
     return fallo(mensajeErrorBD(e));
   }

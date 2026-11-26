@@ -13,9 +13,7 @@ export default async function EditarClientePage({ params }: { params: Promise<{ 
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const [cliente] = await sql()<ClienteEditable[]>`
-    select id, nombres, apellidos, tipo_documento, numero_documento, to_char(fecha_nacimiento, 'YYYY-MM-DD') as fecha_nacimiento,
-           sexo, estado_civil, telefono, telefono_secundario, email::text, direccion, urbanizacion, distrito, provincia, departamento,
-           referencia, tipo_vivienda, latitud::float8, longitud::float8, ocupacion, direccion_trabajo, ingreso_mensual::float8, notas
+    select id, nombres, apellidos, tipo_documento, numero_documento, sexo, telefono, email::text, direccion, ocupacion
     from public.cliente where id = ${id}`;
   if (!cliente) notFound();
 

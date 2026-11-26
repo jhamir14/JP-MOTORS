@@ -62,58 +62,26 @@ const clienteSchema = z
     id: uuid.optional().or(z.literal("").transform(() => undefined)),
     solicitudId: uuid.optional().or(z.literal("").transform(() => undefined)),
     numeroOriginal: z.string().optional(),
-    nombres: z.string().trim().min(2, "Ingresa los nombres").max(80),
-    apellidos: z.string().trim().min(2, "Ingresa los apellidos").max(80),
-    tipoDocumento: z.enum(TIPOS_DOCUMENTO),
+    nombres: z.string().trim().min(2, "Ingresa el nombre").max(80),
+    apellidos: z.string().trim().min(2, "Ingresa el apellido").max(80),
+    tipoDocumento: z.enum(TIPOS_DOCUMENTO).default("DNI"),
     numeroDocumento: z.string().transform(normalizarDocumento),
-    fechaNacimiento: z
-      .string()
-      .trim()
-      .refine((v) => v === "" || /^\d{4}-\d{2}-\d{2}$/.test(v), "Fecha no válida")
-      .refine((v) => v === "" || edad(v) >= 18, "Debe ser mayor de edad")
-      .refine((v) => v === "" || edad(v) <= 100, "Revisa la fecha")
-      .transform((v) => v || null),
-    sexo: enumOpcional(SEXOS),
-    estadoCivil: enumOpcional(ESTADOS_CIVILES),
+    sexo: z.enum(SEXOS, { message: "Elige el sexo" }),
     telefono: z
       .string()
       .trim()
       .refine((v) => normalizarCelular(v) != null, "Celular de 9 dígitos que empiece con 9")
       .transform((v) => normalizarCelular(v)!),
-    telefonoSecundario: celularOpcional("Teléfono 2"),
-    email: z
-      .string()
-      .trim()
-      .toLowerCase()
-      .refine((v) => v === "" || z.string().email().safeParse(v).success, "Correo no válido")
-      .transform((v) => v || null),
-    direccion: vacioANull(200),
-    urbanizacion: vacioANull(100),
-    distrito: vacioANull(60),
-    provincia: vacioANull(60),
-    departamento: vacioANull(40),
-    referencia: vacioANull(200),
-    tipoVivienda: enumOpcional(TIPOS_VIVIENDA),
-    latitud: coordenada,
-    longitud: coordenada,
-    ocupacion: vacioANull(100),
-    direccionTrabajo: vacioANull(200),
-    ingresoMensual: z
-      .string()
-      .trim()
-      .refine((v) => v === "" || (/^\d+(\.\d{1,2})?$/.test(v) && Number(v) <= 1_000_000), "Usa solo números (ej. 2500)")
-      .transform((v) => (v === "" ? null : Number(v))),
-    notas: vacioANull(2000),
+    email: z.string().trim().toLowerCase().pipe(z.string().min(1, "Ingresa el correo").email("Correo no válido")),
+    direccion: vacioANull(200).optional(),
+    ocupacion: vacioANull(100).optional(),
+    notas: vacioANull(2000).optional(),
   })
   .superRefine((d, ctx) => {
     // Un documento provisional de la migración (ej. SIN-DOC-12) se puede conservar mientras no se cambie.
     const sinCambio = d.id && d.numeroOriginal != null && d.numeroDocumento === normalizarDocumento(d.numeroOriginal);
     const error = errorDocumento(d.tipoDocumento, d.numeroDocumento);
     if (error && !sinCambio) ctx.addIssue({ code: "custom", path: ["numeroDocumento"], message: error });
-    if ((d.latitud == null) !== (d.longitud == null))
-      ctx.addIssue({ code: "custom", path: ["longitud"], message: "Ingresa latitud y longitud juntas" });
-    else if (d.latitud != null && d.longitud != null && !coordenadasEnPeru(d.latitud, d.longitud))
-      ctx.addIssue({ code: "custom", path: ["latitud"], message: "La ubicación no está en el Perú (¿coordenadas invertidas?)" });
   });
 
 export async function guardarCliente(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
@@ -133,51 +101,30 @@ export async function guardarCliente(_prev: EstadoAccion, fd: FormData): Promise
     );
   }
 
+  // Solo las columnas de la ficha simple: el resto de datos antiguos del cliente no se toca al editar.
   const fila = {
     nombres: d.nombres,
     apellidos: d.apellidos,
     tipo_documento: d.tipoDocumento,
     numero_documento: d.numeroDocumento,
-    fecha_nacimiento: d.fechaNacimiento,
     sexo: d.sexo,
-    estado_civil: d.estadoCivil,
     telefono: d.telefono,
-    telefono_secundario: d.telefonoSecundario,
     email: d.email,
-    direccion: d.direccion,
-    urbanizacion: d.urbanizacion,
-    distrito: d.distrito,
-    provincia: d.provincia,
-    departamento: d.departamento,
-    referencia: d.referencia,
-    tipo_vivienda: d.tipoVivienda,
-    ocupacion: d.ocupacion,
-    direccion_trabajo: d.direccionTrabajo,
-    ingreso_mensual: d.ingresoMensual,
-    notas: d.notas,
+    direccion: d.direccion ?? null,
+    ocupacion: d.ocupacion ?? null,
+    ...(d.id ? {} : { notas: d.notas ?? null }),
   };
 
   let id = d.id;
   try {
     await comoUsuario(sesion, async (tx) => {
       if (id) {
-        const [antes] = await tx<{ latitud: number | null; longitud: number | null }[]>`
-          select latitud::float8, longitud::float8 from public.cliente where id = ${id} for update`;
+        const [antes] = await tx<{ id: string }[]>`select id from public.cliente where id = ${id} for update`;
         if (!antes) throw Object.assign(new Error("no encontrado"), { code: "P0002" });
-        const geoCambio = antes.latitud !== d.latitud || antes.longitud !== d.longitud;
-        await tx`
-          update public.cliente set ${tx(fila)}, latitud = ${d.latitud}, longitud = ${d.longitud}
-            ${geoCambio ? tx`, geo_precision_m = null, geo_registrada_at = ${d.latitud == null ? null : new Date()}` : tx``}
-          where id = ${id}`;
+        await tx`update public.cliente set ${tx(fila)} where id = ${id}`;
       } else {
         const [nuevo] = await tx<{ id: string }[]>`
-          insert into public.cliente ${tx({
-            ...fila,
-            latitud: d.latitud,
-            longitud: d.longitud,
-            geo_registrada_at: d.latitud == null ? null : new Date(),
-            registrado_por: sesion.usuarioId,
-          })} returning id`;
+          insert into public.cliente ${tx({ ...fila, registrado_por: sesion.usuarioId })} returning id`;
         id = nuevo.id;
         if (d.solicitudId) {
           await tx`

@@ -505,7 +505,7 @@ export function contratoCelular(e: DatosEmpresa, d: DatosCredito): Documento {
 }
 
 // -----------------------------------------------------------------------------
-// Contrato de mutuo (préstamos en efectivo migrados del sistema anterior)
+// Contrato de mutuo (préstamos de dinero)
 // -----------------------------------------------------------------------------
 export function contratoMutuo(e: DatosEmpresa, d: DatosCredito): Documento {
   const clausulas = [
@@ -526,7 +526,7 @@ export function contratoMutuo(e: DatosEmpresa, d: DatosCredito): Documento {
     pie: pieEmpresa(e),
     bloques: [
       { t: "titulo", texto: "Contrato de mutuo dinerario" },
-      { t: "parrafo", texto: `Préstamo **${d.codigo}** (sistema anterior) · ${fechaEnLetras(d.fechaDesembolso)}`, alinear: "centro", tamano: 9 },
+      { t: "parrafo", texto: `Préstamo **${d.codigo}** · ${fechaEnLetras(d.fechaDesembolso)}`, alinear: "centro", tamano: 9 },
       ...avisoReferencial(e),
       ...numerar(clausulas),
       cierre(e, d),

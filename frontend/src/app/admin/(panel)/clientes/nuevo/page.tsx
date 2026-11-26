@@ -41,16 +41,16 @@ export default async function NuevoClientePage({ searchParams }: { searchParams:
     apellidos: solicitud.apellidos,
     tipo_documento: solicitud.tipo_documento,
     numero_documento: normalizarDocumento(solicitud.numero_documento),
-    fecha_nacimiento: solicitud.fecha_nacimiento,
-    estado_civil: estadoCivilDesdeWeb(solicitud.estado_civil),
     telefono: solicitud.celular,
     email: solicitud.email,
-    distrito: solicitud.distrito,
-    provincia: solicitud.provincia,
-    departamento: solicitud.departamento,
+    direccion: [solicitud.distrito, solicitud.provincia, solicitud.departamento].filter(Boolean).join(", ") || null,
     ocupacion: solicitud.situacion_laboral,
-    ingreso_mensual: solicitud.ingreso_mensual,
-    notas: `Convertido desde la solicitud web del ${solicitud.created_at.toLocaleDateString("es-PE", { timeZone: "America/Lima" })}${solicitud.producto_interes ? ` (interés: ${solicitud.producto_interes})` : ""}.`,
+    notas: [
+      `Convertido desde la solicitud web del ${solicitud.created_at.toLocaleDateString("es-PE", { timeZone: "America/Lima" })}${solicitud.producto_interes ? ` (interés: ${solicitud.producto_interes})` : ""}.`,
+      solicitud.fecha_nacimiento ? `Fecha de nacimiento: ${solicitud.fecha_nacimiento}.` : "",
+      solicitud.estado_civil ? `Estado civil: ${estadoCivilDesdeWeb(solicitud.estado_civil) ?? solicitud.estado_civil}.` : "",
+      solicitud.ingreso_mensual ? `Ingreso mensual declarado: S/ ${solicitud.ingreso_mensual}.` : "",
+    ].filter(Boolean).join(" "),
   };
 
   return (
@@ -60,8 +60,8 @@ export default async function NuevoClientePage({ searchParams }: { searchParams:
       </Link>
       <Encabezado titulo={solicitud ? "Convertir solicitud en cliente" : "Nuevo cliente"}>
         {solicitud
-          ? "Datos tomados de la solicitud web: revísalos y completa el expediente. La solicitud quedará como «convertida»."
-          : "Registra lo mínimo (nombre, documento y celular) y completa el resto después: la ficha te indicará qué falta."}
+          ? "Datos tomados de la solicitud web: revísalos y completa lo que falte. La solicitud quedará como «convertida»."
+          : "Nombre, apellido, DNI, sexo, celular y correo. El domicilio y el trabajo son opcionales."}
       </Encabezado>
 
       {existente && solicitud && (

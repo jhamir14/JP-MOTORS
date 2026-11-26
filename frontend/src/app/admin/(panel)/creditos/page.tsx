@@ -8,6 +8,7 @@ import { ETIQUETA_FRECUENCIA, type Frecuencia } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
 import { requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
+import { PestanasTipo } from "./PestanasTipo";
 
 export const metadata = { title: "Créditos" };
 
@@ -29,7 +30,10 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
   const sesion = await requerirSesion();
   const sp = await searchParams;
   const estado = FILTROS.some((f) => f.valor === sp.estado) ? sp.estado! : "activos";
-  const tipo = sp.tipo === "CREDITO_VEHICULAR" || sp.tipo === "CREDITO_CELULAR" || sp.tipo === "PRESTAMO_EFECTIVO" ? sp.tipo : null;
+  // Dos pestañas: créditos de productos (motos, motokar, toritos y celulares) y préstamos de dinero.
+  const vista = sp.tipo === "prestamo" || sp.tipo === "PRESTAMO_EFECTIVO" ? "prestamo" : "credito";
+  const tipo = vista === "credito" && (sp.tipo === "CREDITO_VEHICULAR" || sp.tipo === "CREDITO_CELULAR") ? sp.tipo : null;
+  const esPrestamo = vista === "prestamo";
   const q = (sp.q ?? "").trim().slice(0, 60);
   const pagina = Math.max(1, Number(sp.pagina) || 1);
   const db = sql();
@@ -40,7 +44,7 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
     : estado === "todos" ? db`true`
     : db`cr.estado = ${estado}`;
 
-  const [filas, [resumen]] = await Promise.all([
+  const [filas, [resumen], [conteos]] = await Promise.all([
     db<(Fila & { total: number })[]>`
       select cr.id, cr.codigo, cr.tipo, cr.estado, cr.cliente_id, cl.nombres || ' ' || cl.apellidos as cliente,
              coalesce(uv.marca || ' ' || uv.modelo, uc.marca || ' ' || uc.modelo) as bien,
@@ -54,6 +58,7 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
       left join public.unidad_vehiculo uv on uv.id = cr.unidad_vehiculo_id
       left join public.unidad_celular uc on uc.id = cr.unidad_celular_id
       where ${filtroEstado}
+        and (case when ${esPrestamo} then cr.tipo = 'PRESTAMO_EFECTIVO' else cr.tipo <> 'PRESTAMO_EFECTIVO' end)
         and (${tipo}::text is null or cr.tipo::text = ${tipo})
         and (${q} = '' or cr.codigo ilike ${patron} or (cl.nombres || ' ' || cl.apellidos) ilike ${patron} or cl.numero_documento ilike ${patron})
       order by cr.fecha_desembolso desc, cr.created_at desc
@@ -65,11 +70,16 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
              coalesce(sum(cr.monto_financiado) filter (where cr.estado <> 'ANULADO' and date_trunc('month', cr.fecha_desembolso) = date_trunc('month', (now() at time zone 'America/Lima')::date)), 0)::float8 as colocado_mes,
              count(*) filter (where cr.estado <> 'ANULADO' and date_trunc('month', cr.fecha_desembolso) = date_trunc('month', (now() at time zone 'America/Lima')::date))::int as creditos_mes
       from public.credito cr
-      left join lateral (select sum(least(cu.monto_pagado, cu.monto_cuota)) as pagado from public.cuota cu where cu.credito_id = cr.id) p on true`,
+      left join lateral (select sum(least(cu.monto_pagado, cu.monto_cuota)) as pagado from public.cuota cu where cu.credito_id = cr.id) p on true
+      where case when ${esPrestamo} then cr.tipo = 'PRESTAMO_EFECTIVO' else cr.tipo <> 'PRESTAMO_EFECTIVO' end`,
+    db<{ credito: number; prestamo: number }[]>`
+      select count(*) filter (where tipo <> 'PRESTAMO_EFECTIVO' and estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO'))::int as credito,
+             count(*) filter (where tipo = 'PRESTAMO_EFECTIVO' and estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO'))::int as prestamo
+      from public.credito`,
   ]);
   const total = filas[0]?.total ?? 0;
   const qs = (cambios: Record<string, string | null>) => {
-    const p = new URLSearchParams({ estado, ...(tipo ? { tipo } : {}), ...(q ? { q } : {}) });
+    const p = new URLSearchParams({ estado, ...(esPrestamo ? { tipo: "prestamo" } : tipo ? { tipo } : {}), ...(q ? { q } : {}) });
     for (const [k, v] of Object.entries(cambios)) {
       if (v == null) p.delete(k);
       else p.set(k, v);
@@ -80,17 +90,24 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
   return (
     <>
       <Encabezado
-        titulo="Créditos"
-        acciones={puedeGestionarCreditos(sesion.rol) && <ButtonLink href="/admin/creditos/nuevo" variant="brand" size="sm">+ Nuevo crédito</ButtonLink>}
+        titulo={esPrestamo ? "Préstamos de dinero" : "Créditos"}
+        acciones={puedeGestionarCreditos(sesion.rol) && (
+          <div className="flex flex-wrap gap-2">
+            <ButtonLink href="/admin/creditos/nuevo" variant={esPrestamo ? "outline" : "brand"} size="sm">+ Nuevo crédito</ButtonLink>
+            <ButtonLink href="/admin/creditos/nuevo?tipo=prestamo" variant={esPrestamo ? "brand" : "outline"} size="sm">+ Nuevo préstamo</ButtonLink>
+          </div>
+        )}
       >
-        Financiamientos de motos, motokar, toritos y celulares con su cronograma.
+        {esPrestamo ? "Dinero prestado a clientes, con sus cuotas y su saldo." : "Financiamientos de motos, motokar, toritos y celulares con su cronograma."}
       </Encabezado>
 
+      <PestanasTipo activo={vista} base="/admin/creditos" conteos={conteos} />
+
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi k="Créditos activos" v={String(resumen.activos)} />
+        <Kpi k={esPrestamo ? "Préstamos activos" : "Créditos activos"} v={String(resumen.activos)} />
         <Kpi k="En mora" v={String(resumen.mora)} alerta={resumen.mora > 0} />
         <Kpi k="Cartera por cobrar" v={formatSoles(resumen.cartera)} />
-        <Kpi k="Colocado este mes" v={formatSoles(resumen.colocado_mes)} detalle={`${resumen.creditos_mes} crédito${resumen.creditos_mes === 1 ? "" : "s"}`} />
+        <Kpi k="Colocado este mes" v={formatSoles(resumen.colocado_mes)} detalle={`${resumen.creditos_mes} ${esPrestamo ? "préstamo" : "crédito"}${resumen.creditos_mes === 1 ? "" : "s"}`} />
       </div>
 
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -104,19 +121,22 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
         </nav>
         <form className="flex gap-2" role="search">
           <input type="hidden" name="estado" value={estado} />
-          <select name="tipo" defaultValue={tipo ?? ""} aria-label="Tipo" className="rounded-xl border border-line bg-surface px-2 py-2 text-sm">
-            <option value="">Todos los tipos</option>
-            <option value="CREDITO_VEHICULAR">Vehicular</option>
-            <option value="CREDITO_CELULAR">Celular</option>
-            <option value="PRESTAMO_EFECTIVO">Préstamo (anterior)</option>
-          </select>
+          {esPrestamo ? (
+            <input type="hidden" name="tipo" value="prestamo" />
+          ) : (
+            <select name="tipo" defaultValue={tipo ?? ""} aria-label="Tipo" className="rounded-xl border border-line bg-surface px-2 py-2 text-sm">
+              <option value="">Motos y celulares</option>
+              <option value="CREDITO_VEHICULAR">Solo vehículos</option>
+              <option value="CREDITO_CELULAR">Solo celulares</option>
+            </select>
+          )}
           <input name="q" defaultValue={q} placeholder="Código, cliente o DNI" aria-label="Buscar" className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm md:w-56" />
           <button type="submit" className="cursor-pointer rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white">Buscar</button>
         </form>
       </div>
 
       {filas.length === 0 ? (
-        <Vacio>No hay créditos con estos filtros.</Vacio>
+        <Vacio>{esPrestamo ? "No hay préstamos con estos filtros." : "No hay créditos con estos filtros."}</Vacio>
       ) : (
         <Tabla>
           <thead>

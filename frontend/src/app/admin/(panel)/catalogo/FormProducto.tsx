@@ -1,4 +1,4 @@
-import { AdminForm, BotonEnviar } from "@/components/admin/AdminForm";
+import { AdminForm, BotonEnviar, ErrorCampo } from "@/components/admin/AdminForm";
 import { CampoArea, CampoSelect, CampoTexto, Check } from "@/components/admin/ui";
 import { CATEGORIAS, ETIQUETA_CATEGORIA, GAMAS, type CategoriaProducto } from "@/lib/catalogo";
 import { guardarProducto } from "./actions";
@@ -48,6 +48,24 @@ export function FormProducto({ producto }: { producto?: ProductoEditable }) {
         placeholder="se genera del nombre"
         hint={producto ? "Cambiarlo rompe los enlaces ya compartidos." : "Vacío = se genera a partir del nombre."}
       />
+      <div className="rounded-2xl border border-dashed border-brand/40 bg-brand-soft/40 p-4 md:col-span-2">
+        <label htmlFor="imagenes-producto" className="mb-1 block text-xs font-semibold tracking-wide text-muted uppercase">
+          {producto ? "Agregar foto de la moto (opcional)" : "Foto de la moto (opcional)"}
+        </label>
+        <input
+          id="imagenes-producto"
+          name="imagenes"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          multiple
+          className="block w-full cursor-pointer text-sm file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:font-semibold file:text-white"
+        />
+        <ErrorCampo name="imagenes" />
+        <p className="mt-1.5 text-xs text-muted">
+          JPG, PNG, WEBP o AVIF de hasta 5 MB. Mejor con fondo transparente o liso: la web la muestra sobre la placa azul con el aro dorado.
+          {producto ? " Si el producto no tiene portada, la primera foto se usa como portada." : " La primera foto será la portada."}
+        </p>
+      </div>
       <CampoArea label="Descripción" name="descripcion" defaultValue={producto?.descripcion ?? ""} className="md:col-span-2" rows={3} />
       <CampoArea
         label="Especificaciones"

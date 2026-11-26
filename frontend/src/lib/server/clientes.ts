@@ -34,7 +34,7 @@ export async function garantesConDocumento(db: Db, tipo: TipoDocumento, numero: 
 
 /** Columnas que se usan para calcular la completitud del expediente. */
 export const COLUMNAS_KYC = [
-  "tipo_documento", "numero_documento", "fecha_nacimiento", "sexo", "estado_civil", "telefono", "direccion", "distrito",
+  "tipo_documento", "numero_documento", "fecha_nacimiento", "sexo", "estado_civil", "telefono", "email", "direccion", "distrito",
   "provincia", "departamento", "referencia", "tipo_vivienda", "latitud", "longitud", "ocupacion", "ingreso_mensual",
 ] as const;
 

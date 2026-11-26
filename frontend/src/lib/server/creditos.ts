@@ -84,7 +84,7 @@ export async function opcionesAltaCredito(db: Db) {
       select id, servicio, nombre, frecuencia, tipo_calculo as "tipoCalculo", tasa_porcentaje::float8 as "tasaPorcentaje",
              cuotas_min as "cuotasMin", cuotas_max as "cuotasMax", penalidad_diaria::float8 as "penalidadDiaria"
       from public.tasa_servicio
-      where activa and servicio in ('CREDITO_VEHICULAR', 'CREDITO_CELULAR')
+      where activa and servicio in ('CREDITO_VEHICULAR', 'CREDITO_CELULAR', 'PRESTAMO_EFECTIVO')
       order by servicio, frecuencia`,
   ]);
   return { unidades, planes, tasas };
