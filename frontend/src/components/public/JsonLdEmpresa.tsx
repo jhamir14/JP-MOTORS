@@ -31,6 +31,7 @@ export function JsonLdEmpresa() {
         email: siteConfig.emailContacto,
         telephone: `+${siteConfig.whatsappNumber}`,
         taxID: siteConfig.ruc,
+        sameAs: siteConfig.redes.map((r) => r.url),
         priceRange: "S/",
         address: {
           "@type": "PostalAddress",

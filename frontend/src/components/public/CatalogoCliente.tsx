@@ -9,7 +9,7 @@ import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
 
 const ORDENES = ["Destacados", "Menor precio", "Mayor precio", "Nombre"] as const;
 type Orden = (typeof ORDENES)[number];
-/** "todos", una línea (motos / mototaxis) o una marca de celular. */
+/** "todos", una línea (motos / motocar y toritos) o una marca de celular. */
 type Filtro = string;
 
 interface Props {

@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { IconClock, IconMapPin, IconWhatsApp } from "@/components/icons";
+import { IconClock, IconFacebook, IconInstagram, IconMapPin, IconTikTok, IconWhatsApp } from "@/components/icons";
 import { Logo } from "@/components/Logo";
 import { LINEAS, hrefLinea } from "@/lib/catalogo";
 import { siteConfig } from "@/lib/config";
 import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
+
+const iconoRed = { facebook: IconFacebook, instagram: IconInstagram, tiktok: IconTikTok } as const;
 
 const legales = [
   { href: "/privacidad", label: "Política de privacidad" },
@@ -21,8 +23,26 @@ export default function Footer() {
         <div>
           <Logo tone="light" size={64} />
           <p className="mt-6 max-w-xs text-[0.95rem] leading-relaxed">
-            Motos, mototaxis y celulares nuevos con financiamiento directo para quienes trabajan por su cuenta.
+            Motos, motocar, toritos y celulares nuevos con financiamiento directo para quienes trabajan por su cuenta.
           </p>
+          <ul aria-label="Redes sociales" className="mt-6 flex gap-3">
+            {siteConfig.redes.map((r) => {
+              const Icono = iconoRed[r.id];
+              return (
+                <li key={r.id}>
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${siteConfig.name} en ${r.nombre}`}
+                    className="flex size-11 items-center justify-center rounded-full border border-white/15 text-white/80 transition-colors hover:border-oro hover:bg-oro hover:text-noche"
+                  >
+                    <Icono size={20} />
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
         </div>
 
         <div>

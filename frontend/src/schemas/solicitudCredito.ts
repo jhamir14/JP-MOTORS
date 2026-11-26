@@ -11,12 +11,12 @@ export const NIVELES_EDUCACION = ["Primaria", "Secundaria", "Técnico", "Univers
 export const PREFERENCIAS_CONTACTO = ["WhatsApp", "Llamada", "Correo"] as const;
 /**
  * Mismos códigos que el enum `servicio_solicitud` de la base de datos.
- * La web solo financia productos (motos, mototaxis y celulares): no recibe solicitudes de préstamo en efectivo.
+ * La web solo financia productos (motos, motocar, toritos y celulares): no recibe solicitudes de préstamo en efectivo.
  */
 export const SERVICIOS = ["CREDITO_VEHICULAR", "CREDITO_CELULAR"] as const;
 export type Servicio = (typeof SERVICIOS)[number];
 export const ETIQUETAS_SERVICIO: Record<Servicio, string> = {
-  CREDITO_VEHICULAR: "Crédito vehicular (moto o mototaxi)",
+  CREDITO_VEHICULAR: "Crédito vehicular (moto, motocar o torito)",
   CREDITO_CELULAR: "Celular a crédito",
 };
 export const SITUACIONES_LABORALES = ["Independiente", "Comerciante", "Transportista", "Dependiente"] as const;
@@ -96,7 +96,7 @@ export const solicitudCreditoSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["productoInteres"],
-        message: d.servicio === "CREDITO_VEHICULAR" ? "Indica el modelo de moto o mototaxi" : "Indica el modelo de celular",
+        message: d.servicio === "CREDITO_VEHICULAR" ? "Indica el modelo de moto, motocar o torito" : "Indica el modelo de celular",
       });
     }
   });

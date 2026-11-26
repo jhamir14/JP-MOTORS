@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { PaginaCatalogo } from "@/components/public/PaginaCatalogo";
 
 export const metadata: Metadata = {
-  title: "Motos y mototaxis",
-  description: "Motos lineales y mototaxis nuevas con financiamiento directo en Inversiones JP, Santa Anita (Lima). Consulta con un asesor por WhatsApp.",
+  title: "Motos, motocar y toritos",
+  description: "Motos lineales, motocar y toritos nuevos con financiamiento directo en Inversiones JP, Santa Anita (Lima). Consulta con un asesor por WhatsApp.",
   alternates: { canonical: "/motos" },
 };
 

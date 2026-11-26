@@ -14,9 +14,9 @@ import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: { absolute: "Inversiones JP | Motos, mototaxis y celulares a crédito en Lima" },
+  title: { absolute: "Inversiones JP | Motos, motocar, toritos y celulares a crédito en Lima" },
   description:
-    "Inversiones JP, Santa Anita (Lima): motos, mototaxis y celulares nuevos con financiamiento directo, sin bancos. Mira el catálogo y conversa con un asesor por WhatsApp.",
+    "Inversiones JP, Santa Anita (Lima): motos, motocar, toritos y celulares nuevos con financiamiento directo, sin bancos. Mira el catálogo y conversa con un asesor por WhatsApp.",
   alternates: { canonical: "/" },
 };
 
@@ -24,18 +24,18 @@ export const metadata: Metadata = {
 const banners: { id: string; nombre: string; src: string; alt: string; texto: string }[] = [
   { id: "motos", nombre: "Motos", src: "/lineas/motos.webp", alt: "Motos Honda lineales: CB190R, Navi y CB125F", texto: "Para repartir, ir al trabajo o moverte por la ciudad." },
   { id: "celulares", nombre: "Celulares", src: "/lineas/celulares.webp", alt: "Celulares iPhone, Samsung, Xiaomi y Honor", texto: "Equipos nuevos para vender, cobrar y estar en contacto." },
-  { id: "motokar", nombre: "Motokar", src: "/lineas/motokar.webp", alt: "Dos mototaxis Honda Motokar, una azul y una roja", texto: "Mototaxis de pasajeros listas para trabajar desde el primer día." },
-  { id: "torito", nombre: "Torito Bajaj", src: "/lineas/torito-bajaj.webp", alt: "Dos mototaxis Torito Bajaj, una roja y una celeste", texto: "El clásico torito de cabina cerrada, para trabajar llueva o truene." },
+  { id: "motokar", nombre: "Motokar", src: "/lineas/motokar.webp", alt: "Dos motocar Honda Motokar, una azul y una roja", texto: "Motocar de pasajeros listos para trabajar desde el primer día." },
+  { id: "torito", nombre: "Torito Bajaj", src: "/lineas/torito-bajaj.webp", alt: "Dos toritos Bajaj, uno rojo y uno celeste", texto: "El clásico torito de cabina cerrada, para trabajar llueva o truene." },
 ];
 
 const pasos = [
-  { titulo: "Elige tu modelo", texto: "Revisa el catálogo y encuentra la moto, la mototaxi o el celular que necesitas." },
+  { titulo: "Elige tu modelo", texto: "Revisa el catálogo y encuentra la moto, el motocar, el torito o el celular que necesitas." },
   { titulo: "Conversa con un asesor", texto: "Por WhatsApp o en nuestra oficina de Santa Anita. Te explicamos los requisitos y resolvemos tus dudas." },
   { titulo: "Llévatelo", texto: "Recibes tu producto nuevo, con garantía y con sus documentos en regla." },
 ];
 
 const historias = [
-  { src: "/escenas/mototaxista.webp", alt: "Mototaxista junto a su mototaxi en una avenida iluminada", titulo: "Para quien trabaja con su mototaxi", clase: "md:col-span-7 md:row-span-2", posicion: "35% 45%" },
+  { src: "/escenas/mototaxista.webp", alt: "Conductor junto a su motocar en una avenida iluminada", titulo: "Para quien trabaja con su motocar o torito", clase: "md:col-span-7 md:row-span-2", posicion: "35% 45%" },
   { src: "/escenas/repartidora.webp", alt: "Repartidora manejando su moto", titulo: "Para quien reparte en moto", clase: "md:col-span-5", posicion: "50% 25%" },
   { src: "/escenas/celular-mercado.webp", alt: "Manos de una comerciante con su celular nuevo", titulo: "Para quien vende desde su celular", clase: "md:col-span-5", posicion: "50% 55%" },
 ];
@@ -85,15 +85,15 @@ export default async function Home() {
               <IconMapPin size={16} /> Santa Anita, Lima
             </p>
             <h1 className="display entrada mt-5 text-[2.6rem] text-white sm:text-[3.3rem] lg:text-[4.3rem]" style={{ "--retraso": "200ms" } as React.CSSProperties}>
-              Motos, mototaxis y celulares para salir a trabajar.
+              Motos, motocar, toritos y celulares para salir a trabajar.
             </h1>
             <p className="entrada mx-auto mt-6 max-w-[34rem] text-[1.08rem] leading-relaxed text-white/70 md:mx-0" style={{ "--retraso": "350ms" } as React.CSSProperties}>
-              Te ayudamos a tener tu moto, tu mototaxi o tu celular nuevo con financiamiento directo, sin bancos de por
+              Te ayudamos a tener tu moto, tu motocar, tu torito o tu celular nuevo con financiamiento directo, sin bancos de por
               medio. Mira el catálogo y conversa con un asesor.
             </p>
             <div className="entrada mt-9 flex flex-col justify-center gap-3 sm:flex-row md:justify-start" style={{ "--retraso": "500ms" } as React.CSSProperties}>
               <Link href="/motos" className="btn-oro">
-                Ver motos y mototaxis <IconArrowRight size={18} />
+                Ver motos, motocar y toritos <IconArrowRight size={18} />
               </Link>
               <Link href="/celulares" className="btn-claro">
                 Ver celulares <IconArrowRight size={18} />
@@ -113,7 +113,7 @@ export default async function Home() {
           <Revelar className="grid gap-6 md:grid-cols-[1.2fr_1fr] md:items-end">
             <h2 className="display text-[2.2rem] text-tinta md:text-[3.2rem]">Elige por dónde empezar</h2>
             <p className="max-w-md text-[1.02rem] text-pizarra md:justify-self-end">
-              Motos, mototaxis y celulares con un mismo trato: productos nuevos, asesoría de una persona real y documentos claros.
+              Motos, motocar, toritos y celulares con un mismo trato: productos nuevos, asesoría de una persona real y documentos claros.
             </p>
           </Revelar>
 
@@ -233,7 +233,7 @@ export default async function Home() {
           <Revelar className="max-w-2xl">
             <h2 className="display text-[2.2rem] text-white md:text-[3.2rem]">Hecho para quienes trabajan por su cuenta</h2>
             <p className="mt-5 text-[1.02rem] text-white/65">
-              Mototaxistas, repartidores, comerciantes. Financiamos la herramienta con la que generas tus ingresos.
+              Conductores de motocar y torito, repartidores, comerciantes. Financiamos la herramienta con la que generas tus ingresos.
             </p>
           </Revelar>
           <div className="mt-12 grid auto-rows-[260px] gap-4 md:auto-rows-[280px] md:grid-cols-12">

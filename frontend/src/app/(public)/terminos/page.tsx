@@ -7,7 +7,7 @@ import { siteConfig } from "@/lib/config";
 // financiamiento constan en el contrato y el cronograma que firma el cliente.
 export const metadata: Metadata = {
   title: "Términos y condiciones",
-  description: `Condiciones de uso del sitio web y del financiamiento de motos, mototaxis y celulares de ${siteConfig.name}.`,
+  description: `Condiciones de uso del sitio web y del financiamiento de motos, motocar, toritos y celulares de ${siteConfig.name}.`,
   alternates: { canonical: "/terminos" },
 };
 
@@ -22,7 +22,7 @@ export default function TerminosPage() {
 
       <h2>1. Qué ofrecemos</h2>
       <p>
-        {siteConfig.name} vende y financia directamente <strong>motos lineales, mototaxis (trimóviles) y celulares</strong>.
+        {siteConfig.name} vende y financia directamente <strong>motos lineales, motocar y toritos (trimóviles) y celulares</strong>.
         <strong>No otorgamos préstamos de dinero en efectivo</strong>. No somos una entidad del sistema
         financiero: el financiamiento es un crédito directo por la compra del producto.
       </p>

@@ -263,7 +263,7 @@ export function domicilioDe(p: Persona): string {
 const legible = (v: string) => v.charAt(0) + v.slice(1).toLowerCase().replace(/_/g, " ");
 const ETIQUETA_VEHICULO: Record<string, string> = {
   MOTO_LINEAL: "motocicleta lineal",
-  TRIMOVIL_PASAJEROS: "trimóvil (mototaxi) de pasajeros",
+  TRIMOVIL_PASAJEROS: "trimóvil (motocar o torito) de pasajeros",
   TRIMOVIL_CARGA: "trimóvil de carga",
 };
 const ETIQUETA_PLATAFORMA: Record<string, string> = {

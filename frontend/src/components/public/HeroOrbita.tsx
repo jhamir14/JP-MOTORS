@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 
 const escenas = [
   { id: "motos", titulo: "Motos", detalle: "Urbanas, de trabajo y deportivas", src: "/motos/cb190r.webp", alt: "Moto deportiva roja", escala: "scale-[1.18]" },
-  { id: "mototaxis", titulo: "Mototaxis", detalle: "De pasajeros y de carga", src: "/motos/nl150.webp", alt: "Mototaxi roja de pasajeros", escala: "scale-[1.12]" },
+  { id: "mototaxis", titulo: "Motocar y toritos", detalle: "De pasajeros y de carga", src: "/motos/nl150.webp", alt: "Motocar rojo de pasajeros", escala: "scale-[1.12]" },
   { id: "celulares", titulo: "Celulares", detalle: "iPhone, Samsung, Xiaomi y más", src: "/escenas/celulares-estudio.webp", alt: "Tres celulares de última generación", escala: "scale-100" },
 ] as const;
 

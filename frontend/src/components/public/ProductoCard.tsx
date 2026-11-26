@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { IconArrowRight } from "@/components/icons";
-import { cilindrada, hrefProducto, lineaDe, planDestacado, type Producto } from "@/lib/catalogo";
+import { IconArrowRight, IconWhatsApp } from "@/components/icons";
+import { cilindrada, esVehiculo, etiquetaProducto, hrefProducto, planDestacado, type Producto } from "@/lib/catalogo";
 import { ETIQUETA_FRECUENCIA } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
 import { ProductoImagen, fotoSobreNegro } from "./ProductoImagen";
@@ -18,9 +18,10 @@ function datoClave(p: Producto) {
  * Toda la tarjeta es un enlace a la ficha.
  */
 export function ProductoCard({ producto, priority = false, indice = 0 }: { producto: Producto; priority?: boolean; indice?: number }) {
-  const linea = lineaDe(producto);
   const dato = datoClave(producto);
-  const cuota = planDestacado(producto);
+  const vehiculo = esVehiculo(producto);
+  // Motos, motocar y toritos: solo precio al contado; el financiamiento se consulta por WhatsApp.
+  const cuota = vehiculo ? null : planDestacado(producto);
 
   return (
     <Link
@@ -39,7 +40,7 @@ export function ProductoCard({ producto, priority = false, indice = 0 }: { produ
         {/* Asienta el producto y oculta el borde inferior de las fotos recortadas sobre negro */}
         <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-noche via-noche/70 to-transparent" />
         <span className="absolute top-3 left-3 rounded-full bg-white/10 px-3 py-1 text-[0.72rem] font-semibold text-white/90 backdrop-blur-md">
-          {linea.singular}
+          {etiquetaProducto(producto)}
         </span>
         {producto.stock > 0 && (
           <span className="absolute top-3 right-3 rounded-full bg-oro px-3 py-1 text-[0.72rem] font-bold text-noche">Entrega inmediata</span>
@@ -73,9 +74,16 @@ export function ProductoCard({ producto, priority = false, indice = 0 }: { produ
               </div>
             </div>
           ) : (
-            <div>
-              <div className="text-[0.72rem] text-pizarra">Precio referencial</div>
-              <div className="text-lg font-extrabold text-tinta tabular">{formatSoles(producto.precio)}</div>
+            <div className="min-w-0">
+              <div className="text-[0.72rem] font-semibold tracking-wide text-oro-oscuro uppercase">
+                {vehiculo ? "Precio al contado" : "Precio referencial"}
+              </div>
+              <div className="text-[1.4rem] leading-tight font-extrabold text-tinta tabular">{formatSoles(producto.precio)}</div>
+              {vehiculo && (
+                <div className="mt-0.5 flex items-center gap-1 text-[0.75rem] text-pizarra">
+                  <IconWhatsApp size={13} className="shrink-0 text-[#25D366]" /> Financiamiento: consulta por WhatsApp
+                </div>
+              )}
             </div>
           )}
           <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-tinta text-white transition-[background-color,color,transform] duration-500 group-hover:-rotate-45 group-hover:bg-oro group-hover:text-noche">
