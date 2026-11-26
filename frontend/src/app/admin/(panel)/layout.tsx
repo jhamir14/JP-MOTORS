@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminNav, type ItemNav } from "@/components/admin/AdminNav";
+import { CampanaCobranza } from "@/components/admin/CampanaCobranza";
 import { Logo } from "@/components/Logo";
 import { SECCIONES, seccionesDe, type Seccion } from "@/lib/permisos";
 import { ETIQUETA_ROL, requerirSesion } from "@/lib/server/auth";
@@ -17,8 +18,16 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const sesion = await requerirSesion();
   // Mora y estados del día (una vez por día; si el job programado ya corrió, no hace nada).
   await asegurarProcesoDiario();
-  const [pendientes] = await sql()<{ solicitudes: number; reclamos: number; mora: number }[]>`
+  const [pendientes] = await sql()<{ solicitudes: number; reclamos: number; mora: number; vencen_hoy: number; hoy: string }[]>`
     select (select count(*) from public.solicitud_credito where estado = 'NUEVA')::int as solicitudes,
+           to_char((now() at time zone 'America/Lima')::date, 'YYYY-MM-DD') as hoy,
+           (select count(distinct cu.credito_id) from public.cuota cu join public.credito cr on cr.id = cu.credito_id
+            where cr.estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO') and cu.estado <> 'PAGADA'
+              and cu.monto_cuota + cu.mora - cu.monto_pagado > 0
+              and cu.fecha_vencimiento = (now() at time zone 'America/Lima')::date
+              and not exists (select 1 from public.cuota v where v.credito_id = cu.credito_id and v.estado <> 'PAGADA'
+                              and v.monto_cuota + v.mora - v.monto_pagado > 0
+                              and v.fecha_vencimiento < (now() at time zone 'America/Lima')::date))::int as vencen_hoy,
            (select count(distinct cu.credito_id) from public.cuota cu join public.credito cr on cr.id = cu.credito_id
             where cr.estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO') and cu.estado <> 'PAGADA'
               and cu.monto_cuota + cu.mora - cu.monto_pagado > 0
@@ -59,6 +68,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
               <div className="truncate text-xs text-muted">{ETIQUETA_ROL[sesion.rol]}</div>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+          <CampanaCobranza hoy={pendientes.hoy} vencenHoy={pendientes.vencen_hoy} enMora={pendientes.mora} />
           <form action={salir}>
             <button
               type="submit"
@@ -67,9 +78,10 @@ export default async function PanelLayout({ children }: { children: React.ReactN
               <svg aria-hidden viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" />
               </svg>
-              Cerrar sesión
+              <span className="hidden sm:inline">Cerrar sesión</span>
             </button>
           </form>
+          </div>
         </header>
         <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>

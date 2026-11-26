@@ -9,20 +9,22 @@ import type { Rol } from "@/lib/roles";
 export const TODOS: readonly Rol[] = ["SUPERADMIN", "ADMIN_CREDITOS", "ASESOR_VENTAS", "COBRADOR"];
 const ADMINS: readonly Rol[] = ["SUPERADMIN", "ADMIN_CREDITOS"];
 const VENTAS: readonly Rol[] = ["SUPERADMIN", "ADMIN_CREDITOS", "ASESOR_VENTAS"];
+/** Secciones que el Administrador de créditos no usa (pidió un menú más corto): solo Superadmin y Ventas. */
+const SIN_ADMIN_CREDITOS: readonly Rol[] = ["SUPERADMIN", "ASESOR_VENTAS"];
 
 export const SECCIONES = {
   inicio: { href: "/admin", label: "Inicio", roles: TODOS },
   reportes: { href: "/admin/reportes", label: "Reportes", roles: ADMINS },
-  solicitudes: { href: "/admin/solicitudes", label: "Solicitudes web", roles: VENTAS },
+  solicitudes: { href: "/admin/solicitudes", label: "Solicitudes web", roles: SIN_ADMIN_CREDITOS },
   clientes: { href: "/admin/clientes", label: "Clientes", roles: TODOS },
   creditos: { href: "/admin/creditos", label: "Créditos", roles: TODOS },
   cobranzas: { href: "/admin/cobranzas", label: "Cobranzas", roles: TODOS },
   pagos: { href: "/admin/pagos", label: "Pagos", roles: TODOS },
-  caja: { href: "/admin/caja", label: "Caja", roles: TODOS },
+  caja: { href: "/admin/caja", label: "Caja", roles: ["SUPERADMIN", "ASESOR_VENTAS", "COBRADOR"] as readonly Rol[] },
   catalogo: { href: "/admin/catalogo", label: "Catálogo", roles: VENTAS },
   inventario: { href: "/admin/inventario", label: "Inventario", roles: VENTAS },
-  tasas: { href: "/admin/tasas", label: "Tasas por servicio", roles: VENTAS },
-  reclamos: { href: "/admin/reclamos", label: "Libro de Reclamaciones", roles: VENTAS },
+  tasas: { href: "/admin/tasas", label: "Tasas por servicio", roles: SIN_ADMIN_CREDITOS },
+  reclamos: { href: "/admin/reclamos", label: "Libro de Reclamaciones", roles: SIN_ADMIN_CREDITOS },
   personal: { href: "/admin/personal", label: "Personal", roles: ["SUPERADMIN"] as readonly Rol[] },
   sistema: { href: "/admin/sistema", label: "Sistema", roles: ["SUPERADMIN"] as readonly Rol[] },
 } as const satisfies Record<string, { href: string; label: string; roles: readonly Rol[] }>;

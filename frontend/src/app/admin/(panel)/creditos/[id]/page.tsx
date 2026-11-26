@@ -28,7 +28,7 @@ interface Credito {
   total_intereses: number; monto_total_pagar: number; frecuencia: Frecuencia; numero_cuotas: number; valor_cuota: number;
   penalidad_diaria: number; tea_porcentaje: number | null; fecha_desembolso: string; fecha_primer_vencimiento: string;
   fecha_cancelacion: string | null; motivo_anulacion: string | null; anulado_at: Date | null; anulado_por: string | null;
-  creado_por: string | null; created_at: Date; notas: string | null; legado_origen: string | null;
+  creado_por: string | null; asesor: string | null; created_at: Date; notas: string | null; legado_origen: string | null;
   beneficio_score: { nivel: string; score: number | null; descuentoTasaPct: number; reduccionInicialPct: number; cuotasExtra: number } | null;
   estado_unidad_bloqueo: string | null;
 }
@@ -67,7 +67,7 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
            cr.penalidad_diaria::float8, cr.tea_porcentaje::float8,
            to_char(cr.fecha_desembolso, 'YYYY-MM-DD') as fecha_desembolso, to_char(cr.fecha_primer_vencimiento, 'YYYY-MM-DD') as fecha_primer_vencimiento,
            to_char(cr.fecha_cancelacion, 'YYYY-MM-DD') as fecha_cancelacion, cr.motivo_anulacion, cr.anulado_at,
-           ${nombre("pa")} as anulado_por, ${nombre("pc")} as creado_por, cr.created_at, cr.notas, cr.legado_origen, cr.beneficio_score
+           ${nombre("pa")} as anulado_por, ${nombre("pc")} as creado_por, ${nombre("pv")} as asesor, cr.created_at, cr.notas, cr.legado_origen, cr.beneficio_score
     from public.credito cr
     join public.cliente cl on cl.id = cr.cliente_id
     left join public.garante g on g.id = cr.garante_id
@@ -76,6 +76,7 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
     left join public.plan_credito pl on pl.id = cr.plan_credito_id
     left join public.perfil_usuario pa on pa.id = cr.anulado_por
     left join public.perfil_usuario pc on pc.id = cr.creado_por
+    left join public.perfil_usuario pv on pv.id = cr.asesor_id
     where cr.id = ${id}`;
   if (!cr) notFound();
 
@@ -179,6 +180,7 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
             <Dato k="Garante">{cr.garante ? `${cr.garante} · ${cr.garante_doc}` : "—"}</Dato>
             <Dato k="Producto">{cr.bien ?? "—"}{cr.bien_id && <span className="block text-xs font-normal text-muted">{cr.bien_id}</span>}</Dato>
             {cr.plan && <Dato k="Plan del catálogo">{cr.plan}</Dato>}
+            <Dato k="Asesor de ventas">{cr.asesor ?? "—"}</Dato>
             <Dato k="Registrado">{cr.legado_origen ? "Migrado del sistema anterior" : `${fechaCorta(cr.created_at)}${cr.creado_por ? ` por ${cr.creado_por}` : ""}`}</Dato>
           </dl>
         </Panel>

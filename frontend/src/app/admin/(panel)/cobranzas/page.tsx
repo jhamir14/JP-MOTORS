@@ -72,7 +72,7 @@ export default async function CobranzasPage({ searchParams }: { searchParams: Pr
         cobrado hoy: <strong className="text-fg">{formatSoles(cobradoHoy, true)}</strong>.
       </Encabezado>
 
-      <div className="mb-5 flex flex-wrap gap-2">
+      <div className="mb-5 flex flex-wrap items-center gap-2">
         {PESTANAS.map((p) => (
           <Link
             key={p.id}
@@ -85,6 +85,17 @@ export default async function CobranzasPage({ searchParams }: { searchParams: Pr
             {p.etiqueta} ({conteo[p.id]})
           </Link>
         ))}
+        <a
+          href="/api/documentos/cobranzas"
+          target="_blank"
+          rel="noopener"
+          className="ml-auto inline-flex items-center gap-2 rounded-xl border border-brand bg-brand-soft px-4 py-2 text-sm font-semibold text-brand hover:bg-brand hover:text-white"
+        >
+          <svg aria-hidden viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M12 18v-6" /><path d="m9 15 3 3 3-3" />
+          </svg>
+          PDF de pendientes (hoy y en mora)
+        </a>
       </div>
 
       {pestana === "mora" && (

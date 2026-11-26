@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
 import { ETIQUETA_METODO, puedeAnularPagos, resumenCaja, type MetodoPago } from "@/lib/pagos";
-import { requerirSesion } from "@/lib/server/auth";
+import { requerirSeccion } from "@/lib/server/auth";
 import { hoyLima } from "@/lib/server/cobranza";
 import { sql } from "@/lib/server/db";
 import { cerrarCaja, reabrirCaja } from "../pagos/actions";
@@ -18,7 +18,7 @@ interface Cierre {
 }
 
 export default async function CajaPage({ searchParams }: { searchParams: Promise<{ fecha?: string }> }) {
-  const sesion = await requerirSesion();
+  const sesion = await requerirSeccion("caja");
   const admin = puedeAnularPagos(sesion.rol);
   const sp = await searchParams;
   const db = sql();
