@@ -48,6 +48,7 @@ export default function PrivacidadPage() {
       <h2>3. Para qué los usamos</h2>
       <ul>
         <li>Evaluar tu solicitud de financiamiento y contactarte sobre ella.</li>
+        <li>Responder las cotizaciones que haces en el cotizador de la web, por WhatsApp o por correo, y enviarte una copia de tu cotización.</li>
         <li>Celebrar y ejecutar el contrato: entrega del producto, cronograma de pagos, registro de pagos y constancias.</li>
         <li>
           Enviarte <strong>recordatorios de pago y avisos de tu crédito por WhatsApp</strong> o llamada al número que nos proporcionaste.
@@ -71,7 +72,7 @@ export default function PrivacidadPage() {
       <h2>5. Con quién los compartimos</h2>
       <p>No vendemos ni alquilamos tus datos. Solo los compartimos con:</p>
       <ul>
-        <li>Proveedores que nos prestan servicios y actúan por encargo nuestro: alojamiento del sitio web (Vercel), base de datos (Railway), mensajería (WhatsApp) y analítica web (Google).</li>
+        <li>Proveedores que nos prestan servicios y actúan por encargo nuestro: alojamiento del sitio web (Vercel), base de datos (Railway), correo electrónico (Hostinger), mensajería (WhatsApp) y analítica web (Google).</li>
         <li>Proveedores de GPS vehicular y de plataformas de bloqueo de equipos, solo para los productos financiados que los incluyan.</li>
         <li>Autoridades judiciales o administrativas, cuando la ley lo exija.</li>
       </ul>

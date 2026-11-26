@@ -99,7 +99,7 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
                 <a href={whatsappLink(whatsappMessages.producto(producto.nombre))} target="_blank" rel="noopener noreferrer" className="btn-oro">
                   <IconWhatsApp size={18} /> Consultar por este modelo
                 </a>
-                <Link href={`/catalogo?linea=${linea.id}`} className="btn-claro">Ver más {linea.nombre.toLowerCase()}</Link>
+                <Link href={`/cotizar?producto=${producto.slug}`} className="btn-claro">Calcula tu cuota</Link>
               </div>
             </div>
           </div>
