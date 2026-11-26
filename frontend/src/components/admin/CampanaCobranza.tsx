@@ -54,8 +54,8 @@ export function CampanaCobranza({ hoy, vencenHoy, enMora }: { hoy: string; vence
   return (
     <div className="flex items-center gap-2">
       {permiso === "default" && (
-        <button type="button" onClick={activar} className="hidden cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-brand hover:bg-brand-soft sm:inline-flex">
-          Activar avisos de cobranza
+        <button type="button" onClick={activar} className="hidden cursor-pointer rounded-xl px-2.5 py-2 text-xs font-semibold text-brand hover:bg-brand-soft min-[380px]:inline-flex sm:px-3">
+          Activar avisos<span className="hidden sm:inline">&nbsp;de cobranza</span>
         </button>
       )}
       <Link

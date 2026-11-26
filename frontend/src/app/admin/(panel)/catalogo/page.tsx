@@ -49,7 +49,7 @@ export default async function CatalogoAdminPage({ searchParams }: { searchParams
           name="q"
           defaultValue={q}
           placeholder="Buscar por nombre o marca"
-          className="rounded-xl border border-line bg-surface px-3.5 py-2 text-sm outline-none focus:border-brand"
+          className="min-w-0 flex-1 rounded-xl md:w-64 md:flex-none border border-line bg-surface px-3.5 py-2 text-sm outline-none focus:border-brand"
         />
         {categoria && <input type="hidden" name="categoria" value={categoria} />}
         <button type="submit" className="cursor-pointer rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white">Buscar</button>
