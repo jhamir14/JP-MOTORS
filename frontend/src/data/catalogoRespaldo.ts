@@ -30,25 +30,31 @@ const vehiculos: Base[] = [
     slug: "honda-cb190r", categoria: "MOTO_LINEAL", marca: "Honda", nombre: "Honda CB190R", precio: 11966, destacado: true, etiquetas: ["Deportiva"],
     descripcion: "Naked street con espíritu racing: horquilla invertida dorada, inyección electrónica y frenos de disco en ambas ruedas.",
     specs: { Cilindrada: "184.4 cc", Transmisión: "5 velocidades", Alimentación: "Inyección electrónica", Frenos: "Disco / Disco", Potencia: "16.6 HP / 8,000 RPM", Peso: "141 kg" },
-    imagen: "/motos/cb190r.webp",
+    imagen: "/motos/modelos/honda-cb190r.webp",
   },
   {
     slug: "honda-cb125f-twister", categoria: "MOTO_LINEAL", marca: "Honda", nombre: "Honda CB125F Twister", precio: 7695.2, destacado: true, etiquetas: ["Trabajo", "Urbana"],
     descripcion: "Líneas deportivas y peso ligero para el día a día. Ideal como primera moto para trabajar y moverte por la ciudad.",
     specs: { Cilindrada: "124.8 cc", Transmisión: "4 velocidades", Alimentación: "Carburador", Frenos: "Disco / Tambor", Potencia: "8.38 HP / 7,500 RPM", Peso: "117 kg" },
-    imagen: "/motos/cb125f.webp",
+    imagen: "/motos/modelos/honda-cb125f-twister.webp",
   },
   {
     slug: "honda-navi", categoria: "MOTO_LINEAL", marca: "Honda", nombre: "Honda Navi", precio: 5889.29, destacado: true, etiquetas: ["Urbana"],
     descripcion: "Mini scooter automática, liviana y muy económica en combustible: perfecta para el tráfico urbano.",
     specs: { Cilindrada: "109.19 cc", Transmisión: "Automática (V-Matic)", Alimentación: "Carburador", Frenos: "Tambor / Tambor", Potencia: "7.09 HP / 7,500 RPM", Peso: "101 kg" },
-    imagen: "/motos/navi.webp",
+    imagen: "/motos/modelos/honda-navi.webp",
   },
   {
     slug: "honda-motokar-gl150", categoria: "TRIMOVIL_PASAJEROS", marca: "Honda", nombre: "Honda Motokar GL150", precio: 8800, destacado: true, etiquetas: ["Trimóvil", "Trabajo"],
     descripcion: "El clásico motokar de pasajeros para trabajar en provincia y selva: motor 150 cc confiable y carreta techada.",
     specs: { Cilindrada: "150 cc", Uso: "Transporte de pasajeros", Condición: "0 km" },
-    imagen: "/motos/nl150.webp",
+    imagen: "/motos/modelos/honda-motokar-gl150.webp",
+  },
+  {
+    slug: "honda-motokar-gl125", categoria: "TRIMOVIL_PASAJEROS", marca: "Honda", nombre: "Honda Motokar GL125", precio: 8000, destacado: true, etiquetas: ["Trimóvil", "Trabajo"],
+    descripcion: "Motokar de pasajeros con el motor Honda 125 cc de siempre: económico, resistente y listo para trabajar desde el primer día.",
+    specs: { Cilindrada: "125 cc", Uso: "Transporte de pasajeros", Condición: "0 km" },
+    imagen: "/motos/modelos/honda-motokar-gl125.webp",
   },
 ];
 

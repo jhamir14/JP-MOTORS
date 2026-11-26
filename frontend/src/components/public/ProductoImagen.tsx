@@ -4,11 +4,12 @@ import { cn } from "@/lib/cn";
 import { PhoneMock } from "./PhoneMock";
 
 /**
- * Fotos recortadas sobre negro: se funden con la placa oscura usando `mix-blend-lighten`.
+ * Fotos recortadas sobre negro (las de /motos/modelos/ ya vienen con fondo transparente y no lo necesitan): se funden con la placa oscura usando `mix-blend-lighten`.
  * Si un contenedor de la foto se transforma o anima, ese contenedor también debe llevar `mix-blend-lighten`
  * (un `transform` o `filter` aísla la composición y el negro volvería a verse).
  */
-export const sobreNegro = (url: string) => url.startsWith("/motos/") || url.startsWith("/escenas/celulares-estudio");
+export const sobreNegro = (url: string) =>
+  (url.startsWith("/motos/") && !url.startsWith("/motos/modelos/")) || url.startsWith("/escenas/celulares-estudio");
 
 /**
  * Foto principal del producto sobre la placa oscura. Las fotos subidas desde el panel se muestran tal cual.
