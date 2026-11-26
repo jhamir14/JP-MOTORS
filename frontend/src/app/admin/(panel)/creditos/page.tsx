@@ -83,7 +83,7 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
         titulo="Créditos"
         acciones={puedeGestionarCreditos(sesion.rol) && <ButtonLink href="/admin/creditos/nuevo" variant="brand" size="sm">+ Nuevo crédito</ButtonLink>}
       >
-        Financiamientos de motos, mototaxis y celulares con su cronograma.
+        Financiamientos de motos, motokar, toritos y celulares con su cronograma.
       </Encabezado>
 
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">

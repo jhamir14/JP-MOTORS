@@ -171,7 +171,7 @@ export function FormularioReclamo() {
         <Field label="Tipo" htmlFor="lr-bienTipo">
           <Select {...campo("bienTipo")}>
             <option value="SERVICIO">Servicio (financiamiento)</option>
-            <option value="PRODUCTO">Producto (moto, mototaxi o celular)</option>
+            <option value="PRODUCTO">Producto (moto, motokar, torito o celular)</option>
           </Select>
         </Field>
         <Field label="Monto reclamado (S/)" htmlFor="lr-bienMonto" error={errores.bienMonto} hint="Opcional">

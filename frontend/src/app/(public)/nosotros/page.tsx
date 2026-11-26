@@ -9,7 +9,7 @@ import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
 export const metadata: Metadata = {
   title: "Nosotros",
   description:
-    "Inversiones JP es una empresa de Santa Anita, Lima, que financia motos, mototaxis y celulares para trabajadores independientes y emprendedores.",
+    "Inversiones JP es una empresa de Santa Anita, Lima, que financia motos, motokar, toritos y celulares para trabajadores independientes y emprendedores.",
   alternates: { canonical: "/nosotros" },
 };
 
@@ -22,11 +22,11 @@ const valores = [
 const preguntas = [
   {
     p: "¿Qué es Inversiones JP?",
-    r: "Somos una empresa de financiamiento directo. Nacimos vendiendo motos a crédito y hoy financiamos motos, mototaxis y celulares. No prestamos dinero en efectivo.",
+    r: "Somos una empresa de financiamiento directo. Nacimos vendiendo motos a crédito y hoy financiamos motos, motokar, toritos y celulares. No prestamos dinero en efectivo.",
   },
   {
     p: "¿Necesito boletas de pago o estar en planilla?",
-    r: "No. Atendemos a trabajadores independientes, mototaxistas, comerciantes y emprendedores. Evaluamos tu actividad y tu capacidad de pago.",
+    r: "No. Atendemos a trabajadores independientes, conductores de motokar y torito, comerciantes y emprendedores. Evaluamos tu actividad y tu capacidad de pago.",
   },
   {
     p: "¿Qué documentos necesito?",
@@ -54,7 +54,7 @@ export default function NosotrosPage() {
               Financiamos la herramienta con la que trabajas.
             </h1>
             <p className="entrada mt-6 max-w-lg text-[1.08rem] leading-relaxed text-white/70" style={{ "--retraso": "260ms" } as React.CSSProperties}>
-              En Inversiones JP ayudamos a mototaxistas, repartidores y comerciantes a tener su moto, su mototaxi o su
+              En Inversiones JP ayudamos a conductores de motokar y torito, repartidores y comerciantes a tener su moto, su motokar, su torito o su
               celular nuevo, sin depender de un banco.
             </p>
           </div>
@@ -99,7 +99,7 @@ export default function NosotrosPage() {
           </Revelar>
           <Revelar retraso={120} className="order-1 md:order-2">
             <p className="display-sm text-[1.6rem] text-tinta md:text-[2.15rem]">
-              Empezamos vendiendo motos a crédito. Hoy también financiamos mototaxis y celulares, siempre con la misma
+              Empezamos vendiendo motos a crédito. Hoy también financiamos motokar, toritos y celulares, siempre con la misma
               idea: que el trabajo de cada día te permita pagar lo que te ayuda a trabajar.
             </p>
             <p className="mt-6 max-w-lg text-pizarra">

@@ -11,9 +11,9 @@ export const siteConfig = {
   /** RUC de la empresa (Libro de Reclamaciones y páginas legales). Se puede sobrescribir con NEXT_PUBLIC_RUC. */
   ruc: process.env.NEXT_PUBLIC_RUC || "10479269217",
   emailContacto: process.env.NEXT_PUBLIC_EMAIL_CONTACTO ?? "contacto@inversiones-jp.com",
-  tagline: "Financiamiento de motos, mototaxis y celulares",
+  tagline: "Financiamiento de motos, motokar, toritos y celulares",
   description:
-    "Inversiones JP: crédito vehicular para motos y mototaxis, y celulares en cuotas semanales. Crédito directo, evaluación rápida y pagos diarios, semanales o mensuales.",
+    "Inversiones JP: crédito vehicular para motos, motokar y toritos, y celulares en cuotas semanales. Crédito directo, evaluación rápida y pagos diarios, semanales o mensuales.",
   /** Dominio oficial: canonical, sitemap, Open Graph y datos estructurados. */
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://inversiones-jp.com",
   locale: "es_PE",
@@ -21,6 +21,12 @@ export const siteConfig = {
   telefonoVisible: "902 423 015",
   horario: "Lun. a sáb. · 9:00 a. m. – 7:00 p. m.",
   gaId: process.env.NEXT_PUBLIC_GA_ID ?? "G-C6RTDH3SXY",
+  /** Redes sociales oficiales (pie de página y datos estructurados). */
+  redes: [
+    { id: "facebook", nombre: "Facebook", url: "https://www.facebook.com/profile.php?id=61596640415033" },
+    { id: "instagram", nombre: "Instagram", url: "https://www.instagram.com/inversionesjp.pe/" },
+    { id: "tiktok", nombre: "TikTok", url: "https://www.tiktok.com/@inversionesjp.pe" },
+  ],
   address: {
     name: "Oficina principal",
     lines: ["Santa Anita, Lima"],

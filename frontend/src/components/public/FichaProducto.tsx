@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { IconArrowRight, IconCheck, IconWhatsApp } from "@/components/icons";
-import { CATALOGOS, catalogoDeLinea, hrefLinea, hrefProducto, lineaDe, resultadoPlan, type Producto } from "@/lib/catalogo";
+import { CATALOGOS, catalogoDeLinea, esVehiculo, hrefLinea, hrefProducto, lineaDe, resultadoPlan, type Producto } from "@/lib/catalogo";
 import { ETIQUETA_FRECUENCIA } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
 import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
@@ -21,7 +21,9 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
   const catalogo = CATALOGOS[catalogoDeLinea(linea.id)];
   const [portada, ...galeria] = producto.imagenes;
   const specs = Object.entries(producto.specs).filter(([, v]) => v);
-  const planes = producto.planes
+  // Motos, motokar y toritos: solo precio al contado; las cuotas se consultan por WhatsApp.
+  const vehiculo = esVehiculo(producto);
+  const planes = (vehiculo ? [] : producto.planes)
     .map((plan) => ({ plan, cuota: Math.ceil(resultadoPlan(producto, plan).cuota) }))
     .filter((p) => p.cuota > 0)
     .sort((a, b) => a.cuota - b.cuota);
@@ -58,7 +60,7 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
 
               <div className="mt-8 flex flex-wrap items-end gap-x-8 gap-y-3 border-t border-white/10 pt-6">
                 <div>
-                  <div className="text-sm text-white/55">Precio referencial</div>
+                  <div className="text-sm text-white/55">{vehiculo ? "Precio al contado" : "Precio referencial"}</div>
                   <div className="display-sm mt-1 text-[2rem] text-white tabular">{formatSoles(producto.precio)}</div>
                 </div>
                 <div className="pb-1 text-sm text-white/65">
@@ -96,9 +98,20 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
                 </div>
               )}
 
+              {vehiculo && (
+                <div className="mt-6 rounded-2xl border border-oro/40 bg-oro/10 px-4 py-3.5 text-[0.95rem] text-white/80">
+                  ¿Lo quieres en cuotas? Calcula tu cuota en el cotizador o consulta el financiamiento directamente con un asesor por WhatsApp.
+                </div>
+              )}
+
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a href={whatsappLink(whatsappMessages.producto(producto.nombre))} target="_blank" rel="noopener noreferrer" className="btn-oro">
-                  <IconWhatsApp size={18} /> Consultar por este modelo
+                <a
+                  href={whatsappLink(vehiculo ? whatsappMessages.financiamiento(producto.nombre) : whatsappMessages.producto(producto.nombre))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-oro"
+                >
+                  <IconWhatsApp size={18} /> {vehiculo ? "Consultar financiamiento" : "Consultar por este modelo"}
                 </a>
                 <Link href={`/cotizar?producto=${producto.slug}`} className="btn-claro">Calcula tu cuota</Link>
               </div>

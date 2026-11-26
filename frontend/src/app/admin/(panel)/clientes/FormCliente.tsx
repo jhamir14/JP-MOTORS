@@ -98,7 +98,7 @@ export function FormCliente({ cliente, solicitudId }: { cliente?: Partial<Client
       </Seccion>
 
       <Seccion titulo="Trabajo o negocio">
-        <CampoTexto label="Ocupación / giro" name="ocupacion" defaultValue={v(c.ocupacion)} placeholder="Mototaxista, bodega, comerciante…" />
+        <CampoTexto label="Ocupación / giro" name="ocupacion" defaultValue={v(c.ocupacion)} placeholder="Conductor de motokar, bodega, comerciante…" />
         <CampoTexto label="Ingreso mensual (S/)" name="ingresoMensual" defaultValue={c.ingreso_mensual != null ? c.ingreso_mensual.toFixed(2) : ""} inputMode="decimal" />
         <CampoTexto label="Dirección del trabajo" name="direccionTrabajo" defaultValue={v(c.direccion_trabajo)} />
       </Seccion>

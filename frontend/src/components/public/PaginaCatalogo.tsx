@@ -10,8 +10,8 @@ const primero = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] :
 
 const portada: Record<CatalogoId, { titulo: string; texto: string; src: string; posicion: string }> = {
   vehiculos: {
-    titulo: "Motos y mototaxis",
-    texto: "Motos lineales para trabajar o moverte por la ciudad, y mototaxis listas para salir a producir desde el primer día.",
+    titulo: "Motos, motokar y toritos",
+    texto: "Motos lineales para trabajar o moverte por la ciudad, y motokar y toritos listos para salir a producir desde el primer día.",
     src: "/hero_bg.webp",
     posicion: "50% 55%",
   },
