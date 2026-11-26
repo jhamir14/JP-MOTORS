@@ -5,6 +5,8 @@
  * para que la web pública nunca quede vacía. En producción los datos se editan desde /admin.
  */
 import type { PlanPublico, Producto, TasaPublica } from "@/lib/catalogo";
+import { cotizarCelularJP, gamaCelular, planJP, slugCelular, specsCelular } from "@/lib/celularesJP";
+import { CELULARES_JP } from "./celularesJP";
 import { fotoPorDefecto } from "./fotosProducto";
 
 const planesVehiculo = (slug: string, precio: number): PlanPublico[] =>
@@ -19,9 +21,14 @@ const planesVehiculo = (slug: string, precio: number): PlanPublico[] =>
     montoCuota: null,
   }));
 
-const planCelular = (slug: string): PlanPublico[] => [
-  { id: `${slug}-16`, nombre: "16 semanas sin inicial", cuotaInicial: 0, numeroCuotas: 16, frecuencia: "SEMANAL", tipoCalculo: "FRANCES", tasaPorcentaje: 1.2, montoCuota: null },
-];
+/** Plan JP del celular: el de la lista oficial, o el que da la metodología según su precio. */
+const planCelular = (slug: string, precio: number): PlanPublico[] => {
+  const oficial = CELULARES_JP.find((c) => slugCelular(c) === slug);
+  const g = gamaCelular(precio);
+  const c = oficial ? cotizarCelularJP(precio, oficial.inicial, oficial.semanas, oficial.tasaMensual) : cotizarCelularJP(precio, g.inicial, g.semanas);
+  const p = planJP(c);
+  return [{ id: `${slug}-jp`, nombre: p.nombre, cuotaInicial: p.cuota_inicial, numeroCuotas: p.numero_cuotas, frecuencia: "SEMANAL", tipoCalculo: "FLAT", tasaPorcentaje: p.tasa_porcentaje, montoCuota: p.monto_cuota }];
+};
 
 type Base = Omit<Producto, "id" | "planes" | "stock" | "imagenes" | "modelo"> & { imagen?: string; modelo?: string };
 
@@ -64,17 +71,21 @@ const cel = (slug: string, marca: string, nombre: string, precio: number, gama: 
   imagen: fotoPorDefecto(slug),
 });
 
+/** Los 38 modelos oficiales (src/data/celularesJP.ts) + los 4 anteriores que siguen en el catálogo. */
+const DESTACADOS = new Set(["apple-iphone-16", "apple-iphone-17-pro-max", "samsung-galaxy-a56", "xiaomi-redmi-note-14-pro-5g", "honor-400-5g"]);
 const celulares: Base[] = [
-  cel("apple-iphone-16", "Apple", "iPhone 16", 3000, "Premium", true, "El iPhone más reciente con cámara de 48 MP y chip A18. Llévalo en cuotas semanales.", "iOS"),
-  cel("apple-iphone-15-pro", "Apple", "iPhone 15 Pro", 3800, "Premium", true, "Titanio, chip A17 Pro y cámara profesional. Disponible a crédito con inicial flexible.", "iOS"),
-  cel("apple-iphone-15", "Apple", "iPhone 15", 2700, "Premium", false, "Dynamic Island, USB-C y cámara de 48 MP.", "iOS"),
+  ...CELULARES_JP.map((c): Base => {
+    const slug = slugCelular(c);
+    return {
+      slug, categoria: "CELULAR", marca: c.marca, nombre: c.nombre, modelo: c.nombre.replace(new RegExp(`^${c.marca}\\s+`, "i"), ""),
+      precio: c.precio, destacado: DESTACADOS.has(slug), etiquetas: [gamaCelular(c.precio).nombre], descripcion: null,
+      specs: specsCelular(c.specs, c.marca), imagen: fotoPorDefecto(slug),
+    };
+  }),
+  cel("apple-iphone-15-pro", "Apple", "iPhone 15 Pro", 3800, "Premium", false, "Titanio, chip A17 Pro y cámara profesional. Disponible a crédito con inicial flexible.", "iOS"),
   cel("apple-iphone-13", "Apple", "iPhone 13", 1850, "Gama media", false, "Un clásico confiable con excelente batería y cámara dual.", "iOS"),
   cel("samsung-galaxy-s24-plus", "Samsung", "Galaxy S24+", 3000, "Premium", false, "Pantalla de 6.7\", Galaxy AI y cámara de 50 MP."),
-  cel("samsung-galaxy-a56", "Samsung", "Galaxy A56 5G", 1300, "Gama media", true, "Gama media 5G con gran batería y actualizaciones por años."),
-  cel("xiaomi-redmi-note-13-pro-5g", "Xiaomi", "Redmi Note 13 Pro 5G", 1800, "Gama media", true, "Cámara de 200 MP, pantalla AMOLED de 120 Hz y carga rápida."),
-  cel("xiaomi-redmi-note-15", "Xiaomi", "Redmi Note 15", 900, "Gama trabajo", false, "Batería para todo el día a un precio accesible."),
-  cel("honor-magic-7-lite", "Honor", "Magic 7 Lite", 1250, "Gama media", false, "Batería de larga duración y pantalla resistente a caídas."),
-  cel("honor-x8c", "Honor", "X8c", 780, "Gama trabajo", false, "Delgado, liviano y con excelente relación precio-calidad."),
+  cel("xiaomi-redmi-note-13-pro-5g", "Xiaomi", "Redmi Note 13 Pro 5G", 1800, "Gama media", false, "Cámara de 200 MP, pantalla AMOLED de 120 Hz y carga rápida."),
 ];
 
 export const catalogoRespaldo: Producto[] = [...vehiculos, ...celulares].map(({ imagen, modelo, ...b }) => ({
@@ -82,7 +93,7 @@ export const catalogoRespaldo: Producto[] = [...vehiculos, ...celulares].map(({ 
   id: b.slug,
   modelo: modelo ?? b.nombre.replace(`${b.marca} `, ""),
   imagenes: imagen ? [{ url: imagen, alt: b.nombre }] : [],
-  planes: b.categoria === "CELULAR" ? planCelular(b.slug) : planesVehiculo(b.slug, b.precio),
+  planes: b.categoria === "CELULAR" ? planCelular(b.slug, b.precio) : planesVehiculo(b.slug, b.precio),
   stock: 0,
 }));
 

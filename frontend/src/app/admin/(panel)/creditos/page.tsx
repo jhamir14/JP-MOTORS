@@ -26,7 +26,7 @@ interface Fila {
   pagadas: number; saldo: number; fecha_desembolso: Date; legado: boolean;
 }
 
-export default async function CreditosPage({ searchParams }: { searchParams: Promise<{ estado?: string; tipo?: string; q?: string; pagina?: string }> }) {
+export default async function CreditosPage({ searchParams }: { searchParams: Promise<{ estado?: string; tipo?: string; q?: string; pagina?: string; eliminado?: string }> }) {
   const sesion = await requerirSesion();
   const sp = await searchParams;
   const estado = FILTROS.some((f) => f.valor === sp.estado) ? sp.estado! : "activos";
@@ -89,6 +89,9 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
+      {sp.eliminado && (
+        <p role="status" className="mb-5 rounded-xl bg-accent-soft px-4 py-3 text-sm font-medium text-accent">Eliminado definitivamente, con su cronograma y pagos.</p>
+      )}
       <Encabezado
         titulo={esPrestamo ? "Préstamos de dinero" : "Créditos"}
         acciones={puedeGestionarCreditos(sesion.rol) && (

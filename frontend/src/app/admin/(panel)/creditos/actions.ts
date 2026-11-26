@@ -323,3 +323,23 @@ export async function anularCredito(_prev: EstadoAccion, fd: FormData): Promise<
   revalidatePath("/admin", "layout");
   redirect(`/admin/creditos/${p.data.creditoId}?anulado=1`);
 }
+
+// -----------------------------------------------------------------------------
+// Eliminar (definitivo, solo Superadmin): borra el crédito con su cronograma, pagos y documentos.
+// -----------------------------------------------------------------------------
+export async function eliminarCredito(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
+  const sesion = await requerirSesion("SUPERADMIN");
+  const id = z.string().uuid().safeParse(fd.get("id"));
+  if (!id.success) return fallo("Crédito no válido.");
+  if (String(fd.get("confirmacion") ?? "").trim().toUpperCase() !== "ELIMINAR")
+    return fallo("Escribe ELIMINAR para confirmar.", { confirmacion: "Escribe ELIMINAR" });
+  const [cr] = await sql()<{ cliente_id: string; tipo: string }[]>`select cliente_id, tipo::text from public.credito where id = ${id.data}`;
+  if (!cr) return fallo("El crédito ya no existe.");
+  try {
+    await comoUsuario(sesion, (tx) => tx`select public.eliminar_credito(${id.data})`);
+  } catch (e) {
+    return fallo(mensajeErrorBD(e));
+  }
+  revalidatePath("/admin", "layout");
+  redirect(`/admin/creditos?${cr.tipo === "PRESTAMO_EFECTIVO" ? "tipo=prestamo&" : ""}eliminado=1`);
+}

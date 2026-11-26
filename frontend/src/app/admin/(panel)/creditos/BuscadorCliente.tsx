@@ -1,4 +1,5 @@
 "use client";
+import { textoDocumento } from "@/lib/clientes";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState, useTransition } from "react";
@@ -59,7 +60,7 @@ export function BuscadorCliente({ seleccionado }: { seleccionado: { id: string; 
         </span>
         <div className="min-w-0 flex-1">
           <div className="truncate font-semibold">{seleccionado.nombre}</div>
-          <div className="truncate text-xs text-muted">DNI {seleccionado.documento}{seleccionado.asesor ? ` · registrado por ${seleccionado.asesor}` : ""}</div>
+          <div className="truncate text-xs text-muted">{textoDocumento(seleccionado.documento)}{seleccionado.asesor ? ` · registrado por ${seleccionado.asesor}` : ""}</div>
         </div>
         <button type="button" onClick={() => elegir(null)} className="cursor-pointer rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-semibold hover:border-brand">
           {cargando ? "Cargando…" : "Cambiar cliente"}
@@ -120,7 +121,7 @@ export function BuscadorCliente({ seleccionado }: { seleccionado: { id: string; 
               >
                 <span className="min-w-0">
                   <span className="block truncate font-semibold">{s.nombre}</span>
-                  <span className="block truncate text-xs text-muted">DNI {s.documento}{s.telefono ? ` · ${s.telefono}` : ""}{s.asesor ? ` · asesor: ${s.asesor}` : ""}</span>
+                  <span className="block truncate text-xs text-muted">{textoDocumento(s.documento)}{s.telefono ? ` · ${s.telefono}` : ""}{s.asesor ? ` · asesor: ${s.asesor}` : ""}</span>
                 </span>
                 {s.bloqueado ? <span className="text-xs font-semibold text-danger">Bloqueado</span> : <span className="text-xs font-semibold text-brand">Elegir</span>}
               </button>

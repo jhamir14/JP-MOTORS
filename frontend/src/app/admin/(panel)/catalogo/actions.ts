@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { datosDe, erroresZod, exito, fallo, mensajeErrorBD, type EstadoAccion } from "@/lib/admin/accion";
 import { CATEGORIAS } from "@/lib/catalogo";
+import { PREFIJO_PLAN_JP, cotizarCelularJP, gamaCelular, planJP } from "@/lib/celularesJP";
 import { FRECUENCIAS, TIPOS_CALCULO, calcularCredito } from "@/lib/finance";
 import { comoUsuario, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
@@ -88,9 +89,17 @@ export async function guardarProducto(_prev: EstadoAccion, fd: FormData): Promis
       if (id) {
         const r = await tx`update public.producto_catalogo set ${tx(fila)}, specs = ${tx.json(specs)} where id = ${id}`;
         if (r.count === 0) throw Object.assign(new Error("no encontrado"), { code: "P0002" });
+        // Celulares: los planes JP siguen al precio (misma inicial y plazo, cuota recalculada).
+        if (d.categoria === "CELULAR") await recalcularPlanesJP(tx, id, d.precio);
       } else {
         const [nuevo] = await tx<{ id: string }[]>`insert into public.producto_catalogo ${tx({ ...fila, specs: tx.json(specs) })} returning id`;
         id = nuevo.id;
+        // Celular nuevo: nace con su plan semanal según la metodología JP.
+        if (d.categoria === "CELULAR") {
+          const g = gamaCelular(d.precio);
+          const c = cotizarCelularJP(d.precio, Math.min(g.inicial, Math.floor(d.precio / 2)), g.semanas);
+          if (c.cuota > 0) await tx`insert into public.plan_credito ${tx({ ...planJP(c), producto_id: id, publicado: true, orden: 0 })}`;
+        }
       }
       if (leidas.listos.length) await guardarImagenes(tx, sesion.usuarioId, id!, leidas.listos, d.nombre);
     });
@@ -136,7 +145,7 @@ async function leerImagenes(fd: FormData): Promise<{ error: EstadoAccion } | { l
 }
 
 /** Guarda las imágenes en `archivo` y las enlaza al producto (la primera es portada si aún no tiene). */
-async function guardarImagenes(tx: Parameters<Parameters<typeof comoUsuario>[1]>[0], usuarioId: string, productoId: string, listos: ImagenLista[], alt: string) {
+async function guardarImagenes(tx: Tx, usuarioId: string, productoId: string, listos: ImagenLista[], alt: string) {
   const [{ nombre, tiene_portada, max_orden }] = await tx<{ nombre: string; tiene_portada: boolean; max_orden: number }[]>`
     select p.nombre,
            exists (select 1 from public.imagen_producto i where i.producto_id = p.id and i.es_portada) as tiene_portada,
@@ -206,6 +215,56 @@ export async function marcarPortada(fd: FormData) {
     await tx`update public.imagen_producto set es_portada = true where id = ${id}`;
   });
   refrescar(productoId);
+}
+
+// -----------------------------------------------------------------------------
+// Metodología JP (celulares): planes semanales con la tasa mensual de su gama
+// -----------------------------------------------------------------------------
+type Tx = Parameters<Parameters<typeof comoUsuario>[1]>[0];
+
+/** Recalcula la cuota de los planes JP del producto con su nueva tasa/precio (conserva inicial y semanas). */
+async function recalcularPlanesJP(tx: Tx, productoId: string, precio: number) {
+  const planes = await tx<{ id: string; inicial: number; semanas: number }[]>`
+    select id, cuota_inicial::float8 as inicial, numero_cuotas as semanas from public.plan_credito
+    where producto_id = ${productoId} and nombre like ${`${PREFIJO_PLAN_JP}%`} and frecuencia = 'SEMANAL'`;
+  for (const pl of planes) {
+    const c = cotizarCelularJP(precio, pl.inicial, pl.semanas);
+    if (c.cuota > 0 && pl.inicial < precio) await tx`update public.plan_credito set ${tx(planJP(c))} where id = ${pl.id}`;
+  }
+}
+
+const planJPSchema = z.object({
+  productoId: z.string().uuid(),
+  inicial: z.string().trim().regex(/^\d{1,7}$/, "Monto entero (ej. 150)").transform(Number),
+  semanas: z.string().trim().regex(/^\d{1,3}$/, "Número entero").transform(Number).refine((n) => n >= 4 && n <= 104, "Entre 4 y 104 semanas"),
+});
+
+/** Crea (o reemplaza) el plan JP del celular con la inicial y semanas indicadas. */
+export async function aplicarPlanJP(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
+  const sesion = await requerirSesion(...ROLES_CATALOGO);
+  const parsed = planJPSchema.safeParse(datosDe(fd));
+  if (!parsed.success) return fallo("Revisa los datos del plan.", erroresZod(parsed.error));
+  const d = parsed.data;
+  const [producto] = await sql()<{ precio: number; categoria: string }[]>`
+    select precio_contado::float8 as precio, categoria::text from public.producto_catalogo where id = ${d.productoId}`;
+  if (!producto) return fallo("Producto no encontrado.");
+  if (producto.categoria !== "CELULAR") return fallo("La metodología JP es solo para celulares.");
+  if (d.inicial >= producto.precio) return fallo("La inicial debe ser menor que el precio.", { inicial: "Menor que el precio" });
+  const c = cotizarCelularJP(producto.precio, d.inicial, d.semanas);
+  try {
+    await comoUsuario(sesion, async (tx) => {
+      // Los planes JP anteriores se borran (o se ocultan si un crédito ya los usa).
+      await tx`
+        delete from public.plan_credito pl where pl.producto_id = ${d.productoId} and pl.nombre like ${`${PREFIJO_PLAN_JP}%`}
+          and not exists (select 1 from public.credito cr where cr.plan_credito_id = pl.id)`;
+      await tx`update public.plan_credito set publicado = false where producto_id = ${d.productoId} and nombre like ${`${PREFIJO_PLAN_JP}%`}`;
+      await tx`insert into public.plan_credito ${tx({ ...planJP(c), producto_id: d.productoId, publicado: true, orden: 0 })}`;
+    });
+  } catch (e) {
+    return fallo(mensajeErrorBD(e));
+  }
+  refrescar(d.productoId);
+  return exito(`Plan JP guardado: inicial S/ ${c.inicial} + ${c.semanas} cuotas de S/ ${c.cuota} (${c.tasaMensual} % mensual). Total S/ ${c.totalPagado}.`);
 }
 
 // -----------------------------------------------------------------------------

@@ -61,7 +61,7 @@ export default async function NuevoClientePage({ searchParams }: { searchParams:
       <Encabezado titulo={solicitud ? "Convertir solicitud en cliente" : "Nuevo cliente"}>
         {solicitud
           ? "Datos tomados de la solicitud web: revísalos y completa lo que falte. La solicitud quedará como «convertida»."
-          : "Nombre, apellido, DNI, sexo, celular y correo. El domicilio y el trabajo son opcionales."}
+          : "Nombre, apellido, sexo, celular y correo. El DNI, el domicilio y el trabajo son opcionales."}
       </Encabezado>
 
       {existente && solicitud && (

@@ -30,6 +30,7 @@ export function mensajeErrorBD(e: unknown): string {
   if (err?.code === "42501") return "Tu rol no tiene permiso para esta operación.";
   if (err?.code === "23514") return "Algún valor no cumple las reglas del sistema. Revisa los datos.";
   if (err?.code === "23503") return "El registro está relacionado con otros datos y no se puede modificar así.";
+  if ((err?.code === "P0001" || err?.code === "P0002") && (e as Error).message) return (e as Error).message;
   console.error("[admin] Error de base de datos:", e);
   return "No se pudo guardar. Inténtalo de nuevo.";
 }

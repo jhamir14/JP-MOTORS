@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    { "path": "/api/cron/avisos-cobranza?tramo=manana", "schedule": "0 13 * * *" },
+    { "path": "/api/cron/avisos-cobranza?tramo=tarde", "schedule": "0 20 * * *" }
+  ]
+}

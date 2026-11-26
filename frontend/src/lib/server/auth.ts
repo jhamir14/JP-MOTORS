@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import type postgres from "postgres";
 import { sql } from "./db";
@@ -19,6 +19,7 @@ const DURACION_MS = 12 * 60 * 60 * 1000;
 
 import { ROLES, type Rol } from "@/lib/roles";
 import { SECCIONES, type Seccion } from "@/lib/permisos";
+import { COOKIE_PUERTA, huellaPuerta, rutaSecreta } from "@/lib/rutaPanel";
 
 export { ROLES, type Rol };
 export const ETIQUETA_ROL: Record<Rol, string> = {
@@ -86,7 +87,12 @@ export const obtenerSesion = cache(async (): Promise<Sesion | null> => {
 /** Para páginas y acciones del panel: exige sesión (y opcionalmente un rol). */
 export async function requerirSesion(...roles: Rol[]): Promise<Sesion> {
   const s = await obtenerSesion();
-  if (!s) redirect("/admin/login");
+  if (!s) {
+    // Con ruta secreta: a quien no conoce la puerta se le responde «no encontrado» (no se revela el panel).
+    const secreta = rutaSecreta();
+    if (secreta && (await cookies()).get(COOKIE_PUERTA)?.value !== (await huellaPuerta(secreta))) notFound();
+    redirect("/admin/login");
+  }
   if (roles.length && !roles.includes(s.rol)) redirect("/admin?sinPermiso=1");
   return s;
 }

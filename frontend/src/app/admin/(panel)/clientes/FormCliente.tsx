@@ -1,7 +1,7 @@
 import { AdminForm, BotonEnviar } from "@/components/admin/AdminForm";
 import { CampoSelect, CampoTexto } from "@/components/admin/ui";
 import { legible } from "@/lib/admin/constantes";
-import { SEXOS } from "@/lib/clientes";
+import { SEXOS, esDocumentoProvisional } from "@/lib/clientes";
 import { guardarCliente } from "./actions";
 
 /** Datos que muestra/edita el formulario (los nombres coinciden con las columnas de `cliente`). */
@@ -21,7 +21,7 @@ export interface ClienteEditable {
 }
 
 /**
- * Ficha simple del cliente: nombre, apellido, DNI, sexo, celular y correo.
+ * Ficha simple del cliente: nombre, apellido, DNI (opcional), sexo, celular y correo.
  * El domicilio y el trabajo son opcionales. (Otros datos antiguos del cliente se conservan tal cual.)
  */
 export function FormCliente({ cliente, solicitudId }: { cliente?: Partial<ClienteEditable>; solicitudId?: string }) {
@@ -38,14 +38,14 @@ export function FormCliente({ cliente, solicitudId }: { cliente?: Partial<Client
       <CampoTexto label="Nombre" name="nombres" defaultValue={v(c.nombres)} required autoComplete="off" placeholder="Juan Carlos" />
       <CampoTexto label="Apellido" name="apellidos" defaultValue={v(c.apellidos)} required autoComplete="off" placeholder="Quispe Mamani" />
       <CampoTexto
-        label={c.tipo_documento && c.tipo_documento !== "DNI" ? "N.º de documento" : "DNI"}
+        label={c.tipo_documento && c.tipo_documento !== "DNI" ? "N.º de documento (opcional)" : "DNI (opcional)"}
         name="numeroDocumento"
-        defaultValue={v(c.numero_documento)}
-        required
+        defaultValue={c.numero_documento && esDocumentoProvisional(c.numero_documento) ? "" : v(c.numero_documento)}
         autoComplete="off"
         inputMode="numeric"
         maxLength={12}
         placeholder="8 dígitos"
+        hint="Déjalo vacío si el cliente no tiene o no lo dio; se puede agregar después."
       />
       <CampoSelect
         label="Sexo"

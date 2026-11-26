@@ -94,6 +94,13 @@ export function errorDocumento(tipo: TipoDocumento, numero: string): string | nu
 /** Documento de relleno de la migración del sistema anterior (ej. «SIN-DOC-12»). */
 export const esDocumentoProvisional = (numero: string) => /^SIN-?DOC-?\d+$/i.test(numero) || /^OLD-?/i.test(numero);
 
+/** Número de documento para mostrar: los clientes sin DNI (documento provisional) se muestran como «sin DNI». */
+export const documentoVisible = (numero: string | null | undefined) => (!numero || esDocumentoProvisional(numero) ? "sin DNI" : numero);
+
+/** «DNI 12345678» (o el tipo indicado), o «Sin DNI» si el cliente no tiene documento. */
+export const textoDocumento = (numero: string | null | undefined, tipo = "DNI") =>
+  !numero || esDocumentoProvisional(numero) ? "Sin DNI" : `${tipo === "CARNET_EXTRANJERIA" ? "CE" : tipo} ${numero}`;
+
 /**
  * Documentos que identifican a la MISMA persona. Sirve para detectar duplicados:
  * el RUC de persona natural es «10» + DNI + dígito verificador.
@@ -159,11 +166,12 @@ export interface DatosKyc {
  * Se usa para destacar pendientes en la ficha y para mantener `cliente.datos_incompletos`.
  */
 export function faltantesCliente(c: DatosKyc, _documentos: readonly string[] = []): string[] {
-  // Ficha simple: nombre, apellido, DNI, sexo, celular y correo. Domicilio, trabajo, GPS y fotos son opcionales.
+  // Ficha simple: nombre, apellido, sexo, celular y correo. DNI, domicilio, trabajo, GPS y fotos son opcionales
+  // (si se registra un DNI, debe ser válido).
   const falta: string[] = [];
   const vacio = (v: unknown) => v == null || (typeof v === "string" && v.trim() === "");
   const tipo = c.tipo_documento as TipoDocumento;
-  if (esDocumentoProvisional(c.numero_documento) || (TIPOS_DOCUMENTO.includes(tipo) && errorDocumento(tipo, c.numero_documento)))
+  if (!esDocumentoProvisional(c.numero_documento) && TIPOS_DOCUMENTO.includes(tipo) && errorDocumento(tipo, c.numero_documento))
     falta.push("Número de DNI válido");
   if (vacio(c.sexo)) falta.push("Sexo");
   if (vacio(c.telefono) || !normalizarCelular(String(c.telefono))) falta.push("Celular");

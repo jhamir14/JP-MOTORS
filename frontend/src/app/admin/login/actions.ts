@@ -7,6 +7,7 @@ import { cerrarSesion, crearSesion } from "@/lib/server/auth";
 import { dbConfigurada, sql } from "@/lib/server/db";
 import { ipDe, permitirIntentoCompartido, reiniciarIntentosCompartido } from "@/lib/server/limite";
 import { verificarPassword } from "@/lib/server/password";
+import { rutaSecreta } from "@/lib/rutaPanel";
 
 const loginSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(120),
@@ -45,5 +46,6 @@ export async function iniciarSesion(_prev: EstadoAccion, fd: FormData): Promise<
 
 export async function salir() {
   await cerrarSesion();
-  redirect("/admin/login");
+  const secreta = rutaSecreta();
+  redirect(secreta ? `/${secreta}` : "/admin/login");
 }
