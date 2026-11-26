@@ -119,18 +119,18 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
             </Link>
           ))}
         </nav>
-        <form className="flex gap-2" role="search">
+        <form className="flex flex-wrap gap-2 md:flex-nowrap" role="search">
           <input type="hidden" name="estado" value={estado} />
           {esPrestamo ? (
             <input type="hidden" name="tipo" value="prestamo" />
           ) : (
-            <select name="tipo" defaultValue={tipo ?? ""} aria-label="Tipo" className="rounded-xl border border-line bg-surface px-2 py-2 text-sm">
+            <select name="tipo" defaultValue={tipo ?? ""} aria-label="Tipo" className="w-full rounded-xl border border-line bg-surface px-2 py-2 text-sm md:w-auto">
               <option value="">Motos y celulares</option>
               <option value="CREDITO_VEHICULAR">Solo vehículos</option>
               <option value="CREDITO_CELULAR">Solo celulares</option>
             </select>
           )}
-          <input name="q" defaultValue={q} placeholder="Código, cliente o DNI" aria-label="Buscar" className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm md:w-56" />
+          <input name="q" defaultValue={q} placeholder="Código, cliente o DNI" aria-label="Buscar" className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm md:w-56 md:flex-none" />
           <button type="submit" className="cursor-pointer rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white">Buscar</button>
         </form>
       </div>
