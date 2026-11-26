@@ -712,3 +712,70 @@ export const ETIQUETA_DOCUMENTO_FIRMADO: Record<(typeof TIPOS_DOCUMENTO_FIRMADO)
   ACTA_ENTREGA: "Acta de entrega",
   OTRO: "Otro documento",
 };
+
+// -----------------------------------------------------------------------------
+// Lista de cobranza del día (todas las cuotas que vencen hoy y las vencidas)
+// -----------------------------------------------------------------------------
+export interface FilaCobranza {
+  cliente: string;
+  telefono: string | null;
+  direccion: string | null;
+  codigo: string;
+  /** Cuota que vence hoy (saldo) o 0. */
+  hoy: number;
+  /** Total vencido de cuotas anteriores. */
+  vencido: number;
+  cuotasVencidas: number;
+  diasAtraso: number;
+}
+
+export function listaCobranza(e: DatosEmpresa, hoy: string, filas: FilaCobranza[]): Documento {
+  const f2 = (n: number) => (n > 0.004 ? n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—");
+  const conHoy = filas.filter((f) => f.hoy > 0.004 && f.vencido <= 0.004);
+  const enMora = filas.filter((f) => f.vencido > 0.004).sort((a, b) => b.diasAtraso - a.diasAtraso);
+  const totalHoy = filas.reduce((s, f) => s + f.hoy, 0);
+  const totalMora = filas.reduce((s, f) => s + f.vencido, 0);
+  const contacto = (f: FilaCobranza) => [f.telefono, f.direccion].filter(Boolean).join(" · ") || "—";
+  const tabla = (lista: FilaCobranza[], mora: boolean): Bloque => ({
+    t: "tabla",
+    columnas: [
+      { titulo: "N.°", ancho: 0.55 },
+      { titulo: "Cliente", ancho: 2.1 },
+      { titulo: "Celular / dirección", ancho: mora ? 1.65 : 2.25 },
+      { titulo: "Crédito", ancho: 2.1 },
+      ...(mora ? [{ titulo: "Atraso", ancho: 0.9, alinear: "der" as const }, { titulo: "Vencido", ancho: 1, alinear: "der" as const }] : []),
+      { titulo: "Hoy", ancho: 0.9, alinear: "der" as const },
+      { titulo: "Cobrado", ancho: 1.1 },
+    ],
+    filas: lista.map((f, i) => [
+      String(i + 1),
+      f.cliente,
+      contacto(f),
+      f.codigo,
+      ...(mora ? [`${f.diasAtraso} d (${f.cuotasVencidas})`, f2(f.vencido)] : []),
+      f2(f.hoy),
+      "",
+    ]),
+    total: mora
+      ? ["", "Total", "", "", "", f2(lista.reduce((s, f) => s + f.vencido, 0)), f2(lista.reduce((s, f) => s + f.hoy, 0)), ""]
+      : ["", "Total", "", "", f2(lista.reduce((s, f) => s + f.hoy, 0)), ""],
+  });
+  return {
+    archivo: `cobranzas-${hoy}`,
+    titulo: "Cobranzas pendientes",
+    referencia: `Cobranzas ${fechaCorta(hoy)}`,
+    pie: `${pieEmpresa(e)} · Uso interno · Emitido el ${fechaCorta(hoy)}`,
+    bloques: [
+      { t: "titulo", texto: "Cobranzas pendientes" },
+      { t: "parrafo", texto: `Al **${fechaCorta(hoy)}** · ${filas.length} cliente${filas.length === 1 ? "" : "s"} por cobrar`, alinear: "centro", tamano: 9 },
+      { t: "datos", columnas: 2, filas: [
+        ["Vencen hoy", `${filas.filter((f) => f.hoy > 0.004).length} cuotas · S/ ${f2(totalHoy)}`],
+        ["En mora", `${enMora.length} créditos · S/ ${f2(totalMora)}`],
+      ] },
+      { t: "subtitulo", texto: `Vencen hoy (${conHoy.length})` },
+      conHoy.length ? tabla(conHoy, false) : { t: "parrafo", texto: "Ninguna cuota vence hoy." },
+      { t: "subtitulo", texto: `En mora (${enMora.length})` },
+      enMora.length ? tabla(enMora, true) : { t: "parrafo", texto: "No hay créditos en mora." },
+    ],
+  };
+}

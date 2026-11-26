@@ -2,7 +2,6 @@
  * Recordatorios de pago por WhatsApp (mensaje prearmado que el personal envía desde su celular con wa.me).
  * Funciones puras: las usan la ficha del cliente, la página de Cobranzas y los tests.
  */
-import { siteConfig } from "./config";
 import { normalizarCelular } from "./clientes";
 
 export interface CuotaPendiente {
@@ -52,40 +51,42 @@ const primerNombre = (nombres: string) => {
   return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
 };
 
+/** Lista natural: «2», «2 y 3», «2, 3 y 4». */
+const lista = (ns: number[]) => (ns.length <= 1 ? String(ns[0] ?? "") : `${ns.slice(0, -1).join(", ")} y ${ns[ns.length - 1]}`);
+
+/**
+ * Mensaje corto y directo (sin código de crédito ni firma), p. ej.:
+ * «Hola Antonio, te recordamos que hoy vence tu cuota número 3 de S/ 300.00. Puedes pagarla por Yape, Plin,
+ *  transferencia o en efectivo. Si ya pagaste, envíanos tu comprobante. ¡Gracias!»
+ */
 export function mensajeRecordatorio(d: DatosRecordatorio): string {
   const conSaldo = d.pendientes.filter((c) => c.saldo > 0.004);
   const tipo = tipoRecordatorio(d);
-  const credito = `tu crédito ${d.codigo}${d.producto ? ` (${d.producto})` : ""}`;
-  const lineas = [`Hola ${primerNombre(d.nombres)}, te saluda ${siteConfig.name}.`];
+  const hola = `Hola ${primerNombre(d.nombres)},`;
+  const cierre = "Puedes pagarla por Yape, Plin, transferencia o en efectivo. Si ya pagaste, envíanos tu comprobante. ¡Gracias!";
 
-  if (tipo === "MORA") {
-    const vencidas = conSaldo.filter((c) => c.fecha < d.hoy);
-    const total = vencidas.reduce((s, c) => s + c.saldo, 0);
-    const dias = diasEntre(vencidas[0].fecha, d.hoy);
-    lineas.push(
-      vencidas.length === 1
-        ? `Tu cuota N.° ${vencidas[0].numero} de ${credito} venció el ${fechaLarga(vencidas[0].fecha)} (hace ${dias} día${dias === 1 ? "" : "s"}). Saldo pendiente: ${soles(total)}.`
-        : `Tienes ${vencidas.length} cuotas vencidas de ${credito} (N.° ${vencidas.map((c) => c.numero).join(", ")}). Total pendiente: ${soles(total)}. La más antigua venció hace ${dias} días.`,
-      "Te pedimos regularizar tu pago lo antes posible para evitar más penalidades.",
-    );
-    const hoy = conSaldo.find((c) => c.fecha === d.hoy);
-    if (hoy) lineas.push(`Además, hoy vence tu cuota N.° ${hoy.numero} por ${soles(hoy.saldo)}.`);
-  } else if (tipo === "VENCE_HOY") {
+  if (tipo === "AL_DIA") return `${hola} no tienes cuotas pendientes. ¡Gracias por tu puntualidad!`;
+
+  if (tipo === "VENCE_HOY") {
     const c = conSaldo.find((x) => x.fecha === d.hoy)!;
-    lineas.push(`Te recordamos que hoy vence tu cuota N.° ${c.numero} de ${d.numeroCuotas} de ${credito} por ${soles(c.saldo)}.`);
-  } else if (tipo === "POR_VENCER") {
-    const c = conSaldo[0];
-    lineas.push(`Te recordamos que tu cuota N.° ${c.numero} de ${d.numeroCuotas} de ${credito} vence el ${fechaLarga(c.fecha)} por ${soles(c.saldo)}.`);
-  } else {
-    lineas.push(`Tu crédito ${d.codigo} no tiene cuotas pendientes. ¡Gracias por tu puntualidad!`);
-    return lineas.join("\n");
+    return `${hola} te recordamos que hoy vence tu cuota número ${c.numero} de ${soles(c.saldo)}. ${cierre}`;
   }
 
-  lineas.push(
-    "Puedes pagar con Yape, Plin, transferencia o en efectivo con nuestro cobrador (siempre con recibo).",
-    "Si ya pagaste, envíanos tu comprobante por aquí. ¡Gracias!",
-  );
-  return lineas.join("\n");
+  if (tipo === "POR_VENCER") {
+    const c = conSaldo[0];
+    return `${hola} te recordamos que el ${fechaLarga(c.fecha)} vence tu cuota número ${c.numero} de ${soles(c.saldo)}. ${cierre}`;
+  }
+
+  // MORA
+  const vencidas = conSaldo.filter((c) => c.fecha < d.hoy);
+  const total = vencidas.reduce((s, c) => s + c.saldo, 0);
+  const hoy = conSaldo.find((c) => c.fecha === d.hoy);
+  const texto =
+    vencidas.length === 1
+      ? `${hola} te recordamos que tu cuota número ${vencidas[0].numero} de ${soles(total)} venció el ${fechaLarga(vencidas[0].fecha)}.`
+      : `${hola} te recordamos que tienes ${vencidas.length} cuotas vencidas (número ${lista(vencidas.map((c) => c.numero))}) por un total de ${soles(total)}.`;
+  const extra = hoy ? ` Además, hoy vence tu cuota número ${hoy.numero} de ${soles(hoy.saldo)}.` : "";
+  return `${texto}${extra} ${cierre.replace("pagarla", vencidas.length > 1 || hoy ? "pagarlas" : "pagarla")}`;
 }
 
 /** Enlace wa.me al celular del cliente, o null si no tiene un celular peruano válido. */

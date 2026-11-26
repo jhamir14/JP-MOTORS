@@ -47,13 +47,13 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
   const k = kpi ? indicadores(kpi) : null;
 
   const tarjetas = [
-    { titulo: "Solicitudes nuevas", valor: kpis.solicitudes_nuevas, href: "/admin/solicitudes?estado=NUEVA" },
-    { titulo: "Cuotas que vencen hoy", valor: kpis.cuotas_hoy, href: "/admin/cobranzas?ver=hoy" },
-    { titulo: "Expedientes por completar", valor: `${kpis.incompletos} / ${kpis.clientes}`, href: "/admin/clientes?incompletos=1" },
-    { titulo: "Productos publicados", valor: `${kpis.publicados} / ${kpis.productos}`, href: "/admin/catalogo" },
-    { titulo: "Unidades en stock", valor: kpis.en_stock, href: "/admin/inventario" },
-    { titulo: "Reclamos abiertos", valor: kpis.reclamos_abiertos, href: "/admin/reclamos" },
-  ];
+    { titulo: "Solicitudes nuevas", valor: kpis.solicitudes_nuevas, href: "/admin/solicitudes?estado=NUEVA", seccion: "solicitudes" as const },
+    { titulo: "Cuotas que vencen hoy", valor: kpis.cuotas_hoy, href: "/admin/cobranzas?ver=hoy", seccion: "cobranzas" as const },
+    { titulo: "Expedientes por completar", valor: `${kpis.incompletos} / ${kpis.clientes}`, href: "/admin/clientes?incompletos=1", seccion: "clientes" as const },
+    { titulo: "Productos publicados", valor: `${kpis.publicados} / ${kpis.productos}`, href: "/admin/catalogo", seccion: "catalogo" as const },
+    { titulo: "Unidades en stock", valor: kpis.en_stock, href: "/admin/inventario", seccion: "inventario" as const },
+    { titulo: "Reclamos abiertos", valor: kpis.reclamos_abiertos, href: "/admin/reclamos", seccion: "reclamos" as const },
+  ].filter((t) => puedeVerSeccion(sesion.rol, t.seccion));
 
   return (
     <>
@@ -70,7 +70,7 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
           { href: "/admin/creditos", titulo: "Registrar pago", texto: "Busca el crédito y pulsa «Registrar pago»" },
           { href: "/admin/pagos", titulo: "Pagos", texto: "Pagos registrados y constancias" },
           { href: "/admin/caja", titulo: "Caja", texto: "Cierre de caja del día" },
-        ].map((a) => (
+        ].filter((a) => a.href !== "/admin/caja" || puedeVerSeccion(sesion.rol, "caja")).map((a) => (
           <Link key={a.href + a.titulo} href={a.href} className="rounded-2xl bg-brand px-4 py-3 text-white shadow-card transition-colors hover:bg-brand-hover">
             <span className="block font-semibold">{a.titulo}</span>
             <span className="block text-xs text-white/75">{a.texto}</span>
@@ -172,7 +172,7 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
           </ul>
         </Panel>
 
-        <Panel titulo="Últimas solicitudes" acciones={<Link href="/admin/solicitudes" className="text-sm font-semibold text-brand">Ver todas</Link>}>
+        {puedeVerSeccion(sesion.rol, "solicitudes") && <Panel titulo="Últimas solicitudes" acciones={<Link href="/admin/solicitudes" className="text-sm font-semibold text-brand">Ver todas</Link>}>
           {solicitudes.length === 0 ? (
             <p className="text-sm text-muted">Aún no hay solicitudes desde la web.</p>
           ) : (
@@ -188,7 +188,7 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
               ))}
             </ul>
           )}
-        </Panel>
+        </Panel>}
       </div>
     </>
   );

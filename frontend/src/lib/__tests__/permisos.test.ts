@@ -8,7 +8,11 @@ import { ROLES } from "../roles";
 describe("matriz de permisos del panel", () => {
   it("el superadmin ve todo; todos ven lo básico de cobranza", () => {
     expect(seccionesDe("SUPERADMIN")).toEqual(Object.keys(SECCIONES));
-    for (const rol of ROLES) for (const s of ["inicio", "clientes", "creditos", "cobranzas", "pagos", "caja"] as const) expect(puedeVerSeccion(rol, s)).toBe(true);
+    for (const rol of ROLES) for (const s of ["inicio", "clientes", "creditos", "cobranzas", "pagos"] as const) expect(puedeVerSeccion(rol, s)).toBe(true);
+  });
+
+  it("el administrador de créditos no ve caja, tasas, reclamos ni solicitudes web", () => {
+    for (const s of ["caja", "tasas", "reclamos", "solicitudes"] as const) expect(puedeVerSeccion("ADMIN_CREDITOS", s)).toBe(false);
   });
 
   it("el cobrador no ve ventas, configuración, reportes ni administración", () => {

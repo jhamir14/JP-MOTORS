@@ -13,6 +13,7 @@ export interface CreditoPorCobrar {
   cliente: string;
   telefono: string | null;
   distrito: string | null;
+  direccion: string | null;
   producto: string | null;
   pendientes: CuotaPendiente[];
   ultimoRecordatorio: { fecha: string; por: string | null } | null;
@@ -41,7 +42,7 @@ export async function creditosPorCobrar(db: Db, opciones: { clienteId?: string }
   const clienteId = opciones.clienteId ?? null;
   const filas = await db<Omit<CreditoPorCobrar, "situacion" | "vencido" | "cuotasVencidas" | "diasAtraso" | "proxima" | "mensaje" | "whatsapp">[]>`
     select cr.id, cr.codigo, cr.tipo, cr.numero_cuotas as "numeroCuotas", cl.id as "clienteId",
-           cl.nombres || ' ' || cl.apellidos as cliente, cl.telefono, cl.distrito,
+           cl.nombres || ' ' || cl.apellidos as cliente, cl.telefono, cl.distrito, cl.direccion,
            coalesce(uv.marca || ' ' || uv.modelo, uc.marca || ' ' || uc.modelo) as producto,
            json_agg(json_build_object(
              'numero', cu.numero,

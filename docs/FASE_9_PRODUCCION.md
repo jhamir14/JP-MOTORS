@@ -9,9 +9,11 @@ Matriz única en `src/lib/permisos.ts`: el menú muestra solo lo que el rol pued
 
 | Sección | Superadmin | Admin. créditos | Asesor de ventas | Cobrador |
 |---|:-:|:-:|:-:|:-:|
-| Inicio, Clientes, Créditos, Cobranzas, Pagos, Caja | ✔ | ✔ | ✔ | ✔ |
+| Inicio, Clientes, Créditos, Cobranzas, Pagos | ✔ | ✔ | ✔ | ✔ |
+| Caja | ✔ | — | ✔ | ✔ |
 | Reportes e indicadores financieros | ✔ | ✔ | — | — |
-| Solicitudes web, Catálogo, Inventario, Tasas, Libro de Reclamaciones | ✔ | ✔ | ✔ | — |
+| Catálogo, Inventario | ✔ | ✔ | ✔ | — |
+| Solicitudes web, Tasas, Libro de Reclamaciones | ✔ | — | ✔ | — |
 | Personal, Sistema | ✔ | — | — | — |
 
 Cambio respecto a fases anteriores: el **cobrador** ya no ve Solicitudes, Catálogo, Inventario, Tasas ni Reclamos (no los necesita para cobrar).

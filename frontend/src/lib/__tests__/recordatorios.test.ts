@@ -18,20 +18,21 @@ describe("recordatorios de pago", () => {
     expect(tipoRecordatorio({ ...base, pendientes: [{ numero: 3, fecha: "2026-11-20", saldo: 0 }] })).toBe("AL_DIA");
   });
 
-  it("vence hoy: cuota, total de cuotas, producto y monto", () => {
-    const m = mensajeRecordatorio({ ...base, pendientes: [{ numero: 4, fecha: "2026-11-25", saldo: 350.5 }] });
-    expect(m).toContain("Hola Juan,");
-    expect(m).toContain("hoy vence tu cuota N.° 4 de 12 de tu crédito JP-CV-2026-000123 (Honda CB190R)");
-    expect(m).toContain("S/ 350.50");
-    expect(m).toContain("Yape");
+  it("vence hoy: mensaje corto, sin código ni firma", () => {
+    const m = mensajeRecordatorio({ ...base, nombres: "ANTONIO", pendientes: [{ numero: 3, fecha: "2026-11-25", saldo: 300 }] });
+    expect(m).toBe(
+      "Hola Antonio, te recordamos que hoy vence tu cuota número 3 de S/ 300.00. Puedes pagarla por Yape, Plin, transferencia o en efectivo. Si ya pagaste, envíanos tu comprobante. ¡Gracias!",
+    );
+    expect(m).not.toContain("JP-CV");
+    expect(m).not.toContain("te saluda");
   });
 
   it("por vencer: fecha en palabras", () => {
     const m = mensajeRecordatorio({ ...base, pendientes: [{ numero: 5, fecha: "2026-11-28", saldo: 300 }] });
-    expect(m).toContain("vence el sábado, 28 de noviembre");
+    expect(m).toContain("el sábado, 28 de noviembre vence tu cuota número 5 de S/ 300.00");
   });
 
-  it("en mora: suma las cuotas vencidas, días de atraso y menciona la que vence hoy", () => {
+  it("en mora: suma las cuotas vencidas y menciona la que vence hoy", () => {
     const m = mensajeRecordatorio({
       ...base,
       pendientes: [
@@ -40,17 +41,14 @@ describe("recordatorios de pago", () => {
         { numero: 4, fecha: "2026-11-25", saldo: 300 },
       ],
     });
-    expect(m).toContain("Tienes 2 cuotas vencidas");
-    expect(m).toContain("N.° 2, 3");
-    expect(m).toContain("S/ 400.00");
-    expect(m).toContain("hace 14 días");
-    expect(m).toContain("hoy vence tu cuota N.° 4");
+    expect(m).toContain("tienes 2 cuotas vencidas (número 2 y 3) por un total de S/ 400.00");
+    expect(m).toContain("hoy vence tu cuota número 4");
+    expect(m).toContain("pagarlas");
   });
 
   it("una sola cuota vencida", () => {
     const m = mensajeRecordatorio({ ...base, producto: null, pendientes: [{ numero: 2, fecha: "2026-11-24", saldo: 80 }] });
-    expect(m).toContain("Tu cuota N.° 2 de tu crédito JP-CV-2026-000123 venció");
-    expect(m).toContain("hace 1 día)");
+    expect(m).toContain("tu cuota número 2 de S/ 80.00 venció el martes, 24 de noviembre");
   });
 
   it("arma el enlace de WhatsApp solo con celulares válidos", () => {

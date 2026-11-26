@@ -27,7 +27,8 @@ const numeroOpcional = (campo: string) =>
     .transform((v) => (v === "" ? null : Number(v)));
 
 const altaSchema = z.object({
-  clienteId: uuid,
+  clienteId: z.string().uuid("Elige al cliente"),
+  asesorId: uuidOpcional.default(""),
   tipo: z.enum(TIPOS_CREDITO_NUEVO),
   unidadId: z.string().uuid("Elige la unidad que se entrega"),
   garanteId: uuidOpcional,
@@ -148,13 +149,13 @@ export async function crearCredito(_prev: EstadoAccion, fd: FormData): Promise<E
     creditoId = await comoUsuario(sesion, async (tx) => {
       const [cr] = await tx<{ id: string }[]>`
         insert into public.credito (
-          tipo, cliente_id, garante_id, unidad_vehiculo_id, unidad_celular_id, plan_credito_id, creado_por,
+          tipo, cliente_id, garante_id, unidad_vehiculo_id, unidad_celular_id, plan_credito_id, creado_por, asesor_id,
           monto_total, cuota_inicial, tasa_porcentaje, tipo_calculo, total_intereses, monto_total_pagar,
           frecuencia, numero_cuotas, valor_cuota, penalidad_diaria, tea_porcentaje,
           fecha_desembolso, fecha_primer_vencimiento, estado, notas, beneficio_score)
         values (
           ${d.tipo}, ${d.clienteId}, ${d.garanteId}, ${d.tipo === "CREDITO_VEHICULAR" ? d.unidadId : null},
-          ${d.tipo === "CREDITO_CELULAR" ? d.unidadId : null}, ${d.planId}, ${sesion.usuarioId},
+          ${d.tipo === "CREDITO_CELULAR" ? d.unidadId : null}, ${d.planId}, ${sesion.usuarioId}, ${d.asesorId ?? sesion.usuarioId},
           ${entrada.precio}, ${entrada.cuotaInicial}, ${plan.tasaPorcentaje}, ${d.tipoCalculo}, ${plan.totalIntereses}, ${plan.totalPagar},
           ${d.frecuencia}, ${d.numeroCuotas}, ${plan.valorCuota}, ${entrada.penalidadDiaria}, ${tea},
           ${entrada.fechaDesembolso}, ${plan.cuotas[0].fecha}, 'VIGENTE', ${d.notas}, ${beneficioScore ? tx.json(beneficioScore) : null})
@@ -192,7 +193,8 @@ export async function crearCredito(_prev: EstadoAccion, fd: FormData): Promise<E
 // Préstamo de dinero: monto, cuotas e interés (sin unidad ni inicial)
 // -----------------------------------------------------------------------------
 const prestamoSchema = z.object({
-  clienteId: uuid,
+  clienteId: z.string().uuid("Elige al cliente"),
+  asesorId: uuidOpcional.default(""),
   garanteId: uuidOpcional,
   tasaId: uuidOpcional,
   monto: numero("Monto"),
@@ -258,12 +260,12 @@ export async function crearPrestamo(_prev: EstadoAccion, fd: FormData): Promise<
     creditoId = await comoUsuario(sesion, async (tx) => {
       const [cr] = await tx<{ id: string }[]>`
         insert into public.credito (
-          tipo, cliente_id, garante_id, creado_por,
+          tipo, cliente_id, garante_id, creado_por, asesor_id,
           monto_total, cuota_inicial, tasa_porcentaje, tipo_calculo, total_intereses, monto_total_pagar,
           frecuencia, numero_cuotas, valor_cuota, penalidad_diaria, tea_porcentaje,
           fecha_desembolso, fecha_primer_vencimiento, estado, notas)
         values (
-          'PRESTAMO_EFECTIVO', ${d.clienteId}, ${d.garanteId}, ${sesion.usuarioId},
+          'PRESTAMO_EFECTIVO', ${d.clienteId}, ${d.garanteId}, ${sesion.usuarioId}, ${d.asesorId ?? sesion.usuarioId},
           ${entrada.precio}, 0, ${plan.tasaPorcentaje}, ${d.tipoCalculo}, ${plan.totalIntereses}, ${plan.totalPagar},
           ${d.frecuencia}, ${d.numeroCuotas}, ${plan.valorCuota}, ${entrada.penalidadDiaria}, ${tea},
           ${entrada.fechaDesembolso}, ${plan.cuotas[0].fecha}, 'VIGENTE', ${d.notas})

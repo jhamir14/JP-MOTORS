@@ -16,8 +16,14 @@ interface Garante { id: string; nombre: string }
 
 export interface PropsFormCredito {
   action: (prev: EstadoAccion, fd: FormData) => Promise<EstadoAccion>;
-  clienteId: string;
+  /** null mientras no se elige el cliente (el formulario se puede ir llenando igual). */
+  clienteId: string | null;
   garantes: Garante[];
+  /** Equipo de ventas para el campo «Asesor de ventas». */
+  asesores: { id: string; nombre: string }[];
+  asesorInicial: string;
+  /** Motivo por el que no se puede registrar (cliente bloqueado, mora…). */
+  bloqueo?: string | null;
   unidades: Unidad[];
   planes: Plan[];
   tasas: Tasa[];
@@ -39,6 +45,8 @@ const num = (s: string) => (s.trim() === "" ? NaN : Number(s));
 export function FormCredito(props: PropsFormCredito) {
   const { unidades, planes, tasas, garantes, hoy } = props;
   const feriados = useMemo(() => new Set(props.feriados), [props.feriados]);
+  // "" = el asesor por defecto del cliente (cambia al elegir otro cliente).
+  const [asesorId, setAsesorId] = useState("");
   const [tipo, setTipo] = useState<TipoCreditoNuevo>(() => (unidades.some((u) => u.tipo === "vehiculo") ? "CREDITO_VEHICULAR" : "CREDITO_CELULAR"));
   const tasasTipo = tasas.filter((t) => t.servicio === tipo);
   const tasaInicial = tasasTipo[0];
@@ -162,7 +170,8 @@ export function FormCredito(props: PropsFormCredito) {
 
   return (
     <AdminForm action={props.action} className="grid gap-6 lg:grid-cols-[1fr_1.05fr]">
-      <input type="hidden" name="clienteId" value={props.clienteId} />
+      <input type="hidden" name="clienteId" value={props.clienteId ?? ""} />
+      <input type="hidden" name="asesorId" value={asesorId || props.asesorInicial} />
       <input type="hidden" name="tipo" value={tipo} />
       <input type="hidden" name="modo" value={v.modo} />
       <input type="hidden" name="tasaId" value={v.tasaId} />
@@ -213,6 +222,14 @@ export function FormCredito(props: PropsFormCredito) {
             />
           )}
           {planesUnidad.length === 0 && <input type="hidden" name="planId" value="" />}
+          <CampoSelect
+            label="Asesor de ventas"
+            name="_asesor"
+            value={asesorId || props.asesorInicial}
+            onChange={(e) => setAsesorId(e.target.value)}
+            opciones={props.asesores.length ? props.asesores.map((a) => ({ value: a.id, label: a.nombre })) : [{ value: "", label: "Sin asesores activos" }]}
+            hint={props.clienteId ? "Por defecto, quien registró al cliente." : undefined}
+          />
           <CampoSelect
             label={`Garante${tipo === "CREDITO_VEHICULAR" && props.vehicularExigeGarante ? " (obligatorio)" : " (opcional)"}`}
             name="garanteId"
@@ -316,9 +333,11 @@ export function FormCredito(props: PropsFormCredito) {
         {!plan ? (
           <div className="rounded-xl border border-dashed border-line p-6 text-sm text-muted">
             <p className="font-semibold text-fg">{v.unidadId ? "Completa el precio y las cuotas para ver el cronograma." : "Elige la unidad para ver el cronograma."}</p>
-            <ul className="mt-2 list-disc pl-5">
-              {Object.values(errores).slice(0, 4).map((e) => <li key={e}>{e}</li>)}
-            </ul>
+            {v.unidadId && (
+              <ul className="mt-2 list-disc pl-5">
+                {Object.values(errores).slice(0, 4).map((e) => <li key={e}>{e}</li>)}
+              </ul>
+            )}
           </div>
         ) : (
           <>
@@ -369,18 +388,23 @@ export function FormCredito(props: PropsFormCredito) {
             <ErrorCampo name="confirmoRiesgo" />
           </>
         )}
-        {(!v.unidadId || faltaGarante || (!plan && v.unidadId)) && (
-          <p role="status" className="rounded-xl bg-gold-soft/70 px-3 py-2 text-sm text-[#8a5d00]">
-            {!v.unidadId
-              ? unidadesTipo.length === 0
-                ? "No hay unidades en stock de este tipo: ingrésalas primero en Inventario."
-                : "Elige la unidad que se entrega (paso 1)."
-              : faltaGarante
-                ? "Este crédito requiere un garante: agrégalo en la ficha del cliente."
-                : "Revisa las condiciones (paso 2) para ver el cronograma."}
-          </p>
-        )}
-        <BotonEnviar variant="brand" disabled={!plan || !v.unidadId || faltaGarante} pendiente="Registrando…">
+        {(() => {
+          const aviso = !props.clienteId
+            ? "Elige al cliente arriba (escribe su DNI, nombre o celular)."
+            : props.bloqueo
+              ? props.bloqueo
+              : !v.unidadId
+                ? unidadesTipo.length === 0
+                  ? "No hay unidades en stock de este tipo: ingrésalas primero en Inventario."
+                  : "Elige la unidad que se lleva (paso 1)."
+                : faltaGarante
+                  ? "Este crédito requiere un garante: agrégalo en la ficha del cliente."
+                  : !plan
+                    ? "Revisa el precio y las cuotas (paso 2)."
+                    : null;
+          return aviso ? <p role="status" className="rounded-xl bg-gold-soft/70 px-3 py-2 text-sm text-[#8a5d00]">{aviso}</p> : null;
+        })()}
+        <BotonEnviar variant="brand" disabled={!plan || !v.unidadId || faltaGarante || !props.clienteId || !!props.bloqueo} pendiente="Registrando…">
           Confirmar y registrar crédito
         </BotonEnviar>
         <p className="text-xs text-muted">Al confirmar se generan las cuotas y la unidad pasa a «vendido a crédito». Todo queda en la auditoría.</p>

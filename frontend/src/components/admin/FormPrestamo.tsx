@@ -12,8 +12,11 @@ interface Tasa { id: string; servicio: string; frecuencia: string; tipoCalculo: 
 
 export interface PropsFormPrestamo {
   action: (prev: EstadoAccion, fd: FormData) => Promise<EstadoAccion>;
-  clienteId: string;
+  clienteId: string | null;
   garantes: { id: string; nombre: string }[];
+  asesores: { id: string; nombre: string }[];
+  asesorInicial: string;
+  bloqueo?: string | null;
   tasas: Tasa[];
   feriados: string[];
   hoy: string;
@@ -33,6 +36,8 @@ const CUOTAS_SUGERIDAS: Record<Frecuencia, number> = { DIARIO: 24, SEMANAL: 4, Q
 export function FormPrestamo(props: PropsFormPrestamo) {
   const { hoy, tasas } = props;
   const feriados = useMemo(() => new Set(props.feriados), [props.feriados]);
+  // "" = el asesor por defecto del cliente (cambia al elegir otro cliente).
+  const [asesorId, setAsesorId] = useState("");
   const tasaDe = (f: Frecuencia) => tasas.find((t) => t.servicio === "PRESTAMO_EFECTIVO" && t.frecuencia === f);
   const inicial = tasaDe("SEMANAL") ?? tasas[0];
   const frecuenciaInicial = (inicial?.frecuencia ?? "SEMANAL") as Frecuencia;
@@ -83,7 +88,8 @@ export function FormPrestamo(props: PropsFormPrestamo) {
 
   return (
     <AdminForm action={props.action} className="grid gap-6 lg:grid-cols-[1fr_1.05fr]">
-      <input type="hidden" name="clienteId" value={props.clienteId} />
+      <input type="hidden" name="clienteId" value={props.clienteId ?? ""} />
+      <input type="hidden" name="asesorId" value={asesorId || props.asesorInicial} />
       <input type="hidden" name="tipoCalculo" value="FLAT" />
       <input type="hidden" name="tasaId" value={v.tasaId} />
       <input type="hidden" name="frecuencia" value={v.frecuencia} />
@@ -91,7 +97,7 @@ export function FormPrestamo(props: PropsFormPrestamo) {
       <fieldset className="grid content-start gap-4 rounded-2xl border border-line-soft bg-surface p-5 shadow-card sm:grid-cols-2">
         <legend className="sr-only">Datos del préstamo</legend>
         <h2 className="text-lg sm:col-span-2">💵 Datos del préstamo</h2>
-        <CampoTexto label="Monto a prestar (S/)" name="monto" inputMode="decimal" placeholder="1000" value={v.monto} onChange={(e) => set({ monto: e.target.value })} required className="sm:col-span-2" autoFocus />
+        <CampoTexto label="Monto a prestar (S/)" name="monto" inputMode="decimal" placeholder="1000" value={v.monto} onChange={(e) => set({ monto: e.target.value })} required className="sm:col-span-2" />
 
         <div className="sm:col-span-2">
           <span className="mb-1 block text-xs font-semibold tracking-wide text-muted uppercase">¿Cada cuánto paga?</span>
@@ -111,6 +117,14 @@ export function FormPrestamo(props: PropsFormPrestamo) {
           hint="Sobre el monto, por todo el plazo." />
         <CampoTexto label="Fecha de entrega" name="fechaDesembolso" type="date" value={v.fechaDesembolso}
           onChange={(e) => set({ fechaDesembolso: e.target.value, primerVencimiento: vencimientoPara(e.target.value, v.frecuencia) })} />
+        <CampoSelect
+          label="Asesor de ventas"
+          name="_asesor"
+          value={asesorId || props.asesorInicial}
+          onChange={(e) => setAsesorId(e.target.value)}
+          opciones={props.asesores.length ? props.asesores.map((a) => ({ value: a.id, label: a.nombre })) : [{ value: "", label: "Sin asesores activos" }]}
+          hint={props.clienteId ? "Por defecto, quien registró al cliente." : undefined}
+        />
         <CampoSelect
           label="Garante (opcional)"
           name="garanteId"
@@ -180,7 +194,12 @@ export function FormPrestamo(props: PropsFormPrestamo) {
             <ErrorCampo name="confirmoRiesgo" />
           </>
         )}
-        <BotonEnviar variant="brand" disabled={!plan} pendiente="Registrando…">Registrar préstamo</BotonEnviar>
+        {(!props.clienteId || props.bloqueo) && (
+          <p role="status" className="rounded-xl bg-gold-soft/70 px-3 py-2 text-sm text-[#8a5d00]">
+            {props.bloqueo ?? "Elige al cliente arriba (escribe su DNI, nombre o celular)."}
+          </p>
+        )}
+        <BotonEnviar variant="brand" disabled={!plan || !props.clienteId || !!props.bloqueo} pendiente="Registrando…">Registrar préstamo</BotonEnviar>
         <p className="text-xs text-muted">Se generan las cuotas y el préstamo aparece en Cobranzas. Todo queda en la auditoría.</p>
       </section>
     </AdminForm>
