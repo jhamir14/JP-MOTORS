@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { IconArrowRight } from "@/components/icons";
-import { cilindrada, hrefProducto, lineaDe, type Producto } from "@/lib/catalogo";
+import { cilindrada, hrefProducto, lineaDe, planDestacado, type Producto } from "@/lib/catalogo";
+import { ETIQUETA_FRECUENCIA } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
 import { ProductoImagen, fotoSobreNegro } from "./ProductoImagen";
 import { cn } from "@/lib/cn";
@@ -19,6 +20,7 @@ function datoClave(p: Producto) {
 export function ProductoCard({ producto, priority = false, indice = 0 }: { producto: Producto; priority?: boolean; indice?: number }) {
   const linea = lineaDe(producto);
   const dato = datoClave(producto);
+  const cuota = planDestacado(producto);
 
   return (
     <Link
@@ -51,12 +53,32 @@ export function ProductoCard({ producto, priority = false, indice = 0 }: { produ
         </span>
         <h3 className="display-sm mt-1 text-[1.18rem] text-tinta">{producto.modelo}</h3>
 
-        <div className="mt-auto flex items-end justify-between gap-3 pt-5">
-          <div>
-            <div className="text-[0.72rem] text-pizarra">Precio referencial</div>
-            <div className="text-lg font-extrabold text-tinta tabular">{formatSoles(producto.precio)}</div>
+        {cuota && (
+          <div className="mt-1.5 text-[0.8rem] text-pizarra">
+            Precio <span className="font-semibold text-tinta tabular">{formatSoles(producto.precio)}</span>
           </div>
-          <span className="flex size-11 items-center justify-center rounded-full bg-tinta text-white transition-[background-color,color,transform] duration-500 group-hover:-rotate-45 group-hover:bg-oro group-hover:text-noche">
+        )}
+
+        <div className="mt-auto flex items-end justify-between gap-3 pt-5">
+          {cuota ? (
+            <div className="min-w-0">
+              <div className="text-[0.72rem] font-semibold tracking-wide text-oro-oscuro uppercase">Cuota desde</div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-[1.4rem] leading-tight font-extrabold text-tinta tabular">{formatSoles(Math.ceil(cuota.resultado.cuota))}</span>
+                <span className="text-sm font-medium text-pizarra">/{ETIQUETA_FRECUENCIA[cuota.plan.frecuencia].singular}</span>
+              </div>
+              <div className="mt-0.5 text-[0.75rem] text-pizarra tabular">
+                {cuota.plan.cuotaInicial > 0 ? `Inicial ${formatSoles(cuota.plan.cuotaInicial)}` : "Sin inicial"} · {cuota.plan.numeroCuotas}{" "}
+                {ETIQUETA_FRECUENCIA[cuota.plan.frecuencia].plural}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="text-[0.72rem] text-pizarra">Precio referencial</div>
+              <div className="text-lg font-extrabold text-tinta tabular">{formatSoles(producto.precio)}</div>
+            </div>
+          )}
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-tinta text-white transition-[background-color,color,transform] duration-500 group-hover:-rotate-45 group-hover:bg-oro group-hover:text-noche">
             <IconArrowRight size={18} />
             <span className="sr-only">Ver ficha de {producto.nombre}</span>
           </span>

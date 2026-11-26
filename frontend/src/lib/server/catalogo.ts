@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { catalogoRespaldo, tasasRespaldo } from "@/data/catalogoRespaldo";
+import { fotoPorDefecto } from "@/data/fotosProducto";
 import type { CategoriaProducto, Producto, TasaPublica } from "@/lib/catalogo";
 import { dbConfigurada, sql } from "./db";
 
@@ -29,7 +30,15 @@ export const obtenerCatalogo = cache(async (): Promise<Producto[]> => {
       left join public.v_stock_producto s on s.producto_id = p.id
       where p.publicado and p.categoria <> 'REPUESTO'
       order by p.orden, p.nombre`;
-    return filas.map((f) => ({ ...f, specs: (f.specs ?? {}) as Record<string, string> }));
+    return filas.map((f) => {
+      // Sin foto subida desde el panel: se usa la foto de estudio del modelo, si existe.
+      const foto = f.imagenes.length ? undefined : fotoPorDefecto(f.slug);
+      return {
+        ...f,
+        specs: (f.specs ?? {}) as Record<string, string>,
+        imagenes: foto ? [{ url: foto, alt: f.nombre }] : f.imagenes,
+      };
+    });
   } catch (e) {
     console.error("[catálogo] No se pudo leer de la base de datos; se usa el respaldo estático:", e);
     return catalogoRespaldo;

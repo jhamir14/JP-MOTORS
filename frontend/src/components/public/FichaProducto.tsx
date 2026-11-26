@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { IconArrowRight, IconCheck, IconWhatsApp } from "@/components/icons";
-import { hrefProducto, lineaDe, type Producto } from "@/lib/catalogo";
+import { hrefProducto, lineaDe, resultadoPlan, type Producto } from "@/lib/catalogo";
+import { ETIQUETA_FRECUENCIA } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
 import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
 import { ProductoCard } from "./ProductoCard";
@@ -19,6 +20,10 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
   const linea = lineaDe(producto);
   const [portada, ...galeria] = producto.imagenes;
   const specs = Object.entries(producto.specs).filter(([, v]) => v);
+  const planes = producto.planes
+    .map((plan) => ({ plan, cuota: Math.ceil(resultadoPlan(producto, plan).cuota) }))
+    .filter((p) => p.cuota > 0)
+    .sort((a, b) => a.cuota - b.cuota);
 
   return (
     <main>
@@ -63,6 +68,32 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
                   )}
                 </div>
               </div>
+
+              {planes.length > 0 && (
+                <div className="mt-6">
+                  <div className="text-sm text-white/55">Págalo en cuotas</div>
+                  <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {planes.map(({ plan, cuota }, i) => {
+                      const f = ETIQUETA_FRECUENCIA[plan.frecuencia];
+                      return (
+                        <li
+                          key={plan.id}
+                          className={`rounded-2xl border px-4 py-3.5 ${i === 0 ? "border-oro/50 bg-oro/10" : "border-white/10 bg-white/[0.04]"}`}
+                        >
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-[1.5rem] leading-tight font-extrabold text-white tabular">{formatSoles(cuota)}</span>
+                            <span className="text-sm text-white/60">/{f.singular}</span>
+                          </div>
+                          <div className="mt-1 text-[0.8rem] text-white/60 tabular">
+                            {plan.numeroCuotas} {f.plural} · {plan.cuotaInicial > 0 ? `inicial ${formatSoles(plan.cuotaInicial)}` : "sin inicial"}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <p className="mt-3 text-xs text-white/45">Cuotas referenciales. El monto final se confirma con tu asesor tras la evaluación.</p>
+                </div>
+              )}
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a href={whatsappLink(whatsappMessages.producto(producto.nombre))} target="_blank" rel="noopener noreferrer" className="btn-oro">

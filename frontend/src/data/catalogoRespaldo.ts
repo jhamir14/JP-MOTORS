@@ -5,6 +5,7 @@
  * para que la web pública nunca quede vacía. En producción los datos se editan desde /admin.
  */
 import type { PlanPublico, Producto, TasaPublica } from "@/lib/catalogo";
+import { fotoPorDefecto } from "./fotosProducto";
 
 const planesVehiculo = (slug: string, precio: number): PlanPublico[] =>
   [12, 24].map((n) => ({
@@ -54,6 +55,7 @@ const vehiculos: Base[] = [
 const cel = (slug: string, marca: string, nombre: string, precio: number, gama: string, destacado: boolean, descripcion: string, sistema = "Android"): Base => ({
   slug, categoria: "CELULAR", marca, nombre: marca === "Apple" ? nombre : `${marca} ${nombre}`, modelo: nombre, precio, destacado, etiquetas: [gama], descripcion,
   specs: { Sistema: sistema },
+  imagen: fotoPorDefecto(slug),
 });
 
 const celulares: Base[] = [
