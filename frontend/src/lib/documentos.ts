@@ -247,7 +247,9 @@ const ETIQUETA_DOCUMENTO: Record<string, string> = {
   RUC: "RUC",
 };
 export const documentoDe = (p: Pick<Persona, "tipoDocumento" | "numeroDocumento">) =>
-  `${ETIQUETA_DOCUMENTO[p.tipoDocumento] ?? p.tipoDocumento} N.° ${p.numeroDocumento}`;
+  /^SIN-?DOC-?\d+$|^OLD-?/i.test(p.numeroDocumento)
+    ? "sin documento de identidad registrado"
+    : `${ETIQUETA_DOCUMENTO[p.tipoDocumento] ?? p.tipoDocumento} N.° ${p.numeroDocumento}`;
 
 export const nombreCompleto = (p: Pick<Persona, "nombres" | "apellidos">) => `${p.nombres} ${p.apellidos}`.replace(/\s+/g, " ").trim().toUpperCase();
 
@@ -627,7 +629,7 @@ export function cronograma(e: DatosEmpresa, d: DatosCredito, hoy: string): Docum
 // -----------------------------------------------------------------------------
 export function recibo(e: DatosEmpresa, r: DatosRecibo): Documento {
   const numero = r.numeroRecibo.padStart(6, "0");
-  const doc = r.publico
+  const doc = r.publico && !/^SIN-?DOC-?\d+$|^OLD-?/i.test(r.cliente.numeroDocumento)
     ? `${ETIQUETA_DOCUMENTO[r.cliente.tipoDocumento] ?? r.cliente.tipoDocumento} ${enmascararDocumento(r.cliente.numeroDocumento)}`
     : documentoDe(r.cliente);
   const hora = r.registradoEl.toLocaleTimeString("es-PE", { timeZone: "America/Lima", hour: "2-digit", minute: "2-digit" });

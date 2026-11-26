@@ -1,3 +1,4 @@
+import { esDocumentoProvisional } from "@/lib/clientes";
 import Link from "next/link";
 import { Encabezado, Tabla, Vacio } from "@/components/admin/ui";
 import { Badge, ButtonLink } from "@/components/ui";
@@ -18,7 +19,7 @@ interface Fila {
 }
 
 
-export default async function ClientesPage({ searchParams }: { searchParams: Promise<{ q?: string; estado?: string; incompletos?: string; score?: string; orden?: string; p?: string }> }) {
+export default async function ClientesPage({ searchParams }: { searchParams: Promise<{ q?: string; estado?: string; incompletos?: string; score?: string; orden?: string; p?: string; eliminado?: string }> }) {
   const sesion = await requerirSesion();
   const sp = await searchParams;
   const q = (sp.q ?? "").trim().slice(0, 80);
@@ -70,6 +71,9 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
+      {sp.eliminado && (
+        <p role="status" className="mb-5 rounded-xl bg-accent-soft px-4 py-3 text-sm font-medium text-accent">Cliente eliminado junto con sus créditos y expediente.</p>
+      )}
       <Encabezado
         titulo="Clientes"
         acciones={puedeEditarKyc(sesion.rol) ? <ButtonLink href="/admin/clientes/nuevo" variant="brand" size="sm">+ Nuevo cliente</ButtonLink> : null}
@@ -161,7 +165,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
                   </Link>
                   {c.datos_incompletos && <div className="text-xs font-semibold text-[#8a5d00]">⚠ Expediente incompleto</div>}
                 </td>
-                <td className="font-mono text-xs whitespace-nowrap">{c.tipo_documento === "DNI" ? "" : `${c.tipo_documento} `}{c.numero_documento}</td>
+                <td className="font-mono text-xs whitespace-nowrap">{esDocumentoProvisional(c.numero_documento) ? <span className="font-sans text-muted">sin DNI</span> : <>{c.tipo_documento === "DNI" ? "" : `${c.tipo_documento} `}{c.numero_documento}</>}</td>
                 <td className="whitespace-nowrap">{c.telefono ?? <span className="text-muted">—</span>}</td>
                 <td>{c.distrito ?? <span className="text-muted">—</span>}</td>
                 <td className="whitespace-nowrap tabular">

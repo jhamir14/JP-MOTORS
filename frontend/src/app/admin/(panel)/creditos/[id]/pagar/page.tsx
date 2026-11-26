@@ -1,3 +1,4 @@
+import { textoDocumento } from "@/lib/clientes";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FormPago } from "@/components/admin/FormPago";
@@ -35,7 +36,7 @@ export default async function PagarPage({ params }: { params: Promise<{ id: stri
     <>
       <Link href={`/admin/creditos/${id}`} className="text-sm font-medium text-muted hover:text-brand">← Crédito {cr.codigo}</Link>
       <Encabezado titulo="Registrar pago">
-        {cr.cliente} · DNI {cr.documento} · {ETIQUETA_SERVICIO[cr.tipo]} {cr.codigo}
+        {cr.cliente} · {textoDocumento(cr.documento)} · {ETIQUETA_SERVICIO[cr.tipo]} {cr.codigo}
         {cr.penalidad > 0 && <> · Penalidad por atraso: S/ {cr.penalidad.toFixed(2)} por día</>}
       </Encabezado>
       {activo && cierre.length > 0 && (

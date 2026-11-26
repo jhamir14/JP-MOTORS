@@ -1,5 +1,5 @@
 "use server";
-import { createHash } from "node:crypto";
+import { createHash, randomInt } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -15,6 +15,7 @@ import {
   DOCUMENTOS_GARANTE,
   coordenadasEnPeru,
   errorDocumento,
+  esDocumentoProvisional,
   normalizarCelular,
   normalizarDocumento,
 } from "@/lib/clientes";
@@ -78,7 +79,9 @@ const clienteSchema = z
     notas: vacioANull(2000).optional(),
   })
   .superRefine((d, ctx) => {
-    // Un documento provisional de la migración (ej. SIN-DOC-12) se puede conservar mientras no se cambie.
+    // El DNI es opcional: vacío, el cliente queda «sin DNI» (se le asigna un documento provisional SIN-DOC-…).
+    if (d.numeroDocumento === "") return;
+    // Un documento provisional (ej. SIN-DOC-12) se puede conservar mientras no se cambie.
     const sinCambio = d.id && d.numeroOriginal != null && d.numeroDocumento === normalizarDocumento(d.numeroOriginal);
     const error = errorDocumento(d.tipoDocumento, d.numeroDocumento);
     if (error && !sinCambio) ctx.addIssue({ code: "custom", path: ["numeroDocumento"], message: error });
@@ -91,8 +94,14 @@ export async function guardarCliente(_prev: EstadoAccion, fd: FormData): Promise
   const d = parsed.data;
   // Sin cambios en el documento: se conserva tal cual estaba guardado (ej. «SIN-DOC-7» de la migración).
   if (d.id && d.numeroOriginal != null && d.numeroDocumento === normalizarDocumento(d.numeroOriginal)) d.numeroDocumento = d.numeroOriginal;
+  // Sin DNI: se conserva el provisional que ya tenía o se le asigna uno nuevo (único).
+  const sinDocumento = d.numeroDocumento === "";
+  if (sinDocumento) {
+    d.tipoDocumento = "DNI";
+    d.numeroDocumento = d.numeroOriginal && esDocumentoProvisional(d.numeroOriginal) ? d.numeroOriginal : `SIN-DOC-${Date.now() % 1e8}${randomInt(10, 99)}`;
+  }
 
-  const [duplicado] = await clientesConDocumento(sql(), d.tipoDocumento, d.numeroDocumento, d.id);
+  const [duplicado] = sinDocumento ? [] : await clientesConDocumento(sql(), d.tipoDocumento, d.numeroDocumento, d.id);
   if (duplicado) {
     return fallo(
       `Ya existe un cliente con ese documento: ${duplicado.nombres} ${duplicado.apellidos} (${duplicado.tipo_documento} ${duplicado.numero_documento}).`,
@@ -374,4 +383,22 @@ export async function cambiarBloqueo(_prev: EstadoAccion, fd: FormData): Promise
       ? "Cliente bloqueado: no podrá recibir nuevos créditos."
       : "Bloqueo levantado. El estado se recalcula con su historial en el proceso diario.",
   );
+}
+
+// -----------------------------------------------------------------------------
+// Eliminar cliente (definitivo, solo Superadmin): borra también todos sus créditos y su expediente.
+// -----------------------------------------------------------------------------
+export async function eliminarCliente(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
+  const sesion = await requerirSesion("SUPERADMIN");
+  const id = uuid.safeParse(fd.get("id"));
+  if (!id.success) return fallo("Cliente no válido.");
+  if (String(fd.get("confirmacion") ?? "").trim().toUpperCase() !== "ELIMINAR")
+    return fallo("Escribe ELIMINAR para confirmar.", { confirmacion: "Escribe ELIMINAR" });
+  try {
+    await comoUsuario(sesion, (tx) => tx`select public.eliminar_cliente(${id.data})`);
+  } catch (e) {
+    return fallo(mensajeErrorBD(e));
+  }
+  revalidatePath("/admin", "layout");
+  redirect("/admin/clientes?eliminado=1");
 }

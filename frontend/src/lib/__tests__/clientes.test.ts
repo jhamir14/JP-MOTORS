@@ -7,6 +7,7 @@ import {
   errorDocumento,
   esRucValido,
   estadoCivilDesdeWeb,
+  documentoVisible,
   faltantesCliente,
   normalizarCelular,
   normalizarDocumento,
@@ -95,7 +96,7 @@ describe("faltantesCliente", () => {
   });
   it("cliente migrado: documento provisional, sin celular ni correo", () => {
     const f = faltantesCliente({ ...completo, numero_documento: "SIN-DOC-7", telefono: "", email: null, sexo: null }, []);
-    expect(f).toEqual(["Número de DNI válido", "Sexo", "Celular", "Correo"]);
+    expect(f).toEqual(["Sexo", "Celular", "Correo"]); // el DNI es opcional
   });
 });
 
@@ -132,8 +133,10 @@ describe("utilidades", () => {
 describe("documentos provisionales de la migración", () => {
   it("se reconocen con o sin guiones", () => {
     const base = { tipo_documento: "DNI", fecha_nacimiento: null, sexo: null, estado_civil: null, telefono: null, direccion: null, distrito: null, provincia: null, departamento: null, referencia: null, tipo_vivienda: null, latitud: null, longitud: null, ocupacion: null, ingreso_mensual: null };
-    expect(faltantesCliente({ ...base, numero_documento: "SIN-DOC-7" }, [])).toContain("Número de DNI válido");
-    expect(faltantesCliente({ ...base, numero_documento: "SINDOC7" }, [])).toContain("Número de DNI válido");
+    expect(faltantesCliente({ ...base, numero_documento: "SIN-DOC-7" }, [])).not.toContain("Número de DNI válido");
+    expect(documentoVisible("SIN-DOC-7")).toBe("sin DNI");
+    expect(documentoVisible("12345678")).toBe("12345678");
+    expect(faltantesCliente({ ...base, numero_documento: "SINDOC7" }, [])).not.toContain("Número de DNI válido");
   });
 });
 

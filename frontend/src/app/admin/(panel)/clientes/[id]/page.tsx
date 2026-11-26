@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConfirmarEliminar } from "@/components/admin/ConfirmarEliminar";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { AdminForm, BotonEnviar } from "@/components/admin/AdminForm";
@@ -20,7 +21,9 @@ import {
   TIPOS_DOCUMENTO,
   TIPOS_DOCUMENTO_KYC,
   TONO_ESTADO_CLIENTE,
+  documentoVisible,
   enlaceMapa,
+  esDocumentoProvisional,
   enlaceRuta,
   faltantesCliente,
   puedeBloquearCliente,
@@ -38,7 +41,7 @@ import { sql } from "@/lib/server/db";
 import { creditosPorCobrar } from "@/lib/server/cobranza";
 import { perfilScore } from "@/lib/server/scoring";
 import { registrarRecordatorio } from "../../cobranzas/actions";
-import { cambiarBloqueo, desvincularGarante, eliminarDocumento, guardarGarante, guardarUbicacion, subirDocumento } from "../actions";
+import { cambiarBloqueo, desvincularGarante, eliminarCliente, eliminarDocumento, guardarGarante, guardarUbicacion, subirDocumento } from "../actions";
 
 export const metadata = { title: "Ficha del cliente" };
 
@@ -212,7 +215,7 @@ export default async function FichaClientePage({
           </>
         }
       >
-        {ETIQUETA_DOCUMENTO[cliente.tipo_documento as keyof typeof ETIQUETA_DOCUMENTO] ?? cliente.tipo_documento} {cliente.numero_documento}
+        {esDocumentoProvisional(cliente.numero_documento) ? "Sin DNI" : `${ETIQUETA_DOCUMENTO[cliente.tipo_documento as keyof typeof ETIQUETA_DOCUMENTO] ?? cliente.tipo_documento} ${cliente.numero_documento}`}
         {" · "}cliente desde {fecha(cliente.created_at)}
         {cliente.legado_id != null && " · migrado del sistema anterior"}
         {cliente.registrado_por && ` · registrado por ${cliente.registrado_por}`}
@@ -245,7 +248,7 @@ export default async function FichaClientePage({
         <div className="grid min-w-0 grid-cols-1 content-start gap-6">
           <Panel titulo="Datos personales">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
-              <Dato k={cliente.tipo_documento === "DNI" ? "DNI" : "Documento"}>{cliente.numero_documento}</Dato>
+              <Dato k={cliente.tipo_documento === "DNI" ? "DNI" : "Documento"}>{documentoVisible(cliente.numero_documento)}</Dato>
               <Dato k="Sexo" vacio={!cliente.sexo}>{legible(cliente.sexo ?? "")}</Dato>
               <Dato k="Celular" vacio={!cliente.telefono}>{cliente.telefono}</Dato>
               <Dato k="Correo" vacio={!cliente.email}>{cliente.email}</Dato>
@@ -521,6 +524,18 @@ export default async function FichaClientePage({
               </ul>
             </Panel>
           )}
+        </div>
+      )}
+
+      {sesion.rol === "SUPERADMIN" && (
+        <div className="mt-8 border-t border-line-soft pt-6 print:hidden">
+          <ConfirmarEliminar action={eliminarCliente} id={id} titulo="Eliminar cliente">
+            Se borrará a <strong>{cliente.nombres} {cliente.apellidos}</strong> con su expediente (documentos, garantes y score)
+            {creditos.length > 0 ? (
+              <> y <strong>{creditos.length === 1 ? "su crédito" : `sus ${creditos.length} créditos`}</strong> con cronogramas, pagos y documentos</>
+            ) : null}
+            . No se puede deshacer. Si solo quieres que deje de cobrarse, mejor anula el crédito.
+          </ConfirmarEliminar>
         </div>
       )}
     </>

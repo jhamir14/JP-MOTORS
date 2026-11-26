@@ -8,7 +8,9 @@ import { ETIQUETA_FRECUENCIA, calcularCredito, type Frecuencia, type TipoCalculo
 import { formatSoles } from "@/lib/format";
 import { requerirSeccion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
-import { eliminarImagen, eliminarPlan, marcarPortada, subirImagenes } from "../actions";
+import { CampoTexto } from "@/components/admin/ui";
+import { PREFIJO_PLAN_JP, cotizarCelularJP, gamaCelular } from "@/lib/celularesJP";
+import { aplicarPlanJP, eliminarImagen, eliminarPlan, marcarPortada, subirImagenes } from "../actions";
 import { FormProducto, type ProductoEditable } from "../FormProducto";
 import { FormPlan, type PlanEditable } from "./FormPlan";
 
@@ -125,6 +127,8 @@ export default async function EditarProductoPage({ params, searchParams }: { par
           <p className="mt-2 text-xs text-muted">JPG, PNG, WEBP o AVIF de hasta 5 MB. Se recomienda fondo uniforme y 1200 px de ancho.</p>
         </Panel>
 
+        {producto.categoria === "CELULAR" && <MetodologiaJP productoId={producto.id} precio={producto.precio} planes={planes} />}
+
         <Panel titulo={`Planes de crédito (${planes.length})`}>
           <p className="mb-4 text-sm text-muted">
             Lo que se publica aparece en la ficha del producto y en su tarjeta («cuota desde»). Cada crédito firmado guarda su propia
@@ -165,3 +169,42 @@ export default async function EditarProductoPage({ params, searchParams }: { par
     </>
   );
 }
+
+/** Plan semanal del celular con la metodología JP (tasa mensual según la gama del precio). */
+function MetodologiaJP({ productoId, precio, planes }: { productoId: string; precio: number; planes: PlanEditable[] }) {
+  const g = gamaCelular(precio);
+  const actual = planes.find((p) => p.publicado && p.nombre?.startsWith(PREFIJO_PLAN_JP));
+  const inicial = actual?.cuotaInicial ?? Math.min(g.inicial, Math.floor(precio / 2));
+  const semanas = actual?.numeroCuotas ?? g.semanas;
+  const c = cotizarCelularJP(precio, inicial, semanas);
+  return (
+    <Panel titulo="Metodología JP" className="border-brand/30">
+      <p className="mb-3 text-sm text-muted">
+        {g.nombre}: <strong className="text-fg">{g.tasaMensual} % mensual</strong> · plazo {g.plazos.length > 1 ? `de ${g.plazos[0]} a ${g.plazos[g.plazos.length - 1]}` : g.semanas} semanas.
+        Interés = saldo × tasa × semanas ÷ 4; la cuota semanal se redondea al sol. Si cambias el precio, la cuota del plan JP se recalcula sola.
+      </p>
+      <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-surface-2 p-3 text-sm sm:grid-cols-4">
+        <Dato k="Inicial" v={formatSoles(c.inicial)} />
+        <Dato k="Cuota semanal" v={`${formatSoles(c.cuota)} × ${c.semanas}`} />
+        <Dato k="Interés" v={`${formatSoles(c.interes)} (${c.interesTotalPct} %)`} />
+        <Dato k="Total pagado" v={formatSoles(c.totalPagado)} />
+      </div>
+      {!actual && <p className="mb-3 rounded-lg bg-gold-soft px-3 py-2 text-xs font-semibold">Este celular aún no tiene un plan JP publicado.</p>}
+      <AdminForm action={aplicarPlanJP} className="grid grid-cols-2 items-end gap-3 sm:grid-cols-[1fr_1fr_auto]">
+        <input type="hidden" name="productoId" value={productoId} />
+        <CampoTexto label="Inicial (S/)" name="inicial" defaultValue={String(inicial)} inputMode="numeric" required />
+        <CampoTexto label="Semanas" name="semanas" defaultValue={String(semanas)} inputMode="numeric" required />
+        <div className="col-span-2 sm:col-span-1">
+          <BotonEnviar size="sm" pendiente="Guardando…">{actual ? "Actualizar plan JP" : "Crear plan JP"}</BotonEnviar>
+        </div>
+      </AdminForm>
+    </Panel>
+  );
+}
+
+const Dato = ({ k, v }: { k: string; v: string }) => (
+  <div>
+    <div className="text-xs text-muted">{k}</div>
+    <div className="font-semibold tabular">{v}</div>
+  </div>
+);

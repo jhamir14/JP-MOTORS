@@ -25,10 +25,11 @@ describe("reglasCotizacion", () => {
     expect(r.cuota).toBe(33);
   });
 
-  it("celulares: sin inicial obligatoria, tasas semanal y quincenal", () => {
+  it("celulares: metodología JP (semanal, inicial del plan, plazo del plan)", () => {
     const r = reglasCotizacion(celular, tasasRespaldo);
-    expect(r.inicialMin).toBe(0);
-    expect(r.tasas.map((t) => t.frecuencia).sort()).toEqual(["QUINCENAL", "SEMANAL"]);
+    expect(r.inicialMin).toBe(300);
+    expect(r.tasas).toHaveLength(1);
+    expect(r.tasas[0]).toMatchObject({ frecuencia: "SEMANAL", tasaPorcentaje: 7.5, metodoJP: true, plazos: [16, 32] });
   });
 
   it("los plazos sugeridos respetan el rango de la tasa", () => {
@@ -59,12 +60,13 @@ describe("cotizar", () => {
 
   it("arma el mensaje de WhatsApp con producto, inicial, plazo y cuota", () => {
     const reglas = reglasCotizacion(celular, tasasRespaldo);
-    const r = cotizar(celular, reglas, { frecuencia: "SEMANAL", numeroCuotas: 16, inicial: 0 })!;
+    const r = cotizar(celular, reglas, { frecuencia: "SEMANAL", numeroCuotas: 32, inicial: 300 })!;
+    expect(r.cuota).toBe(135);
     const m = mensajeWhatsAppCotizacion(celular.nombre, r, "Ana");
     expect(m).toContain("soy Ana");
     expect(m).toContain("iPhone 16");
-    expect(m).toContain("sin inicial");
-    expect(m).toContain("16 semanas");
+    expect(m).toMatch(/Inicial: S\/\s300/);
+    expect(m).toContain("32 semanas");
   });
 });
 

@@ -7,6 +7,7 @@
  */
 import { z } from "zod";
 import { esVehiculo, planDestacado, servicioDeProducto, type Producto, type TasaPublica } from "./catalogo";
+import { cotizarCelularJP, gamaCelular, PREFIJO_PLAN_JP } from "./celularesJP";
 import { ETIQUETA_FRECUENCIA, FRECUENCIAS, calcularCredito, type Frecuencia } from "./finance";
 import { formatSoles } from "./format";
 
@@ -35,6 +36,7 @@ const redondear = (v: number, paso: number) => Math.round(v / paso) * paso;
  * Vehículos: inicial desde S/ 1,000 hasta el 70 % del precio. Celulares: desde S/ 0 hasta 60 %.
  */
 export function reglasCotizacion(producto: Producto, tasasPublicas: TasaPublica[]): ReglasCotizacion {
+  if (!esVehiculo(producto)) return reglasCelularJP(producto);
   const servicio = servicioDeProducto(producto);
   const tasas = tasasPublicas
     .filter((t) => t.servicio === servicio && t.cuotasMax >= t.cuotasMin)
@@ -46,7 +48,32 @@ export function reglasCotizacion(producto: Producto, tasasPublicas: TasaPublica[
   return { tasas, inicialMin, inicialMax, paso };
 }
 
+/**
+ * Celulares: metodología JP. Tasa mensual de su gama, cuotas semanales y la inicial del plan JP del
+ * producto (o la de su gama) como mínimo; el plazo es el del plan (16 semanas, o 30–40 en gama premium).
+ */
+function reglasCelularJP(producto: Producto): ReglasCotizacion {
+  const g = gamaCelular(producto.precio);
+  const plan = producto.planes.find((p) => p.nombre?.startsWith(PREFIJO_PLAN_JP) && p.frecuencia === "SEMANAL");
+  const plazos = Array.from(new Set([...g.plazos, ...(plan ? [plan.numeroCuotas] : [])])).sort((a, b) => a - b);
+  const paso = 10;
+  const inicialMin = Math.min(plan?.cuotaInicial ?? g.inicial, Math.floor(producto.precio / 2));
+  const inicialMax = Math.max(inicialMin, Math.floor((producto.precio * 0.6) / paso) * paso);
+  const tasa: TasaPublica = {
+    servicio: "CREDITO_CELULAR",
+    frecuencia: "SEMANAL",
+    tipoCalculo: "FLAT",
+    tasaPorcentaje: g.tasaMensual,
+    cuotasMin: plazos[0],
+    cuotasMax: plazos[plazos.length - 1],
+    metodoJP: true,
+    plazos,
+  };
+  return { tasas: producto.precio > 0 ? [tasa] : [], inicialMin, inicialMax, paso };
+}
+
 export function plazosSugeridos(tasa: TasaPublica): number[] {
+  if (tasa.plazos?.length) return tasa.plazos;
   const lista = PLAZOS_SUGERIDOS[tasa.frecuencia].filter((n) => n >= tasa.cuotasMin && n <= tasa.cuotasMax);
   return lista.length ? lista : [tasa.cuotasMin, tasa.cuotasMax].filter((n, i, a) => a.indexOf(n) === i);
 }
@@ -90,6 +117,11 @@ export function cotizar(producto: Producto, reglas: ReglasCotizacion, s: Selecci
   if (!tasa) return null;
   if (!Number.isInteger(s.numeroCuotas) || s.numeroCuotas < tasa.cuotasMin || s.numeroCuotas > tasa.cuotasMax) return null;
   if (!Number.isFinite(s.inicial) || s.inicial < reglas.inicialMin || s.inicial > reglas.inicialMax) return null;
+  if (tasa.metodoJP) {
+    if (tasa.plazos && !tasa.plazos.includes(s.numeroCuotas)) return null;
+    const jp = cotizarCelularJP(producto.precio, s.inicial, s.numeroCuotas, tasa.tasaPorcentaje);
+    return { ...s, precio: producto.precio, financiado: jp.saldo, cuota: jp.cuota, totalCuotas: jp.cuota * s.numeroCuotas, tasaPorcentaje: tasa.tasaPorcentaje };
+  }
   const r = calcularCredito({
     monto: producto.precio,
     cuotaInicial: s.inicial,

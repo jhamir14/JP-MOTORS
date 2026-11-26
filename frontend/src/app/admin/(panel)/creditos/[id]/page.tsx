@@ -14,7 +14,8 @@ import { registrarEventoBloqueo } from "../../pagos/actions";
 import { puede, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { describirBeneficio } from "@/lib/scoring";
-import { anularCredito } from "../actions";
+import { ConfirmarEliminar } from "@/components/admin/ConfirmarEliminar";
+import { anularCredito, eliminarCredito } from "../actions";
 import { eliminarDocumentoCredito, subirDocumentoCredito } from "../documentosActions";
 import { SubirDocumentoCredito } from "@/components/admin/SubirDocumentoCredito";
 import { ETIQUETA_DOCUMENTO_FIRMADO, ROLES_DOCUMENTOS_LEGALES, TIPOS_DOCUMENTO_FIRMADO } from "@/lib/documentos";
@@ -56,7 +57,7 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
 
   const [cr] = await db<Credito[]>`
     select cr.id, cr.codigo, cr.tipo, cr.estado, cr.cliente_id, cl.nombres || ' ' || cl.apellidos as cliente,
-           cl.tipo_documento || ' ' || cl.numero_documento as documento, cl.telefono,
+           case when cl.numero_documento ~* '^(SIN-?DOC|OLD)' then 'Sin DNI' else cl.tipo_documento || ' ' || cl.numero_documento end as documento, cl.telefono,
            ${nombre("g")} as garante, g.numero_documento as garante_doc,
            coalesce(uv.marca || ' ' || uv.modelo || coalesce(' ' || uv.anio, '') || coalesce(' · ' || uv.color, ''),
                     uc.marca || ' ' || uc.modelo || coalesce(' ' || uc.almacenamiento, '')) as bien,
@@ -336,6 +337,15 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
       )}
       {cr.estado !== "ANULADO" && !anulable && puedeGestionarCreditos(sesion.rol) && pagado > 0 && (
         <p className="mt-4 text-xs text-muted print:hidden">Este crédito tiene pagos vigentes: para anularlo, primero anula sus pagos.</p>
+      )}
+      {sesion.rol === "SUPERADMIN" && (
+        <div className="mt-8 border-t border-line-soft pt-6 print:hidden">
+          <ConfirmarEliminar action={eliminarCredito} id={cr.id} titulo={cr.tipo === "PRESTAMO_EFECTIVO" ? "Eliminar préstamo" : "Eliminar crédito"}>
+            Se borrará <strong>{cr.codigo}</strong> con su cronograma{pagado > 0 ? <>, <strong>sus pagos ({formatSoles(pagado, true)})</strong></> : ""}, recordatorios
+            y documentos{cr.bien ? "; la unidad vuelve a stock" : ""}. No se puede deshacer. Para un crédito registrado por error sin pagos, también puedes anularlo
+            (queda en el historial).
+          </ConfirmarEliminar>
+        </div>
       )}
       <p className="mt-6 hidden text-xs print:block">Tipo: {legible(cr.tipo_calculo)} · Documento referencial generado por el panel de Inversiones JP.</p>
     </>

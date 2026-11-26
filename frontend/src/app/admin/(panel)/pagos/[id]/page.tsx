@@ -35,7 +35,7 @@ export default async function PagoPage({ params, searchParams }: { params: Promi
   const nombre = (t: string) => db.unsafe(`nullif(trim(coalesce(${t}.nombres, '') || ' ' || coalesce(${t}.apellidos, '')), '')`);
   const [p] = await db<Pago[]>`
     select p.id, p.numero_recibo::text, p.credito_id, cr.codigo, cl.nombres || ' ' || cl.apellidos as cliente,
-           cl.tipo_documento || ' ' || cl.numero_documento as documento, p.monto::float8, p.metodo, p.numero_operacion,
+           case when cl.numero_documento ~* '^(SIN-?DOC|OLD)' then 'Sin DNI' else cl.tipo_documento || ' ' || cl.numero_documento end as documento, p.monto::float8, p.metodo, p.numero_operacion,
            to_char(p.fecha_pago, 'YYYY-MM-DD') as fecha_pago, ${nombre("pr")} as registrado_por, p.created_at, p.anulado,
            p.motivo_anulacion, ${nombre("pa")} as anulado_por, p.anulado_at, p.notas, v.id as voucher_id, v.tipo_mime as voucher_mime,
            p.token_recibo, cl.nombres, cl.telefono,

@@ -61,6 +61,10 @@ export interface TasaPublica {
   tasaPorcentaje: number;
   cuotasMin: number;
   cuotasMax: number;
+  /** Celulares: se cotiza con la metodología JP (src/lib/celularesJP.ts); `tasaPorcentaje` es la tasa mensual. */
+  metodoJP?: boolean;
+  /** Plazos fijos que se ofrecen (si no, los sugeridos por frecuencia). */
+  plazos?: number[];
 }
 
 export const esVehiculo = (p: Pick<Producto, "categoria">) =>
