@@ -14,11 +14,14 @@ describe("reglasCotizacion", () => {
     expect(r.inicialMax).toBe(8300);
   });
 
-  it("la tasa diaria reproduce el ejemplo del negocio: S/ 8,800 en 400 días ⇒ S/ 33 diarios", () => {
-    const motokar = { ...moto, precio: 9800 }; // S/ 1,000 de inicial ⇒ S/ 8,800 financiados
+  it("reproduce el trato de tienda: Motokar GL150 de S/ 8,800, S/ 1,000 de inicial + 400 días de S/ 33", () => {
+    const motokar = catalogoRespaldo.find((p) => p.slug === "honda-motokar-gl150")!;
+    expect(motokar.precio).toBe(8800);
     const reglas = reglasCotizacion(motokar, tasasRespaldo);
-    const r = cotizar(motokar, reglas, { frecuencia: "DIARIO", numeroCuotas: 400, inicial: 1000 })!;
-    expect(r.financiado).toBe(8800);
+    const sel = seleccionInicial(motokar, reglas)!;
+    expect(sel).toMatchObject({ frecuencia: "DIARIO", numeroCuotas: 400, inicial: 1000 });
+    const r = cotizar(motokar, reglas, sel)!;
+    expect(r.financiado).toBe(7800);
     expect(r.cuota).toBe(33);
   });
 
@@ -40,7 +43,7 @@ describe("cotizar", () => {
     const sel = seleccionInicial(moto, reglas)!;
     expect(sel).toMatchObject({ frecuencia: "DIARIO", numeroCuotas: 400, inicial: 1000 });
     const r = cotizar(moto, reglas, sel)!;
-    const esperado = calcularCredito({ monto: moto.precio, cuotaInicial: sel.inicial, numeroCuotas: 400, frecuencia: "DIARIO", tipoCalculo: "FRANCES", tasaPorcentaje: 0.218 });
+    const esperado = calcularCredito({ monto: moto.precio, cuotaInicial: sel.inicial, numeroCuotas: 400, frecuencia: "DIARIO", tipoCalculo: "FRANCES", tasaPorcentaje: 0.29 });
     expect(r.cuota).toBeGreaterThanOrEqual(esperado.cuota);
     expect(r.cuota - esperado.cuota).toBeLessThan(0.1);
     expect(r.financiado).toBeCloseTo(moto.precio - sel.inicial);

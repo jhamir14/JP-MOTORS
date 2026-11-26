@@ -45,7 +45,7 @@ const vehiculos: Base[] = [
     imagen: "/motos/navi.webp",
   },
   {
-    slug: "honda-motokar-gl150", categoria: "TRIMOVIL_PASAJEROS", marca: "Honda", nombre: "Honda Motokar GL150", precio: 14700, destacado: true, etiquetas: ["Trimóvil", "Trabajo"],
+    slug: "honda-motokar-gl150", categoria: "TRIMOVIL_PASAJEROS", marca: "Honda", nombre: "Honda Motokar GL150", precio: 8800, destacado: true, etiquetas: ["Trimóvil", "Trabajo"],
     descripcion: "El clásico motokar de pasajeros para trabajar en provincia y selva: motor 150 cc confiable y carreta techada.",
     specs: { Cilindrada: "150 cc", Uso: "Transporte de pasajeros", Condición: "0 km" },
     imagen: "/motos/nl150.webp",
@@ -82,8 +82,8 @@ export const catalogoRespaldo: Producto[] = [...vehiculos, ...celulares].map(({ 
 
 /** Espejo de las tasas públicas de tasa_servicio. */
 export const tasasRespaldo: TasaPublica[] = [
-  // Motokar NL150: S/ 8,800 al contado → 400 cuotas diarias de S/ 33 ⇒ 0.218 % diario (francés). Igual para todos los vehículos.
-  { servicio: "CREDITO_VEHICULAR", frecuencia: "DIARIO", tipoCalculo: "FRANCES", tasaPorcentaje: 0.218, cuotasMin: 100, cuotasMax: 400 },
+  // Motokar GL150: S/ 8,800 al contado, S/ 1,000 de inicial + 400 cuotas diarias de S/ 33 ⇒ 0.290 % diario (francés). Igual para todos los vehículos.
+  { servicio: "CREDITO_VEHICULAR", frecuencia: "DIARIO", tipoCalculo: "FRANCES", tasaPorcentaje: 0.29, cuotasMin: 100, cuotasMax: 400 },
   { servicio: "CREDITO_CELULAR", frecuencia: "SEMANAL", tipoCalculo: "FRANCES", tasaPorcentaje: 1.2, cuotasMin: 8, cuotasMax: 52 },
   { servicio: "CREDITO_CELULAR", frecuencia: "QUINCENAL", tipoCalculo: "FRANCES", tasaPorcentaje: 2.4, cuotasMin: 4, cuotasMax: 24 },
 ];
