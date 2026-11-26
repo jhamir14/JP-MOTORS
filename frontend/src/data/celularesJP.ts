@@ -24,8 +24,8 @@ export const CELULARES_JP: CelularJP[] = [
   { marca: "Apple", nombre: "iPhone 16", specs: "8GB RAM | 128GB | 5G | A18 Bionic | 6.1\" OLED | 48+12 MP", precio: 3000, inicial: 300, tasaMensual: 7.5, semanas: 32, cuota: 135, totalPagado: 4620 },
   { marca: "Apple", nombre: "iPhone 16 Pro Max", specs: "8GB RAM | 256GB | 5G | A18 Pro | 6.9\" 120Hz | 48+48+12 MP Tele 5x", precio: 4200, inicial: 500, tasaMensual: 5, semanas: 30, cuota: 170, totalPagado: 5600 },
   { marca: "Apple", nombre: "iPhone 17", specs: "8GB RAM | 256GB | 5G | A19 Bionic | 6.3\" 120Hz | 48+48 MP", precio: 3500, inicial: 300, tasaMensual: 5, semanas: 35, cuota: 131, totalPagado: 4885 },
-  { marca: "Apple", nombre: "iPhone 17 Pro", specs: "12GB RAM | 256GB | 5G | A19 Pro | 6.3\" 120Hz | 48+48+48 MP Tele 5x", precio: 4950, inicial: 300, tasaMensual: 5, semanas: 40, cuota: 174, totalPagado: 7260 },
-  { marca: "Apple", nombre: "iPhone 17 Pro Max", specs: "12GB RAM | 256GB | 5G | A19 Pro | 6.9\" 120Hz | 48+48+48 MP Tele 5x", precio: 4600, inicial: 500, tasaMensual: 5, semanas: 32, cuota: 179, totalPagado: 6228 },
+  { marca: "Apple", nombre: "iPhone 17 Pro", specs: "12GB RAM | 256GB | 5G | A19 Pro | 6.3\" 120Hz | 48+48+48 MP Tele 5x", precio: 4600, inicial: 500, tasaMensual: 5, semanas: 32, cuota: 179, totalPagado: 6228 },
+  { marca: "Apple", nombre: "iPhone 17 Pro Max", specs: "12GB RAM | 256GB | 5G | A19 Pro | 6.9\" 120Hz | 48+48+48 MP Tele 5x", precio: 4950, inicial: 300, tasaMensual: 5, semanas: 40, cuota: 174, totalPagado: 7260 },
   { marca: "Apple", nombre: "iPhone 18 Pro Max", specs: "12GB RAM | 256GB | 5G | A20 Pro | 6.9\" 120Hz | 48+48+48 MP Zoom 10x", precio: 6400, inicial: 500, tasaMensual: 5, semanas: 38, cuota: 229, totalPagado: 9202 },
   // Samsung
   { marca: "Samsung", nombre: "Samsung Galaxy A17 4G", specs: "8GB RAM | 256GB | 4G | Helio G99 | 6.7\" 90Hz | 50 MP OIS | 5000 mAh", precio: 950, inicial: 150, tasaMensual: 15, semanas: 16, cuota: 80, totalPagado: 1430 },

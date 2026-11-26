@@ -1,59 +1,19 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore } from "react";
-
-const leerPermiso = (): NotificationPermission | "no-soportado" =>
-  typeof window !== "undefined" && "Notification" in window ? Notification.permission : "no-soportado";
-const sinSuscripcion = () => () => {};
+import { useAvisosPush } from "./AvisosPush";
 
 /**
- * Campana de la barra superior: cuántos clientes hay que cobrar hoy (vencen hoy + en mora) y aviso del navegador.
- *   · Al abrir el panel se muestra una notificación del sistema (Windows, Android, Mac…) una vez en la mañana
- *     y otra en la tarde (desde las 3 p. m.) mientras queden cobranzas pendientes, si el usuario las activó.
- *   · Funciona mientras el panel esté abierto en el navegador (pestaña abierta o en segundo plano).
+ * Campana de la barra superior: cuántos clientes hay que cobrar hoy (vencen hoy + en mora).
+ * El botón «Activar avisos» suscribe este navegador a las notificaciones push: el servidor las envía
+ * en la mañana y en la tarde (/api/cron/avisos-cobranza) y llegan aunque la pestaña del panel esté cerrada.
  */
-export function CampanaCobranza({ hoy, vencenHoy, enMora }: { hoy: string; vencenHoy: number; enMora: number }) {
+export function CampanaCobranza({ vencenHoy, enMora, clavePush }: { vencenHoy: number; enMora: number; clavePush: string | null }) {
   const total = vencenHoy + enMora;
-  // El permiso se lee del navegador en cada render (en el servidor: «default»); tras pedirlo se fuerza un render.
-  const [, setPedido] = useState(0);
-  const permiso = useSyncExternalStore(sinSuscripcion, leerPermiso, () => "default" as const);
-
-  useEffect(() => {
-    if (permiso !== "granted" || total === 0) return;
-    const avisar = () => {
-      const tramo = new Date().toLocaleString("en-US", { timeZone: "America/Lima", hour: "numeric", hour12: false });
-      const clave = `jp-aviso-cobranza:${hoy}:${Number(tramo) >= 15 ? "tarde" : "manana"}`;
-      try {
-        if (localStorage.getItem(clave)) return;
-        localStorage.setItem(clave, "1");
-      } catch {
-        /* sin almacenamiento: se avisa igual */
-      }
-      const partes = [vencenHoy ? `${vencenHoy} cuota${vencenHoy === 1 ? "" : "s"} vence${vencenHoy === 1 ? "" : "n"} hoy` : "", enMora ? `${enMora} en mora` : ""].filter(Boolean);
-      const n = new Notification("Cobranzas pendientes · Inversiones JP", {
-        body: `${partes.join(" y ")}. Toca para ver a quién cobrar.`,
-        tag: "jp-cobranzas",
-        icon: "/logo-jp.webp",
-      });
-      n.onclick = () => {
-        window.focus();
-        window.location.href = "/admin/cobranzas";
-      };
-    };
-    avisar();
-    const t = window.setInterval(avisar, 30 * 60 * 1000);
-    return () => window.clearInterval(t);
-  }, [permiso, total, hoy, vencenHoy, enMora]);
-
-  const activar = async () => {
-    if (permiso === "no-soportado") return;
-    await Notification.requestPermission();
-    setPedido((n) => n + 1);
-  };
+  const { estado, activar } = useAvisosPush(clavePush);
 
   return (
     <div className="flex items-center gap-2">
-      {permiso === "default" && (
+      {estado === "inactivo" && (
         <button type="button" onClick={activar} className="hidden cursor-pointer rounded-xl px-2.5 py-2 text-xs font-semibold text-brand hover:bg-brand-soft min-[380px]:inline-flex sm:px-3">
           Activar avisos<span className="hidden sm:inline">&nbsp;de cobranza</span>
         </button>
@@ -61,7 +21,7 @@ export function CampanaCobranza({ hoy, vencenHoy, enMora }: { hoy: string; vence
       <Link
         href={enMora > 0 && vencenHoy === 0 ? "/admin/cobranzas?ver=mora" : "/admin/cobranzas"}
         aria-label={`Cobranzas pendientes: ${vencenHoy} vencen hoy, ${enMora} en mora`}
-        title={`${vencenHoy} vencen hoy · ${enMora} en mora`}
+        title={`${vencenHoy} vencen hoy · ${enMora} en mora${estado === "activo" ? " · avisos activados" : ""}`}
         className="relative inline-flex size-10 items-center justify-center rounded-xl border border-line bg-surface text-fg hover:border-brand hover:text-brand"
       >
         <svg aria-hidden viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
