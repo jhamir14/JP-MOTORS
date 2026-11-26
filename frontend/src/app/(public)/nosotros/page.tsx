@@ -62,12 +62,12 @@ export default function NosotrosPage() {
           <div className="entrada relative mx-auto w-full max-w-[480px]" style={{ "--retraso": "200ms" } as React.CSSProperties}>
             <div className="relative aspect-[4/5] overflow-hidden rounded-t-full rounded-b-[2rem] bg-marino">
               <Image
-                src="/escenas/entrega-llaves.webp"
-                alt="Asesor de Inversiones JP entregando las llaves a un cliente"
+                src="/financing_worker.webp"
+                alt="Cliente de Inversiones JP mostrando las llaves de su moto nueva"
                 fill
                 priority
                 sizes="(max-width: 768px) 90vw, 480px"
-                className="object-cover object-[40%_50%]"
+                className="object-cover object-[50%_30%]"
               />
             </div>
             <div aria-hidden className="absolute -inset-3 rounded-t-full rounded-b-[2.4rem] border border-oro/50 md:-inset-4" />
@@ -88,8 +88,8 @@ export default function NosotrosPage() {
           <Revelar className="relative order-2 md:order-1">
             <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-noche">
               <Image
-                src="/escenas/mototaxista.webp"
-                alt="Mototaxista sonriente junto a su mototaxi"
+                src="/motos/gallery/gallery-4.webp"
+                alt="Cliente junto a su moto nueva en la calle"
                 fill
                 sizes="(max-width: 768px) 90vw, 560px"
                 className="object-cover object-[35%_45%]"
@@ -179,7 +179,7 @@ export default function NosotrosPage() {
 
       {/* ───────────── Contacto ───────────── */}
       <section id="contacto" className="relative isolate overflow-hidden bg-noche">
-        <Image src="/escenas/showroom.webp" alt="" fill sizes="100vw" className="-z-10 object-cover object-[70%_50%] opacity-60" />
+        <Image src="/motos/gallery/gallery-1.webp" alt="" fill sizes="100vw" className="-z-10 object-cover object-[70%_60%] opacity-60" />
         <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-noche via-noche/85 to-noche/40" />
         <div className="container grid gap-10 py-20 md:grid-cols-[1.2fr_1fr] md:items-end md:py-28">
           <Revelar>
@@ -189,7 +189,7 @@ export default function NosotrosPage() {
               <a href={whatsappLink(whatsappMessages.general())} target="_blank" rel="noopener noreferrer" className="btn-oro">
                 <IconWhatsApp size={18} /> +51 {siteConfig.telefonoVisible}
               </a>
-              <Link href="/catalogo" className="btn-claro">
+              <Link href="/motos" className="btn-claro">
                 Ver el catálogo <IconArrowRight size={18} />
               </Link>
             </div>

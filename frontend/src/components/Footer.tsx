@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { IconClock, IconMapPin, IconWhatsApp } from "@/components/icons";
 import { Logo } from "@/components/Logo";
-import { LINEAS } from "@/lib/catalogo";
+import { LINEAS, hrefLinea } from "@/lib/catalogo";
 import { siteConfig } from "@/lib/config";
 import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
 
@@ -30,7 +30,7 @@ export default function Footer() {
           <ul className="mt-4 flex flex-col gap-2.5 text-[0.95rem]">
             {LINEAS.map((l) => (
               <li key={l.id}>
-                <Link href={`/catalogo?linea=${l.id}`} className="transition-colors hover:text-oro-claro">{l.nombre}</Link>
+                <Link href={hrefLinea(l.id)} className="transition-colors hover:text-oro-claro">{l.nombre}</Link>
               </li>
             ))}
           </ul>
@@ -71,7 +71,7 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="container flex flex-col gap-3 py-6 text-xs text-white/50 md:flex-row md:items-center md:justify-between">
+        <div className="container flex flex-col gap-3 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] text-xs text-white/50 md:flex-row md:items-center md:justify-between md:pb-6">
           <span>© {new Date().getFullYear()} {siteConfig.legalName}. RUC {siteConfig.ruc}.</span>
           <ul className="flex flex-wrap gap-x-5 gap-y-1">
             {legales.map((l) => (

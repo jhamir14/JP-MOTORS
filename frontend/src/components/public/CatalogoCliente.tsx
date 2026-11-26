@@ -3,49 +3,58 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ProductoCard } from "@/components/public/ProductoCard";
 import { IconWhatsApp } from "@/components/icons";
-import { LINEAS, cilindrada, lineaDe, normalizarTexto, type LineaId, type Producto } from "@/lib/catalogo";
+import { LINEAS, cilindrada, lineaDe, normalizarTexto, type CatalogoId, type Producto } from "@/lib/catalogo";
 import { cn } from "@/lib/cn";
 import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
 
 const ORDENES = ["Destacados", "Menor precio", "Mayor precio", "Nombre"] as const;
 type Orden = (typeof ORDENES)[number];
-type Filtro = LineaId | "todos";
+/** "todos", una línea (motos / mototaxis) o una marca de celular. */
+type Filtro = string;
 
 interface Props {
+  /** Solo los productos de este catálogo (vehículos o celulares). */
   productos: Producto[];
-  inicial: { linea: Filtro; q: string; orden: string };
+  catalogo: CatalogoId;
+  inicial: { tipo: string; q: string; orden: string };
 }
 
-export function CatalogoCliente({ productos, inicial }: Props) {
+/** Pestaña a la que pertenece cada producto: la línea en vehículos y la marca en celulares. */
+const grupoDe = (catalogo: CatalogoId, p: Producto) => (catalogo === "celulares" ? p.marca : lineaDe(p).id);
+
+export function CatalogoCliente({ productos, catalogo, inicial }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const [linea, setLinea] = useState<Filtro>(inicial.linea);
+  const [linea, setLinea] = useState<Filtro>(inicial.tipo || "todos");
   const [q, setQ] = useState(inicial.q);
   const [orden, setOrden] = useState<Orden>(ORDENES.includes(inicial.orden as Orden) ? (inicial.orden as Orden) : "Destacados");
 
   // Filtros en la URL: se pueden compartir y no se pierden al volver atrás.
   useEffect(() => {
     const params = new URLSearchParams();
-    if (linea !== "todos") params.set("linea", linea);
+    if (linea !== "todos") params.set("tipo", linea);
     if (q) params.set("q", q);
     if (orden !== "Destacados") params.set("orden", orden);
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [linea, q, orden, pathname, router]);
 
-  const pestañas = useMemo(
-    () => [
-      { id: "todos" as Filtro, nombre: "Todo", total: productos.length },
-      ...LINEAS.map((l) => ({ id: l.id as Filtro, nombre: l.nombre, total: productos.filter((p) => lineaDe(p).id === l.id).length })),
-    ].filter((t) => t.total > 0),
-    [productos],
-  );
+  const pestañas = useMemo(() => {
+    const total = (id: string) => productos.filter((p) => grupoDe(catalogo, p) === id).length;
+    const grupos =
+      catalogo === "celulares"
+        ? [...new Set(productos.map((p) => p.marca))]
+            .map((m) => ({ id: m, nombre: m, total: total(m) }))
+            .sort((a, b) => b.total - a.total || a.nombre.localeCompare(b.nombre, "es"))
+        : LINEAS.filter((l) => l.id !== "celulares").map((l) => ({ id: l.id as string, nombre: l.nombre, total: total(l.id) }));
+    return [{ id: "todos", nombre: "Todo", total: productos.length }, ...grupos].filter((t) => t.total > 0);
+  }, [productos, catalogo]);
 
   const resultado = useMemo(() => {
     const termino = normalizarTexto(q);
     const lista = productos.filter((p) => {
       const texto = normalizarTexto(`${p.nombre} ${p.marca} ${p.etiquetas.join(" ")} ${Object.values(p.specs).join(" ")}`);
-      return (linea === "todos" || lineaDe(p).id === linea) && (!termino || texto.includes(termino));
+      return (linea === "todos" || grupoDe(catalogo, p) === linea) && (!termino || texto.includes(termino));
     });
     if (orden === "Menor precio") return [...lista].sort((a, b) => a.precio - b.precio);
     if (orden === "Mayor precio") return [...lista].sort((a, b) => b.precio - a.precio);
@@ -56,7 +65,7 @@ export function CatalogoCliente({ productos, inicial }: Props) {
         Number(b.destacado) - Number(a.destacado) ||
         (cilindrada(b) ?? 0) - (cilindrada(a) ?? 0),
     );
-  }, [productos, linea, q, orden]);
+  }, [productos, catalogo, linea, q, orden]);
 
   // Indicador dorado que se desliza bajo la pestaña activa.
   const barra = useRef<HTMLDivElement>(null);
@@ -129,7 +138,7 @@ export function CatalogoCliente({ productos, inicial }: Props) {
         >
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="-mx-1 overflow-x-auto px-1 [scrollbar-width:none]">
-              <div ref={barra} role="group" aria-label="Línea de productos" className="relative flex w-max gap-1 rounded-full bg-niebla p-1">
+              <div ref={barra} role="group" aria-label={catalogo === "celulares" ? "Marca" : "Tipo de vehículo"} className="relative flex w-max gap-1 rounded-full bg-niebla p-1">
                 {indicador && (
                   <span
                     aria-hidden
@@ -192,7 +201,7 @@ export function CatalogoCliente({ productos, inicial }: Props) {
             <h2 className="display-sm text-[1.6rem] text-tinta">No encontramos modelos con esa búsqueda</h2>
             <p className="mx-auto mt-3 max-w-md text-pizarra">Prueba con otra palabra o pregúntale a un asesor: también conseguimos modelos a pedido.</p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <button type="button" onClick={limpiar} className="btn-linea">Ver todo el catálogo</button>
+              <button type="button" onClick={limpiar} className="btn-linea">Ver todos los modelos</button>
               <a href={whatsappLink(whatsappMessages.general())} target="_blank" rel="noopener noreferrer" className="btn-oro">
                 <IconWhatsApp size={18} /> Preguntar por WhatsApp
               </a>

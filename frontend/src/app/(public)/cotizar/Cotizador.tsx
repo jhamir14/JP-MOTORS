@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IconArrowRight, IconCheck, IconWhatsApp } from "@/components/icons";
 import { ProductoImagen, fotoSobreNegro } from "@/components/public/ProductoImagen";
-import { LINEAS, lineaDe, type LineaId, type Producto, type TasaPublica } from "@/lib/catalogo";
+import { LINEAS, hrefLinea, lineaDe, type LineaId, type Producto, type TasaPublica } from "@/lib/catalogo";
 import { cn } from "@/lib/cn";
 import {
   cotizar,
@@ -334,7 +334,7 @@ export function Cotizador({ productos, tasas, slugInicial }: Props) {
                     <button type="button" onClick={() => setEnvio({ estado: "editando" })} className="font-semibold text-tinta underline-offset-4 hover:underline">
                       Hacer otra cotización
                     </button>
-                    <Link href="/catalogo" className="font-semibold text-pizarra underline-offset-4 hover:underline">Ver el catálogo</Link>
+                    <Link href={hrefLinea(lineaDe(producto).id)} className="font-semibold text-pizarra underline-offset-4 hover:underline">Ver más modelos</Link>
                   </div>
                 </div>
               ) : (

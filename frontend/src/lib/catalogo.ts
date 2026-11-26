@@ -83,6 +83,19 @@ export type LineaId = (typeof LINEAS)[number]["id"];
 export const lineaDe = (p: Pick<Producto, "categoria">) =>
   LINEAS.find((l) => (l.categorias as readonly string[]).includes(p.categoria)) ?? LINEAS[0];
 
+/** Cada catálogo vive en su propia pestaña: vehículos en /motos y celulares en /celulares. */
+export const CATALOGOS = {
+  vehiculos: { href: "/motos", nombre: "Motos y mototaxis", lineas: ["motos", "mototaxis"] },
+  celulares: { href: "/celulares", nombre: "Celulares", lineas: ["celulares"] },
+} as const satisfies Record<string, { href: string; nombre: string; lineas: readonly LineaId[] }>;
+export type CatalogoId = keyof typeof CATALOGOS;
+
+export const catalogoDeLinea = (id: LineaId): CatalogoId => (id === "celulares" ? "celulares" : "vehiculos");
+
+/** Enlace al catálogo que muestra una línea (las mototaxis se abren filtradas dentro de /motos). */
+export const hrefLinea = (id: LineaId) =>
+  id === "celulares" ? "/celulares" : id === "mototaxis" ? "/motos?tipo=mototaxis" : "/motos?tipo=motos";
+
 export const servicioDeProducto = (p: Pick<Producto, "categoria">) =>
   p.categoria === "CELULAR" ? "CREDITO_CELULAR" : "CREDITO_VEHICULAR";
 

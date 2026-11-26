@@ -10,7 +10,8 @@ export default function NotFound() {
         <h1 className="display mt-4 text-[2.4rem] text-white md:text-[3.4rem]">No encontramos esta página</h1>
         <p className="mt-4 max-w-md text-white/65">Puede que el enlace haya cambiado. Revisa el catálogo o vuelve al inicio.</p>
         <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-          <Link href="/catalogo" className="btn-oro">Ver el catálogo</Link>
+          <Link href="/motos" className="btn-oro">Ver motos</Link>
+          <Link href="/celulares" className="btn-claro">Ver celulares</Link>
           <Link href="/" className="btn-claro">Ir al inicio</Link>
         </div>
       </main>

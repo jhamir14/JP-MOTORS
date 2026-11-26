@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IconHome, IconMoto, IconUser, IconWallet } from "@/components/icons";
+import { IconHome, IconMoto, IconPhone, IconUser, IconWallet } from "@/components/icons";
 import { cn } from "@/lib/cn";
 
 const items = [
   { href: "/", label: "Inicio", Icon: IconHome, exact: true },
-  { href: "/catalogo", label: "Catálogo", Icon: IconMoto, exact: false },
+  { href: "/motos", label: "Motos", Icon: IconMoto, exact: false },
+  { href: "/celulares", label: "Celulares", Icon: IconPhone, exact: false },
   { href: "/cotizar", label: "Cotizar", Icon: IconWallet, exact: false },
   { href: "/nosotros", label: "Nosotros", Icon: IconUser, exact: false },
 ];
@@ -29,11 +30,11 @@ export default function BottomNav() {
             href={href}
             aria-current={activo ? "page" : undefined}
             className={cn(
-              "flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-[0.76rem] font-semibold transition-colors duration-300",
+              "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1.5 text-[0.7rem] font-semibold min-[420px]:flex-row min-[420px]:gap-1.5 min-[420px]:py-2.5 min-[420px]:text-[0.78rem] transition-colors duration-300",
               activo ? "bg-oro text-noche" : "text-white/70",
             )}
           >
-            <Icon size={18} strokeWidth={activo ? 2.4 : 2} />
+            <Icon size={17} strokeWidth={activo ? 2.4 : 2} />
             {label}
           </Link>
         );

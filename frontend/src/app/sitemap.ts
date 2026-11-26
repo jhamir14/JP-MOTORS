@@ -12,7 +12,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const absoluta = (u: string) => (/^https?:\/\//.test(u) ? u : `${base}${u.startsWith("/") ? "" : "/"}${u}`);
   const paginas: MetadataRoute.Sitemap = [
     { url: `${base}/`, lastModified: ahora, changeFrequency: "weekly", priority: 1 },
-    { url: `${base}/catalogo`, lastModified: ahora, changeFrequency: "daily", priority: 0.9 },
+    { url: `${base}/motos`, lastModified: ahora, changeFrequency: "daily", priority: 0.9 },
+    { url: `${base}/celulares`, lastModified: ahora, changeFrequency: "daily", priority: 0.9 },
+    { url: `${base}/cotizar`, lastModified: ahora, changeFrequency: "weekly", priority: 0.8 },
     { url: `${base}/nosotros`, lastModified: ahora, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/libro-reclamaciones`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${base}/terminos`, changeFrequency: "yearly", priority: 0.2 },
