@@ -4,7 +4,7 @@ import { Badge, ButtonLink } from "@/components/ui";
 import { CATEGORIAS, ETIQUETA_CATEGORIA, hrefProducto, type CategoriaProducto } from "@/lib/catalogo";
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
-import { requerirSesion } from "@/lib/server/auth";
+import { requerirSeccion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { cambiarPublicacion } from "./actions";
 
@@ -16,7 +16,7 @@ interface Fila {
 }
 
 export default async function CatalogoAdminPage({ searchParams }: { searchParams: Promise<{ categoria?: string; q?: string }> }) {
-  await requerirSesion();
+  await requerirSeccion("catalogo");
   const sp = await searchParams;
   const categoria = (CATEGORIAS as readonly string[]).includes(sp.categoria ?? "") ? sp.categoria! : null;
   const q = (sp.q ?? "").trim().slice(0, 60);

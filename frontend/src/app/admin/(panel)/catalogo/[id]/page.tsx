@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui";
 import { ETIQUETA_CATEGORIA, hrefProducto } from "@/lib/catalogo";
 import { ETIQUETA_FRECUENCIA, calcularCredito, type Frecuencia, type TipoCalculo } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
-import { requerirSesion } from "@/lib/server/auth";
+import { requerirSeccion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { eliminarImagen, eliminarPlan, marcarPortada, subirImagenes } from "../actions";
 import { FormProducto, type ProductoEditable } from "../FormProducto";
@@ -15,7 +15,7 @@ import { FormPlan, type PlanEditable } from "./FormPlan";
 export const metadata = { title: "Editar producto" };
 
 export default async function EditarProductoPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ creado?: string }> }) {
-  await requerirSesion();
+  await requerirSeccion("catalogo");
   const { id } = await params;
   const { creado } = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();

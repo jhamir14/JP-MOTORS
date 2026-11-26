@@ -3,7 +3,7 @@ import { erroresPorCampo } from "@/schemas/solicitudCredito";
 import { TIPO_DOC_BD, reclamoSchema, type Reclamo } from "@/schemas/reclamo";
 import { siteConfig } from "@/lib/config";
 import { dbConfigurada, sql } from "@/lib/server/db";
-import { ipDe, permitirIntento } from "@/lib/server/limite";
+import { ipDe, permitirIntentoCompartido } from "@/lib/server/limite";
 
 /**
  * Registra una hoja del Libro de Reclamaciones: la guarda en la tabla `reclamo` (con código
@@ -35,7 +35,7 @@ async function avisarPorCorreo(r: Reclamo, codigo: string, leadsEmail: string) {
 }
 
 export async function POST(request: Request) {
-  if (!permitirIntento(`reclamo:${ipDe(request.headers)}`, 5, 60 * 60 * 1000)) {
+  if (!(await permitirIntentoCompartido(`reclamo:${ipDe(request.headers)}`, 5, 60 * 60 * 1000))) {
     return NextResponse.json({ ok: false, error: "Demasiados intentos. Inténtalo más tarde o escríbenos por WhatsApp." }, { status: 429 });
   }
   let body: unknown;

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { fallo, type EstadoAccion } from "@/lib/admin/accion";
 import { cerrarSesion, crearSesion } from "@/lib/server/auth";
 import { dbConfigurada, sql } from "@/lib/server/db";
-import { ipDe, permitirIntento, reiniciarIntentos } from "@/lib/server/limite";
+import { ipDe, permitirIntentoCompartido, reiniciarIntentosCompartido } from "@/lib/server/limite";
 import { verificarPassword } from "@/lib/server/password";
 
 const loginSchema = z.object({
@@ -22,7 +22,11 @@ export async function iniciarSesion(_prev: EstadoAccion, fd: FormData): Promise<
   const { email, password } = parsed.data;
 
   const ip = ipDe(await headers());
-  if (!permitirIntento(`login:${ip}`, 10, 15 * 60 * 1000) || !permitirIntento(`login:${email}`, 5, 15 * 60 * 1000)) {
+  const [porIp, porCorreo] = await Promise.all([
+    permitirIntentoCompartido(`login:${ip}`, 10, 15 * 60 * 1000),
+    permitirIntentoCompartido(`login:${email}`, 5, 15 * 60 * 1000),
+  ]);
+  if (!porIp || !porCorreo) {
     return fallo("Demasiados intentos. Espera 15 minutos e inténtalo de nuevo.");
   }
 
@@ -34,7 +38,7 @@ export async function iniciarSesion(_prev: EstadoAccion, fd: FormData): Promise<
   const valida = await verificarPassword(password, usuario?.password_hash);
   if (!usuario || !valida || !usuario.activo) return fallo(ERROR_GENERICO);
 
-  reiniciarIntentos(`login:${email}`);
+  await reiniciarIntentosCompartido(`login:${email}`);
   await crearSesion(usuario.id);
   redirect("/admin");
 }

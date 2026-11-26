@@ -17,8 +17,10 @@ import { sql } from "./db";
 export const COOKIE_SESION = "jp_sesion";
 const DURACION_MS = 12 * 60 * 60 * 1000;
 
-export const ROLES = ["SUPERADMIN", "ADMIN_CREDITOS", "ASESOR_VENTAS", "COBRADOR"] as const;
-export type Rol = (typeof ROLES)[number];
+import { ROLES, type Rol } from "@/lib/roles";
+import { SECCIONES, type Seccion } from "@/lib/permisos";
+
+export { ROLES, type Rol };
 export const ETIQUETA_ROL: Record<Rol, string> = {
   SUPERADMIN: "Superadministrador",
   ADMIN_CREDITOS: "Administrador de créditos",
@@ -87,6 +89,11 @@ export async function requerirSesion(...roles: Rol[]): Promise<Sesion> {
   if (!s) redirect("/admin/login");
   if (roles.length && !roles.includes(s.rol)) redirect("/admin?sinPermiso=1");
   return s;
+}
+
+/** Exige sesión con un rol que pueda ver la sección (matriz de src/lib/permisos.ts). */
+export function requerirSeccion(seccion: Seccion): Promise<Sesion> {
+  return requerirSesion(...SECCIONES[seccion].roles);
 }
 
 export const puede = (s: Pick<Sesion, "rol">, ...roles: Rol[]) => roles.includes(s.rol);

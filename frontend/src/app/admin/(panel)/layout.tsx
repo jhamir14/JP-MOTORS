@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminNav, type ItemNav } from "@/components/admin/AdminNav";
 import { Logo } from "@/components/Logo";
-import { ETIQUETA_ROL, puede, requerirSesion } from "@/lib/server/auth";
+import { SECCIONES, seccionesDe, type Seccion } from "@/lib/permisos";
+import { ETIQUETA_ROL, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { asegurarProcesoDiario } from "@/lib/server/pagos";
 import { salir } from "../login/actions";
@@ -24,20 +25,9 @@ export default async function PanelLayout({ children }: { children: React.ReactN
               and cu.fecha_vencimiento < (now() at time zone 'America/Lima')::date)::int as mora,
            (select count(*) from public.reclamo where estado <> 'RESPONDIDO')::int as reclamos`;
 
-  const items: ItemNav[] = [
-    { href: "/admin", label: "Inicio" },
-    { href: "/admin/solicitudes", label: "Solicitudes web", badge: pendientes.solicitudes },
-    { href: "/admin/clientes", label: "Clientes" },
-    { href: "/admin/creditos", label: "Créditos" },
-    { href: "/admin/cobranzas", label: "Cobranzas", badge: pendientes.mora },
-    { href: "/admin/pagos", label: "Pagos" },
-    { href: "/admin/caja", label: "Caja" },
-    { href: "/admin/catalogo", label: "Catálogo" },
-    { href: "/admin/inventario", label: "Inventario" },
-    { href: "/admin/tasas", label: "Tasas por servicio" },
-    { href: "/admin/reclamos", label: "Libro de Reclamaciones", badge: pendientes.reclamos },
-    ...(puede(sesion, "SUPERADMIN") ? [{ href: "/admin/personal", label: "Personal" }] : []),
-  ];
+  // Menú según la matriz de permisos (src/lib/permisos.ts): cada rol ve solo lo que puede abrir.
+  const badges: Partial<Record<Seccion, number>> = { solicitudes: pendientes.solicitudes, cobranzas: pendientes.mora, reclamos: pendientes.reclamos };
+  const items: ItemNav[] = seccionesDe(sesion.rol).map((s) => ({ href: SECCIONES[s].href, label: SECCIONES[s].label, badge: badges[s] }));
 
   return (
     <div className="min-h-dvh bg-bg md:grid md:grid-cols-[250px_1fr] print:block print:bg-white">

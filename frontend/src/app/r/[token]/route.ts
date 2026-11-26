@@ -2,7 +2,7 @@ import { recibo } from "@/lib/documentos";
 import { renderizarPdf } from "@/lib/pdf/render";
 import { dbConfigurada, sql } from "@/lib/server/db";
 import { auditarDescarga, datosEmpresa, datosRecibo, noEncontrado, respuestaPdf } from "@/lib/server/documentos";
-import { ipDe, permitirIntento } from "@/lib/server/limite";
+import { ipDe, permitirIntentoCompartido } from "@/lib/server/limite";
 
 /**
  * Recibo compartido por WhatsApp: /r/<token>. No pide sesión: el token (64 hex, ~244 bits aleatorios por pago)
@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  if (!permitirIntento(`recibo:${ipDe(req.headers)}`, 30, 10 * 60 * 1000))
+  if (!(await permitirIntentoCompartido(`recibo:${ipDe(req.headers)}`, 30, 10 * 60 * 1000)))
     return new Response("Demasiadas solicitudes. Intenta en unos minutos.", { status: 429, headers: { "Cache-Control": "no-store" } });
   if (!dbConfigurada || !/^[0-9a-f]{64}$/.test(token)) return noEncontrado();
   const db = sql();

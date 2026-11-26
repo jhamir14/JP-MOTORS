@@ -1,0 +1,5 @@
+# Respaldos de la base (contienen datos personales)
+/respaldos/
+*.dump
+# Funciones de Railway generadas
+/database/railway/dist/

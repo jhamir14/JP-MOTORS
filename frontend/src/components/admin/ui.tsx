@@ -113,3 +113,26 @@ export function Vacio({ children }: { children: ReactNode }) {
 
 export const fechaCorta = (d: Date | string) =>
   new Date(d).toLocaleString("es-PE", { timeZone: "America/Lima", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+/** Indicador numérico (KPI) con detalle opcional y enlace. */
+export function Kpi({ titulo, valor, detalle, tono, href }: { titulo: string; valor: ReactNode; detalle?: ReactNode; tono?: "danger" | "accent"; href?: string }) {
+  const cuerpo = (
+    <>
+      <div className="text-xs font-semibold text-muted">{titulo}</div>
+      <div className={cn("mt-1.5 text-2xl font-extrabold tabular md:text-[1.7rem]", tono === "danger" && "text-danger", tono === "accent" && "text-accent")}>{valor}</div>
+      {detalle && <div className="mt-1 text-xs text-muted">{detalle}</div>}
+    </>
+  );
+  const cls = "block min-w-0 rounded-2xl border border-line-soft bg-surface p-4 shadow-card md:p-5";
+  return href ? <a href={href} className={cn(cls, "transition-colors hover:border-brand")}>{cuerpo}</a> : <div className={cls}>{cuerpo}</div>;
+}
+
+/** Barra horizontal simple (0–100 %) para distribuciones. */
+export function Barra({ porcentaje, tono = "brand" }: { porcentaje: number; tono?: "brand" | "danger" | "gold" | "accent" }) {
+  const color = { brand: "bg-brand", danger: "bg-danger", gold: "bg-gold", accent: "bg-accent" }[tono];
+  return (
+    <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2" aria-hidden>
+      <div className={cn("h-full rounded-full", color)} style={{ width: `${Math.max(0, Math.min(100, porcentaje))}%` }} />
+    </div>
+  );
+}
