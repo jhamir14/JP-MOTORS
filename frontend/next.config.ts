@@ -58,7 +58,7 @@ const nextConfig: NextConfig = {
       { source: "/celulares/:slug([a-z0-9-]+)", destination: "/catalogo/:slug", permanent: true },
       { source: "/repuestos", destination: "/motos", permanent: true },
       { source: "/financiamiento", destination: "/motos", permanent: false },
-      // La web ya no ofrece préstamos en efectivo: solo financia motos, motocar, toritos y celulares.
+      // La web ya no ofrece préstamos en efectivo: solo financia motos, motokar, toritos y celulares.
       { source: "/prestamos", destination: "/", permanent: true },
       // Solo ids numéricos: /motos/*.webp son fotos de public/ y no deben redirigirse.
       { source: "/motos/:id(\\d+)", destination: "/motos", permanent: true },
