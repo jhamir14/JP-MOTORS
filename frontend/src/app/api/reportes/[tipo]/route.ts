@@ -4,7 +4,7 @@ import { obtenerSesion, puede } from "@/lib/server/auth";
 import { hoyLima } from "@/lib/server/cobranza";
 import { dbConfigurada, sql } from "@/lib/server/db";
 import { ipDe, permitirIntentoCompartido } from "@/lib/server/limite";
-import { auditarDescarga, filasReporte } from "@/lib/server/reportes";
+import { auditarDescarga, filasReporte, reportesDisponibles } from "@/lib/server/reportes";
 
 /**
  * Exportación de reportes a Excel (.xlsx) o CSV.
@@ -28,6 +28,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ tipo: st
   const url = new URL(req.url);
   const formato = url.searchParams.get("formato") === "csv" ? "csv" : "xlsx";
   const db = sql();
+  if (!(await reportesDisponibles(db))) return new Response("Reportes no disponibles: falta aplicar la migración de la Fase 8.", { status: 503 });
   const hoy = await hoyLima(db);
   const { filtros } = parsearFiltros(url.searchParams, hoy);
   if (!usaRango(t)) filtros.hasta = hoy;

@@ -5,7 +5,7 @@ import { puedeVerSeccion } from "@/lib/permisos";
 import { ETIQUETA_TRAMO, TRAMOS_MORA, distribucionScore, indicadores, porcentaje } from "@/lib/reportes";
 import { requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
-import { distribucionScoreClientes, kpis as leerKpis, moraPorTramoHoy } from "@/lib/server/reportes";
+import { AVISO_MIGRACION, distribucionScoreClientes, kpis as leerKpis, moraPorTramoHoy, reportesDisponibles } from "@/lib/server/reportes";
 
 export const metadata = { title: "Inicio" };
 
@@ -40,7 +40,8 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
 
   // Fase 8: indicadores financieros (solo quienes ven Reportes).
   const verFinanzas = puedeVerSeccion(sesion.rol, "reportes");
-  const [kpi, tramos, scores] = verFinanzas
+  const faltaMigracion = verFinanzas && !(await reportesDisponibles(db));
+  const [kpi, tramos, scores] = verFinanzas && !faltaMigracion
     ? await Promise.all([leerKpis(db), moraPorTramoHoy(db), distribucionScoreClientes(db)])
     : [null, [], []];
   const k = kpi ? indicadores(kpi) : null;
@@ -77,6 +78,9 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
         ))}
       </nav>
 
+      {faltaMigracion && (
+        <p role="status" className="mb-6 rounded-xl bg-gold-soft px-4 py-3 text-sm">{AVISO_MIGRACION}</p>
+      )}
       {k && (
         <section aria-labelledby="kpi-titulo" className="mb-6">
           <div className="mb-3 flex items-end justify-between gap-3">

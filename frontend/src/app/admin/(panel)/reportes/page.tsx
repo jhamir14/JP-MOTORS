@@ -27,7 +27,7 @@ import {
 import { requerirSeccion } from "@/lib/server/auth";
 import { hoyLima } from "@/lib/server/cobranza";
 import { sql } from "@/lib/server/db";
-import { MAX_FILAS_REPORTE, baseCartera, filasReporte, opcionesFiltros } from "@/lib/server/reportes";
+import { AVISO_MIGRACION, MAX_FILAS_REPORTE, baseCartera, filasReporte, opcionesFiltros, reportesDisponibles } from "@/lib/server/reportes";
 
 export const metadata = { title: "Reportes" };
 
@@ -43,6 +43,14 @@ export default async function ReportesPage({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const db = sql();
   const hoy = await hoyLima(db);
+  if (!(await reportesDisponibles(db))) {
+    return (
+      <>
+        <Encabezado titulo="Reportes" />
+        <Vacio>{AVISO_MIGRACION}</Vacio>
+      </>
+    );
+  }
   const ver: TipoReporte = (TIPOS_REPORTE as readonly string[]).includes(String(sp.ver)) ? (sp.ver as TipoReporte) : "colocaciones";
   const { filtros, avisos } = parsearFiltros(sp, hoy);
   const [filas, opciones, base] = await Promise.all([

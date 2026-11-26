@@ -181,8 +181,7 @@ language sql stable security invoker set search_path = '' as $$
          (select count(*)::int from act where estado = 'EN_MORA'),
          coalesce((select sum(saldo) from pend), 0),
          coalesce((select sum(saldo) from pend, h where pend.fecha_vencimiento < h.hoy), 0),
-         -- capital que falta cobrar: capital de la cuota menos lo pagado que excede mora+interés no se conoce por cuota;
-         -- se usa el capital de las aplicaciones (exacto) restado del capital pactado.
+         -- capital por cobrar = capital pactado de los créditos activos − capital ya aplicado por pagos no anulados
          coalesce((select sum(cu.capital) from public.cuota cu join act on act.id = cu.credito_id), 0)
            - coalesce((select sum(ap.capital) from public.aplicacion_pago ap join public.pago p on p.id = ap.pago_id and not p.anulado
                        join act on act.id = p.credito_id), 0),
