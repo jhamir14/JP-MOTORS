@@ -82,7 +82,8 @@ export const catalogoRespaldo: Producto[] = [...vehiculos, ...celulares].map(({ 
 
 /** Espejo de las tasas públicas de tasa_servicio. */
 export const tasasRespaldo: TasaPublica[] = [
-  { servicio: "CREDITO_VEHICULAR", frecuencia: "MENSUAL", tipoCalculo: "FRANCES", tasaPorcentaje: 2, cuotasMin: 6, cuotasMax: 36 },
+  // Motokar NL150: S/ 8,800 al contado → 400 cuotas diarias de S/ 33 ⇒ 0.218 % diario (francés). Igual para todos los vehículos.
+  { servicio: "CREDITO_VEHICULAR", frecuencia: "DIARIO", tipoCalculo: "FRANCES", tasaPorcentaje: 0.218, cuotasMin: 100, cuotasMax: 400 },
   { servicio: "CREDITO_CELULAR", frecuencia: "SEMANAL", tipoCalculo: "FRANCES", tasaPorcentaje: 1.2, cuotasMin: 8, cuotasMax: 52 },
   { servicio: "CREDITO_CELULAR", frecuencia: "QUINCENAL", tipoCalculo: "FRANCES", tasaPorcentaje: 2.4, cuotasMin: 4, cuotasMax: 24 },
 ];

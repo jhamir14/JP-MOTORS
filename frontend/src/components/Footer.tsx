@@ -23,7 +23,7 @@ export default function Footer() {
         <div>
           <Logo tone="light" size={64} />
           <p className="mt-6 max-w-xs text-[0.95rem] leading-relaxed">
-            Motos, motocar, toritos y celulares nuevos con financiamiento directo para quienes trabajan por su cuenta.
+            Motos, motokar, toritos y celulares nuevos con financiamiento directo para quienes trabajan por su cuenta.
           </p>
           <ul aria-label="Redes sociales" className="mt-6 flex gap-3">
             {siteConfig.redes.map((r) => {

@@ -185,7 +185,7 @@ export function FormCredito(props: PropsFormCredito) {
                   tipo === t ? "border-brand bg-brand text-white" : "border-line bg-surface hover:border-brand",
                 )}
               >
-                {t === "CREDITO_VEHICULAR" ? "🏍 Moto / motocar / torito" : "📱 Celular"}
+                {t === "CREDITO_VEHICULAR" ? "🏍 Moto / motokar / torito" : "📱 Celular"}
               </button>
             ))}
           </div>

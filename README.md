@@ -1,6 +1,6 @@
 # Inversiones JP
 
-Web pública, panel y base de datos (PostgreSQL en Railway) de **Inversiones JP**: financiamiento de motos, motocar, toritos y celulares, y venta de repuestos. No otorga préstamos de dinero en efectivo.
+Web pública, panel y base de datos (PostgreSQL en Railway) de **Inversiones JP**: financiamiento de motos, motokar, toritos y celulares, y venta de repuestos. No otorga préstamos de dinero en efectivo.
 
 - Especificación: [`INVERSIONES_JP_MASTER_CONTEXT.md`](INVERSIONES_JP_MASTER_CONTEXT.md)
 - Plan y roadmap: [`docs/PLAN_ACTUALIZACION_V2.md`](docs/PLAN_ACTUALIZACION_V2.md)

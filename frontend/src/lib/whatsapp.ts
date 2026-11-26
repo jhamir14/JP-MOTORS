@@ -7,7 +7,7 @@ export function whatsappLink(message: string, phone: string = siteConfig.whatsap
 }
 
 export const whatsappMessages = {
-  general: () => "Hola, quisiera información sobre las motos, motocar, toritos y celulares de Inversiones JP.",
+  general: () => "Hola, quisiera información sobre las motos, motokar, toritos y celulares de Inversiones JP.",
   producto: (nombre: string) => `Hola, vi el ${nombre} en el catálogo de Inversiones JP y quisiera más información.`,
   financiamiento: (nombre: string) =>
     `Hola, vi el ${nombre} en la web de Inversiones JP. ¿Cómo sale en cuotas? Quisiera conocer el financiamiento.`,

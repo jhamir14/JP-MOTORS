@@ -12,7 +12,7 @@ import { formatSoles } from "./format";
 
 /** Plazos que se ofrecen como botones rápidos (se filtran al rango de cada tasa). */
 const PLAZOS_SUGERIDOS: Record<Frecuencia, number[]> = {
-  DIARIO: [60, 90, 120, 180],
+  DIARIO: [60, 90, 120, 180, 200, 300, 400],
   SEMANAL: [8, 12, 16, 24, 32, 52],
   QUINCENAL: [4, 6, 8, 12, 18, 24],
   MENSUAL: [6, 12, 18, 24, 36],
@@ -25,11 +25,14 @@ export interface ReglasCotizacion {
   paso: number;
 }
 
+/** Cuota inicial mínima de motos, motokar y toritos. */
+export const INICIAL_MINIMA_VEHICULO = 1000;
+
 const redondear = (v: number, paso: number) => Math.round(v / paso) * paso;
 
 /**
  * Límites de la cuota inicial y tasas disponibles para un producto.
- * Vehículos: inicial entre 10 % y 70 % del precio. Celulares: desde S/ 0 hasta 60 %.
+ * Vehículos: inicial desde S/ 1,000 hasta el 70 % del precio. Celulares: desde S/ 0 hasta 60 %.
  */
 export function reglasCotizacion(producto: Producto, tasasPublicas: TasaPublica[]): ReglasCotizacion {
   const servicio = servicioDeProducto(producto);
@@ -38,7 +41,7 @@ export function reglasCotizacion(producto: Producto, tasasPublicas: TasaPublica[
     .sort((a, b) => FRECUENCIAS.indexOf(a.frecuencia) - FRECUENCIAS.indexOf(b.frecuencia));
   const paso = producto.precio >= 5000 ? 100 : 50;
   const vehiculo = esVehiculo(producto);
-  const inicialMin = vehiculo ? Math.ceil((producto.precio * 0.1) / paso) * paso : 0;
+  const inicialMin = vehiculo ? INICIAL_MINIMA_VEHICULO : 0;
   const inicialMax = Math.max(inicialMin, Math.floor((producto.precio * (vehiculo ? 0.7 : 0.6)) / paso) * paso);
   return { tasas, inicialMin, inicialMax, paso };
 }
@@ -60,8 +63,12 @@ export function seleccionInicial(producto: Producto, reglas: ReglasCotizacion): 
   const tasa = reglas.tasas.find((t) => t.frecuencia === plan?.frecuencia) ?? reglas.tasas[0];
   if (!tasa) return null;
   const sugeridos = plazosSugeridos(tasa);
-  const n = plan && plan.frecuencia === tasa.frecuencia ? plan.numeroCuotas : sugeridos[Math.floor(sugeridos.length / 2)];
-  const inicialBase = plan ? plan.cuotaInicial : esVehiculo(producto) ? producto.precio * 0.2 : 0;
+  const vehiculo = esVehiculo(producto);
+  // Vehículos: se parte de la inicial mínima y el plazo más largo (como se ofrece en tienda).
+  const n = vehiculo
+    ? tasa.cuotasMax
+    : plan && plan.frecuencia === tasa.frecuencia ? plan.numeroCuotas : sugeridos[Math.floor(sugeridos.length / 2)];
+  const inicialBase = vehiculo ? reglas.inicialMin : plan ? plan.cuotaInicial : 0;
   return {
     frecuencia: tasa.frecuencia,
     numeroCuotas: Math.min(Math.max(n, tasa.cuotasMin), tasa.cuotasMax),

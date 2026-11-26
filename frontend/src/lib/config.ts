@@ -11,9 +11,9 @@ export const siteConfig = {
   /** RUC de la empresa (Libro de Reclamaciones y páginas legales). Se puede sobrescribir con NEXT_PUBLIC_RUC. */
   ruc: process.env.NEXT_PUBLIC_RUC || "10479269217",
   emailContacto: process.env.NEXT_PUBLIC_EMAIL_CONTACTO ?? "contacto@inversiones-jp.com",
-  tagline: "Financiamiento de motos, motocar, toritos y celulares",
+  tagline: "Financiamiento de motos, motokar, toritos y celulares",
   description:
-    "Inversiones JP: crédito vehicular para motos, motocar y toritos, y celulares en cuotas semanales. Crédito directo, evaluación rápida y pagos diarios, semanales o mensuales.",
+    "Inversiones JP: crédito vehicular para motos, motokar y toritos, y celulares en cuotas semanales. Crédito directo, evaluación rápida y pagos diarios, semanales o mensuales.",
   /** Dominio oficial: canonical, sitemap, Open Graph y datos estructurados. */
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://inversiones-jp.com",
   locale: "es_PE",

@@ -21,7 +21,7 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
   const catalogo = CATALOGOS[catalogoDeLinea(linea.id)];
   const [portada, ...galeria] = producto.imagenes;
   const specs = Object.entries(producto.specs).filter(([, v]) => v);
-  // Motos, motocar y toritos: solo precio al contado; las cuotas se consultan por WhatsApp.
+  // Motos, motokar y toritos: solo precio al contado; las cuotas se consultan por WhatsApp.
   const vehiculo = esVehiculo(producto);
   const planes = (vehiculo ? [] : producto.planes)
     .map((plan) => ({ plan, cuota: Math.ceil(resultadoPlan(producto, plan).cuota) }))
@@ -100,7 +100,7 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
 
               {vehiculo && (
                 <div className="mt-6 rounded-2xl border border-oro/40 bg-oro/10 px-4 py-3.5 text-[0.95rem] text-white/80">
-                  ¿Lo quieres en cuotas? Consulta el financiamiento, la inicial y el plazo directamente con un asesor por WhatsApp.
+                  ¿Lo quieres en cuotas? Calcula tu cuota en el cotizador o consulta el financiamiento directamente con un asesor por WhatsApp.
                 </div>
               )}
 
@@ -113,7 +113,7 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
                 >
                   <IconWhatsApp size={18} /> {vehiculo ? "Consultar financiamiento" : "Consultar por este modelo"}
                 </a>
-                {!vehiculo && <Link href={`/cotizar?producto=${producto.slug}`} className="btn-claro">Calcula tu cuota</Link>}
+                <Link href={`/cotizar?producto=${producto.slug}`} className="btn-claro">Calcula tu cuota</Link>
               </div>
             </div>
           </div>

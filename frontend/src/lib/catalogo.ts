@@ -13,7 +13,7 @@ export const CATEGORIAS_VEHICULO = ["MOTO_LINEAL", "TRIMOVIL_PASAJEROS", "TRIMOV
 
 export const ETIQUETA_CATEGORIA: Record<CategoriaProducto, string> = {
   MOTO_LINEAL: "Moto lineal",
-  TRIMOVIL_PASAJEROS: "Motocar de pasajeros",
+  TRIMOVIL_PASAJEROS: "Motokar de pasajeros",
   TRIMOVIL_CARGA: "Trimóvil de carga",
   CELULAR: "Celular",
 };
@@ -74,7 +74,7 @@ export function hrefProducto(p: Pick<Producto, "slug">) {
 /** Líneas que se muestran en la web pública (agrupan categorías del catálogo). */
 export const LINEAS = [
   { id: "motos", nombre: "Motos", singular: "Moto", categorias: ["MOTO_LINEAL"] },
-  { id: "mototaxis", nombre: "Motocar y toritos", singular: "Motocar", categorias: ["TRIMOVIL_PASAJEROS", "TRIMOVIL_CARGA"] },
+  { id: "mototaxis", nombre: "Motokar y toritos", singular: "Motokar", categorias: ["TRIMOVIL_PASAJEROS", "TRIMOVIL_CARGA"] },
   { id: "celulares", nombre: "Celulares", singular: "Celular", categorias: ["CELULAR"] },
 ] as const satisfies readonly { id: string; nombre: string; singular: string; categorias: readonly CategoriaProducto[] }[];
 
@@ -92,14 +92,14 @@ export const lineaDe = (p: Pick<Producto, "categoria">) =>
 
 /** Cada catálogo vive en su propia pestaña: vehículos en /motos y celulares en /celulares. */
 export const CATALOGOS = {
-  vehiculos: { href: "/motos", nombre: "Motos, motocar y toritos", lineas: ["motos", "mototaxis"] },
+  vehiculos: { href: "/motos", nombre: "Motos, motokar y toritos", lineas: ["motos", "mototaxis"] },
   celulares: { href: "/celulares", nombre: "Celulares", lineas: ["celulares"] },
 } as const satisfies Record<string, { href: string; nombre: string; lineas: readonly LineaId[] }>;
 export type CatalogoId = keyof typeof CATALOGOS;
 
 export const catalogoDeLinea = (id: LineaId): CatalogoId => (id === "celulares" ? "celulares" : "vehiculos");
 
-/** Enlace al catálogo que muestra una línea (los motocar y toritos se abren filtradas dentro de /motos). */
+/** Enlace al catálogo que muestra una línea (los motokar y toritos se abren filtradas dentro de /motos). */
 export const hrefLinea = (id: LineaId) =>
   id === "celulares" ? "/celulares" : id === "mototaxis" ? "/motos?tipo=mototaxis" : "/motos?tipo=motos";
 

@@ -16,7 +16,7 @@ export interface CuotaPendiente {
 export interface DatosRecordatorio {
   nombres: string;
   codigo: string;
-  /** Moto, motocar, torito o celular financiado (opcional). */
+  /** Moto, motokar, torito o celular financiado (opcional). */
   producto?: string | null;
   numeroCuotas: number;
   /** Cuotas con saldo, en orden de vencimiento. */

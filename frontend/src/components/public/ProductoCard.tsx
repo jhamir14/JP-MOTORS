@@ -20,7 +20,7 @@ function datoClave(p: Producto) {
 export function ProductoCard({ producto, priority = false, indice = 0 }: { producto: Producto; priority?: boolean; indice?: number }) {
   const dato = datoClave(producto);
   const vehiculo = esVehiculo(producto);
-  // Motos, motocar y toritos: solo precio al contado; el financiamiento se consulta por WhatsApp.
+  // Motos, motokar y toritos: solo precio al contado; el financiamiento se consulta por WhatsApp.
   const cuota = vehiculo ? null : planDestacado(producto);
 
   return (

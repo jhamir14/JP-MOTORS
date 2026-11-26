@@ -5,7 +5,7 @@ import { Cotizador } from "./Cotizador";
 export const metadata: Metadata = {
   title: "Cotiza tu cuota",
   description:
-    "Calcula al instante la cuota de tu moto, motocar, torito o celular en Inversiones JP: elige el modelo, la inicial y el plazo, y recibe tu cotización por WhatsApp o correo.",
+    "Calcula al instante la cuota de tu moto, motokar, torito o celular en Inversiones JP: elige el modelo, la inicial y el plazo, y recibe tu cotización por WhatsApp o correo.",
   alternates: { canonical: "/cotizar" },
 };
 
