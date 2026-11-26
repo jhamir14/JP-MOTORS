@@ -42,6 +42,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Dominio anterior: todo se redirige (301) al dominio oficial conservando la ruta, para no perder visitas ni posicionamiento.
+      ...["jpmotorshonda.com", "www.jpmotorshonda.com"].map((host) => ({
+        source: "/:path*",
+        has: [{ type: "host" as const, value: host }],
+        destination: "https://inversiones-jp.com/:path*",
+        permanent: true,
+      })),
       ...Object.entries(motosLegado).map(([id, slug]) => ({ source: `/motos/${id}`, destination: `/catalogo/${slug}`, permanent: true })),
       { source: "/motos", destination: "/catalogo?linea=motos", permanent: true },
       // Rediseño: todas las líneas viven ahora en /catalogo y la web ya no muestra simulador ni solicitud en línea.

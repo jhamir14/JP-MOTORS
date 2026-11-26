@@ -10,11 +10,12 @@ export const siteConfig = {
   legalName: "Inversiones Multimarca JP",
   /** RUC de la empresa (Libro de Reclamaciones y páginas legales). Se puede sobrescribir con NEXT_PUBLIC_RUC. */
   ruc: process.env.NEXT_PUBLIC_RUC || "10479269217",
-  emailContacto: process.env.NEXT_PUBLIC_EMAIL_CONTACTO ?? "contacto@jpmotorshonda.com",
+  emailContacto: process.env.NEXT_PUBLIC_EMAIL_CONTACTO ?? "contacto@inversiones-jp.com",
   tagline: "Financiamiento de motos, mototaxis y celulares",
   description:
     "Inversiones JP: crédito vehicular para motos y mototaxis, y celulares en cuotas semanales. Crédito directo, evaluación rápida y pagos diarios, semanales o mensuales.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  /** Dominio oficial: canonical, sitemap, Open Graph y datos estructurados. */
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://inversiones-jp.com",
   locale: "es_PE",
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "51902423015",
   telefonoVisible: "902 423 015",

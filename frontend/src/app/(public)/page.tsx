@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { IconArrowRight, IconClock, IconMapPin, IconWhatsApp } from "@/components/icons";
 import { HeroOrbita } from "@/components/public/HeroOrbita";
+import { JsonLdEmpresa } from "@/components/public/JsonLdEmpresa";
 import { ProductoCard } from "@/components/public/ProductoCard";
 import { Revelar } from "@/components/public/Revelar";
 import { LINEAS, lineaDe, type LineaId, type Producto } from "@/lib/catalogo";
@@ -10,6 +12,13 @@ import { obtenerCatalogo } from "@/lib/server/catalogo";
 import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
 
 export const revalidate = 300;
+
+export const metadata: Metadata = {
+  title: { absolute: "Inversiones JP | Motos, mototaxis y celulares a crédito en Lima" },
+  description:
+    "Inversiones JP, Santa Anita (Lima): motos, mototaxis y celulares nuevos con financiamiento directo, sin bancos. Mira el catálogo y conversa con un asesor por WhatsApp.",
+  alternates: { canonical: "/" },
+};
 
 const fotosLinea: Record<LineaId, { src: string; alt: string; texto: string; posicion: string }> = {
   motos: {
@@ -66,6 +75,7 @@ export default async function Home() {
 
   return (
     <main>
+      <JsonLdEmpresa />
       {/* ───────────── Hero ───────────── */}
       <section className="noche relative isolate overflow-hidden">
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:120px_100%] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]" />
