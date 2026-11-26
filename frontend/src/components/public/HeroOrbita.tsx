@@ -6,10 +6,12 @@ import { IconArrowRight } from "@/components/icons";
 import { hrefLinea } from "@/lib/catalogo";
 import { cn } from "@/lib/cn";
 
+/** Fotos recortadas sobre fondo transparente (public/hero) para que se asienten sobre el lente azul. */
 const escenas = [
-  { id: "motos", titulo: "Motos", detalle: "Urbanas, de trabajo y deportivas", src: "/motos/cb190r.webp", alt: "Moto deportiva roja", escala: "scale-[1.18]" },
-  { id: "mototaxis", titulo: "Motokar y toritos", detalle: "De pasajeros y de carga", src: "/motos/nl150.webp", alt: "Motokar rojo de pasajeros", escala: "scale-[1.12]" },
-  { id: "celulares", titulo: "Celulares", detalle: "iPhone, Samsung, Xiaomi y más", src: "/escenas/celulares-estudio.webp", alt: "Tres celulares de última generación", escala: "scale-100" },
+  { id: "motos", titulo: "Motos", detalle: "Urbanas, de trabajo y deportivas", href: hrefLinea("motos"), src: "/hero/moto.webp", alt: "Moto deportiva Honda roja", escala: "scale-[0.92]" },
+  { id: "motokar", titulo: "Motokar", detalle: "Honda Motokar de pasajeros", href: "/motos?tipo=mototaxis&q=motokar", src: "/hero/motokar.webp", alt: "Honda Motokar azul de pasajeros", escala: "scale-[0.9]" },
+  { id: "toritos", titulo: "Toritos", detalle: "De cabina cerrada, para todo clima", href: hrefLinea("mototaxis"), src: "/hero/torito.webp", alt: "Torito rojo y blanco de cabina cerrada", escala: "scale-[0.92]" },
+  { id: "celulares", titulo: "Celulares", detalle: "iPhone, Samsung, Xiaomi y más", href: hrefLinea("celulares"), src: "/hero/celulares.webp", alt: "Celulares iPhone, Samsung, Xiaomi y Honor", escala: "scale-100" },
 ] as const;
 
 const DURACION = 5500;
@@ -70,7 +72,7 @@ export function HeroOrbita() {
               key={e.id}
               aria-hidden={i !== activa}
               className={cn(
-                "absolute inset-[6%] mix-blend-lighten transition-opacity duration-700",
+                "absolute inset-[8%] transition-opacity duration-700",
                 i === activa ? "opacity-100 motion-safe:animate-[lente-entrada_1.1s_cubic-bezier(0.2,0.8,0.2,1)_both]" : "opacity-0",
               )}
             >
@@ -80,7 +82,7 @@ export function HeroOrbita() {
                 fill
                 priority={i === 0}
                 sizes="(max-width: 768px) 80vw, 480px"
-                className={cn("object-contain mix-blend-lighten", e.escala)}
+                className={cn("object-contain drop-shadow-[0_18px_30px_rgba(0,0,0,0.45)]", e.escala)}
               />
             </div>
           ))}
@@ -136,7 +138,7 @@ export function HeroOrbita() {
 
         {/* Pie del lente */}
         <Link
-          href={hrefLinea(escena.id)}
+          href={escena.href}
           className="group absolute bottom-[3%] left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/15 bg-noche/70 py-2 pr-2 pl-5 text-left whitespace-nowrap backdrop-blur-md transition-colors hover:border-oro/60"
         >
           <span key={escena.id} className="motion-safe:animate-[aparecer_0.6s_ease-out_both]">
@@ -151,7 +153,7 @@ export function HeroOrbita() {
       </div>
 
       {/* Selector de línea con barra de progreso */}
-      <div className="mt-6 grid grid-cols-3 gap-2" role="group" aria-label="Elegir línea">
+      <div className="mt-6 grid grid-cols-4 gap-1 sm:gap-2" role="group" aria-label="Elegir línea">
         {escenas.map((e, i) => (
           <button
             key={e.id}
@@ -159,7 +161,7 @@ export function HeroOrbita() {
             aria-pressed={i === activa}
             onClick={() => setActiva(i)}
             className={cn(
-              "group relative overflow-hidden rounded-full py-2.5 text-sm font-semibold transition-colors duration-300",
+              "group relative overflow-hidden rounded-full py-2.5 text-[0.8rem] font-semibold sm:text-sm transition-colors duration-300",
               i === activa ? "text-white" : "text-white/45 hover:text-white/80",
             )}
           >
