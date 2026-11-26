@@ -12,7 +12,6 @@ const incluye: Record<string, string[]> = {
   motos: ["Unidad nueva, 0 km", "Tarjeta de propiedad y placas", "Te acompañamos con la instalación del GPS"],
   mototaxis: ["Unidad nueva, 0 km", "Tarjeta de propiedad y placas", "Te acompañamos con la instalación del GPS"],
   celulares: ["Equipo nuevo", "Garantía del fabricante"],
-  repuestos: ["Pregúntanos si es compatible con tu moto antes de comprar"],
 };
 
 /** Ficha pública de un producto: fotos, descripción, características y contacto por WhatsApp. */

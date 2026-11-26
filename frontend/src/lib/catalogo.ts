@@ -5,7 +5,8 @@
  */
 import { calcularCredito, type Frecuencia, type ResultadoCredito, type TipoCalculo } from "./finance";
 
-export const CATEGORIAS = ["MOTO_LINEAL", "TRIMOVIL_PASAJEROS", "TRIMOVIL_CARGA", "CELULAR", "REPUESTO"] as const;
+/** Categorías que se venden. (El enum de la base aún guarda REPUESTO por historial, pero ya no se usa.) */
+export const CATEGORIAS = ["MOTO_LINEAL", "TRIMOVIL_PASAJEROS", "TRIMOVIL_CARGA", "CELULAR"] as const;
 export type CategoriaProducto = (typeof CATEGORIAS)[number];
 
 export const CATEGORIAS_VEHICULO = ["MOTO_LINEAL", "TRIMOVIL_PASAJEROS", "TRIMOVIL_CARGA"] as const satisfies readonly CategoriaProducto[];
@@ -15,7 +16,6 @@ export const ETIQUETA_CATEGORIA: Record<CategoriaProducto, string> = {
   TRIMOVIL_PASAJEROS: "Mototaxi de pasajeros",
   TRIMOVIL_CARGA: "Trimóvil de carga",
   CELULAR: "Celular",
-  REPUESTO: "Repuesto",
 };
 
 export const GAMAS = ["Gama trabajo", "Gama media", "Premium"] as const;
@@ -76,7 +76,6 @@ export const LINEAS = [
   { id: "motos", nombre: "Motos", singular: "Moto", categorias: ["MOTO_LINEAL"] },
   { id: "mototaxis", nombre: "Mototaxis", singular: "Mototaxi", categorias: ["TRIMOVIL_PASAJEROS", "TRIMOVIL_CARGA"] },
   { id: "celulares", nombre: "Celulares", singular: "Celular", categorias: ["CELULAR"] },
-  { id: "repuestos", nombre: "Repuestos", singular: "Repuesto", categorias: ["REPUESTO"] },
 ] as const satisfies readonly { id: string; nombre: string; singular: string; categorias: readonly CategoriaProducto[] }[];
 
 export type LineaId = (typeof LINEAS)[number]["id"];

@@ -6,7 +6,7 @@ import { CatalogoCliente } from "./CatalogoCliente";
 
 export const metadata: Metadata = {
   title: "Catálogo",
-  description: "Motos, mototaxis, celulares y repuestos nuevos en Inversiones JP. Revisa los modelos y consulta con un asesor por WhatsApp.",
+  description: "Motos, mototaxis y celulares nuevos en Inversiones JP. Revisa los modelos y consulta con un asesor por WhatsApp.",
   alternates: { canonical: "/catalogo" },
 };
 

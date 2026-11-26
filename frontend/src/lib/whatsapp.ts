@@ -19,5 +19,4 @@ export const whatsappMessages = {
       `Cuota estimada: ${formatSoles(p.cuota, true)}`,
       "¿Podrían evaluarme?",
     ].join("\n"),
-  repuesto: (nombre: string) => `Hola, quisiera pedir el repuesto: ${nombre}.`,
 };

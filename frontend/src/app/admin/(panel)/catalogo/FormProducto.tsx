@@ -63,7 +63,7 @@ export function FormProducto({ producto }: { producto?: ProductoEditable }) {
           name="etiquetas"
           defaultValue={producto?.etiquetas.join(", ")}
           placeholder="Trabajo, Urbana"
-          hint={`Separadas por comas. Vehículos: uso (Trabajo, Urbana, Deportiva…). Celulares: gama (${GAMAS.join(", ")}). Repuestos: la primera es la categoría; «Agotado» lo marca sin stock.`}
+          hint={`Separadas por comas. Vehículos: uso (Trabajo, Urbana, Deportiva…). Celulares: gama (${GAMAS.join(", ")}).`}
         />
         <CampoTexto label="Orden" name="orden" defaultValue={String(producto?.orden ?? 0)} inputMode="numeric" hint="Menor número = aparece primero." />
         <Check label="Destacado" name="destacado" defaultChecked={producto?.destacado} hint="Aparece en la portada." />

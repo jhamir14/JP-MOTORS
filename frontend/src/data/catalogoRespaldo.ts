@@ -5,7 +5,6 @@
  * para que la web pública nunca quede vacía. En producción los datos se editan desde /admin.
  */
 import type { PlanPublico, Producto, TasaPublica } from "@/lib/catalogo";
-import { mockRepuestos } from "./mockRepuestos";
 
 const planesVehiculo = (slug: string, precio: number): PlanPublico[] =>
   [12, 24].map((n) => ({
@@ -70,20 +69,12 @@ const celulares: Base[] = [
   cel("honor-x8c", "Honor", "X8c", 780, "Gama trabajo", false, "Delgado, liviano y con excelente relación precio-calidad."),
 ];
 
-const slugify = (s: string) =>
-  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-
-const repuestos: Base[] = mockRepuestos.map((r) => ({
-  slug: `repuesto-${slugify(r.name)}`, categoria: "REPUESTO", marca: r.brand, nombre: r.name, precio: r.price, destacado: false,
-  etiquetas: [r.category], descripcion: r.description, specs: {}, imagen: r.image,
-}));
-
-export const catalogoRespaldo: Producto[] = [...vehiculos, ...celulares, ...repuestos].map(({ imagen, modelo, ...b }) => ({
+export const catalogoRespaldo: Producto[] = [...vehiculos, ...celulares].map(({ imagen, modelo, ...b }) => ({
   ...b,
   id: b.slug,
   modelo: modelo ?? b.nombre.replace(`${b.marca} `, ""),
   imagenes: imagen ? [{ url: imagen, alt: b.nombre }] : [],
-  planes: b.categoria === "CELULAR" ? planCelular(b.slug) : b.categoria === "REPUESTO" ? [] : planesVehiculo(b.slug, b.precio),
+  planes: b.categoria === "CELULAR" ? planCelular(b.slug) : planesVehiculo(b.slug, b.precio),
   stock: 0,
 }));
 

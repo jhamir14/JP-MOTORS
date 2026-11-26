@@ -22,8 +22,8 @@ export default function TerminosPage() {
 
       <h2>1. Qué ofrecemos</h2>
       <p>
-        {siteConfig.name} vende y financia directamente <strong>motos lineales, mototaxis (trimóviles) y celulares</strong>, y vende
-        repuestos y accesorios. <strong>No otorgamos préstamos de dinero en efectivo</strong>. No somos una entidad del sistema
+        {siteConfig.name} vende y financia directamente <strong>motos lineales, mototaxis (trimóviles) y celulares</strong>.
+        <strong>No otorgamos préstamos de dinero en efectivo</strong>. No somos una entidad del sistema
         financiero: el financiamiento es un crédito directo por la compra del producto.
       </p>
 

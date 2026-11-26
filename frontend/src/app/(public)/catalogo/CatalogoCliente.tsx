@@ -50,10 +50,9 @@ export function CatalogoCliente({ productos, inicial }: Props) {
     if (orden === "Menor precio") return [...lista].sort((a, b) => a.precio - b.precio);
     if (orden === "Mayor precio") return [...lista].sort((a, b) => b.precio - a.precio);
     if (orden === "Nombre") return [...lista].sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-    // Destacados: primero los destacados; los repuestos al final cuando se ve todo el catálogo.
+    // Destacados: primero los destacados y luego por cilindrada.
     return [...lista].sort(
       (a, b) =>
-        Number(a.categoria === "REPUESTO") - Number(b.categoria === "REPUESTO") ||
         Number(b.destacado) - Number(a.destacado) ||
         (cilindrada(b) ?? 0) - (cilindrada(a) ?? 0),
     );
@@ -72,6 +71,39 @@ export function CatalogoCliente({ productos, inicial }: Props) {
     return () => window.removeEventListener("resize", medir);
   }, [linea, pestañas]);
 
+  // La barra queda fija bajo el encabezado, pero se esconde al bajar para no tapar las tarjetas
+  // y reaparece en cuanto el usuario sube un poco.
+  const centinela = useRef<HTMLDivElement>(null);
+  const [fija, setFija] = useState(false);
+  const [oculta, setOculta] = useState(false);
+  const [tope, setTope] = useState<number | null>(null);
+  useEffect(() => {
+    let ultimoY = window.scrollY;
+    let pendiente = false;
+    const actualizar = () => {
+      pendiente = false;
+      const y = window.scrollY;
+      // Se pega a 12 px del borde inferior del encabezado (que se compacta al bajar).
+      const bajoEncabezado = (document.querySelector("header")?.getBoundingClientRect().bottom ?? 64) + 12;
+      setTope(bajoEncabezado);
+      const pegada = (centinela.current?.getBoundingClientRect().top ?? 0) < bajoEncabezado + 1;
+      setFija(pegada);
+      if (!pegada) setOculta(false);
+      else if (y - ultimoY > 6) setOculta(true);
+      else if (ultimoY - y > 6) setOculta(false);
+      if (Math.abs(y - ultimoY) > 6) ultimoY = y;
+    };
+    const alDesplazar = () => {
+      if (!pendiente) {
+        pendiente = true;
+        requestAnimationFrame(actualizar);
+      }
+    };
+    actualizar();
+    window.addEventListener("scroll", alDesplazar, { passive: true });
+    return () => window.removeEventListener("scroll", alDesplazar);
+  }, []);
+
   const limpiar = () => {
     setLinea("todos");
     setQ("");
@@ -85,7 +117,16 @@ export function CatalogoCliente({ productos, inicial }: Props) {
     <section className="relative bg-niebla pb-24">
       <div className="container">
         {/* Barra de filtros, montada sobre el borde del hero */}
-        <div className="sticky top-[76px] z-20 -mt-14 rounded-[1.75rem] border border-white/60 bg-white/90 p-3 shadow-[0_24px_50px_-30px_rgba(10,22,51,0.55)] backdrop-blur-xl md:top-[84px] md:p-4">
+        <div ref={centinela} aria-hidden className="-mt-14" />
+        <div
+          className={cn(
+            "sticky top-[76px] z-20 rounded-[1.75rem] border border-white/60 bg-white/90 p-3 backdrop-blur-xl transition-[transform,opacity,box-shadow] duration-300 ease-out md:top-[84px] md:p-4",
+            fija ? "shadow-[0_18px_40px_-24px_rgba(10,22,51,0.45)]" : "shadow-[0_24px_50px_-30px_rgba(10,22,51,0.55)]",
+            oculta && "pointer-events-none -translate-y-[calc(100%+6rem)] opacity-0",
+          )}
+          style={tope ? { top: tope } : undefined}
+          onFocusCapture={() => setOculta(false)}
+        >
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="-mx-1 overflow-x-auto px-1 [scrollbar-width:none]">
               <div ref={barra} role="group" aria-label="Línea de productos" className="relative flex w-max gap-1 rounded-full bg-niebla p-1">

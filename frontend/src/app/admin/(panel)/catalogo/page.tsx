@@ -29,7 +29,8 @@ export default async function CatalogoAdminPage({ searchParams }: { searchParams
            coalesce(s.en_stock, 0)::int as stock
     from public.producto_catalogo p
     left join public.v_stock_producto s on s.producto_id = p.id
-    where (${categoria}::text is null or p.categoria::text = ${categoria})
+    where p.categoria <> 'REPUESTO'
+      and (${categoria}::text is null or p.categoria::text = ${categoria})
       and (${q} = '' or p.nombre ilike ${"%" + q + "%"} or p.marca ilike ${"%" + q + "%"} or p.slug ilike ${"%" + q + "%"})
     order by p.categoria, p.orden, p.nombre`;
 

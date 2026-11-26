@@ -30,12 +30,6 @@ const fotosLinea: Record<LineaId, { src: string; alt: string; texto: string; pos
     texto: "Equipos nuevos para vender, cobrar y estar en contacto.",
     posicion: "50% 50%",
   },
-  repuestos: {
-    src: "/repuestos/llantas.webp",
-    alt: "Llanta para moto",
-    texto: "Aceites, llantas, cascos y lo que tu moto necesite.",
-    posicion: "50% 50%",
-  },
 };
 
 const pasos = [
@@ -52,7 +46,7 @@ const historias = [
 
 /** Destacados primero; se reparte entre líneas para que el bloque no quede todo de un solo tipo. */
 function seleccion(catalogo: Producto[], n: number) {
-  const orden = [...catalogo].filter((p) => p.categoria !== "REPUESTO").sort((a, b) => Number(b.destacado) - Number(a.destacado));
+  const orden = [...catalogo].sort((a, b) => Number(b.destacado) - Number(a.destacado));
   const elegidos: Producto[] = [];
   const porLinea = new Map<string, number>();
   for (const p of orden) {
@@ -109,7 +103,7 @@ export default async function Home() {
           <Revelar className="grid gap-6 md:grid-cols-[1.2fr_1fr] md:items-end">
             <h2 className="display text-[2.2rem] text-tinta md:text-[3.2rem]">Elige por dónde empezar</h2>
             <p className="max-w-md text-[1.02rem] text-pizarra md:justify-self-end">
-              Cuatro líneas, un mismo trato: productos nuevos, asesoría de una persona real y documentos claros.
+              Tres líneas, un mismo trato: productos nuevos, asesoría de una persona real y documentos claros.
             </p>
           </Revelar>
 
@@ -118,7 +112,6 @@ export default async function Home() {
               {LINEAS.map((l) => {
                 const foto = fotosLinea[l.id];
                 const total = conteo(l.id);
-                const esProducto = l.id === "repuestos";
                 return (
                   <li key={l.id} className="group/linea relative md:flex-1 md:transition-[flex-grow] md:duration-700 md:ease-[cubic-bezier(0.2,0.8,0.2,1)] md:hover:flex-[2.4] md:focus-within:flex-[2.4]">
                     <Link
@@ -130,7 +123,7 @@ export default async function Home() {
                         alt={foto.alt}
                         fill
                         sizes="(max-width: 768px) 100vw, 50vw"
-                        className={`object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover/linea:scale-105 ${esProducto ? "mix-blend-lighten" : ""}`}
+                        className="object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover/linea:scale-105"
                         style={{ objectPosition: foto.posicion }}
                       />
                       <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-noche via-noche/40 to-transparent" />

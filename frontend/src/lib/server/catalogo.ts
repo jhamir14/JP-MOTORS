@@ -27,7 +27,7 @@ export const obtenerCatalogo = cache(async (): Promise<Producto[]> => {
              coalesce(s.en_stock, 0)::int as stock
       from public.producto_catalogo p
       left join public.v_stock_producto s on s.producto_id = p.id
-      where p.publicado
+      where p.publicado and p.categoria <> 'REPUESTO'
       order by p.orden, p.nombre`;
     return filas.map((f) => ({ ...f, specs: (f.specs ?? {}) as Record<string, string> }));
   } catch (e) {

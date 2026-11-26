@@ -25,7 +25,7 @@ export default async function EditarProductoPage({ params, searchParams }: { par
     db<ProductoEditable[]>`
       select id, categoria, marca, modelo, nombre, slug, descripcion, precio_contado::float8 as precio, specs, etiquetas,
              destacado, publicado, orden
-      from public.producto_catalogo where id = ${id}`,
+      from public.producto_catalogo where id = ${id} and categoria <> 'REPUESTO'`,
     db<{ id: string; url: string; alt: string | null; es_portada: boolean }[]>`
       select id, url, alt, es_portada from public.imagen_producto where producto_id = ${id} order by es_portada desc, orden, created_at`,
     db<PlanEditable[]>`
@@ -125,44 +125,42 @@ export default async function EditarProductoPage({ params, searchParams }: { par
           <p className="mt-2 text-xs text-muted">JPG, PNG, WEBP o AVIF de hasta 5 MB. Se recomienda fondo uniforme y 1200 px de ancho.</p>
         </Panel>
 
-        {producto.categoria !== "REPUESTO" && (
-          <Panel titulo={`Planes de crédito (${planes.length})`}>
-            <p className="mb-4 text-sm text-muted">
-              Lo que se publica aparece en la ficha del producto y en su tarjeta («cuota desde»). Cada crédito firmado guarda su propia
-              copia de las condiciones: cambiar un plan no altera créditos existentes.
-            </p>
-            {planes.length > 0 && (
-              <ul className="mb-6 grid gap-3">
-                {planes.map((pl) => {
-                  const r = calcularCredito({ monto: producto.precio, ...pl });
-                  const etq = ETIQUETA_FRECUENCIA[pl.frecuencia];
-                  return (
-                    <li key={pl.id}>
-                      <details className="rounded-xl border border-line-soft [&_summary::-webkit-details-marker]:hidden">
-                        <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 p-3 text-sm">
-                          <span className="font-semibold">{pl.nombre ?? `${pl.numeroCuotas} ${etq.plural}`}</span>
-                          <span className="tabular text-muted">
-                            Inicial {formatSoles(pl.cuotaInicial)} · {pl.numeroCuotas} × <strong className="text-accent">{formatSoles(r.cuota, true)}</strong> {etq.adjetivo} · TEA {r.teaPorcentaje.toFixed(1)} %
-                          </span>
-                          <Badge tone={pl.publicado ? "accent" : "outline"}>{pl.publicado ? "Publicado" : "Oculto"}</Badge>
-                        </summary>
-                        <div className="border-t border-line-soft p-3">
-                          <FormPlan productoId={producto.id} precio={producto.precio} plan={pl} />
-                          <form action={eliminarPlan} className="mt-3">
-                            <input type="hidden" name="id" value={pl.id} />
-                            <button type="submit" className="cursor-pointer text-xs font-semibold text-danger">Eliminar plan</button>
-                          </form>
-                        </div>
-                      </details>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-            <h3 className="mb-3 text-base">Agregar plan</h3>
-            <FormPlan productoId={producto.id} precio={producto.precio} tasaSugerida={tasa} />
-          </Panel>
-        )}
+        <Panel titulo={`Planes de crédito (${planes.length})`}>
+          <p className="mb-4 text-sm text-muted">
+            Lo que se publica aparece en la ficha del producto y en su tarjeta («cuota desde»). Cada crédito firmado guarda su propia
+            copia de las condiciones: cambiar un plan no altera créditos existentes.
+          </p>
+          {planes.length > 0 && (
+            <ul className="mb-6 grid gap-3">
+              {planes.map((pl) => {
+                const r = calcularCredito({ monto: producto.precio, ...pl });
+                const etq = ETIQUETA_FRECUENCIA[pl.frecuencia];
+                return (
+                  <li key={pl.id}>
+                    <details className="rounded-xl border border-line-soft [&_summary::-webkit-details-marker]:hidden">
+                      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 p-3 text-sm">
+                        <span className="font-semibold">{pl.nombre ?? `${pl.numeroCuotas} ${etq.plural}`}</span>
+                        <span className="tabular text-muted">
+                          Inicial {formatSoles(pl.cuotaInicial)} · {pl.numeroCuotas} × <strong className="text-accent">{formatSoles(r.cuota, true)}</strong> {etq.adjetivo} · TEA {r.teaPorcentaje.toFixed(1)} %
+                        </span>
+                        <Badge tone={pl.publicado ? "accent" : "outline"}>{pl.publicado ? "Publicado" : "Oculto"}</Badge>
+                      </summary>
+                      <div className="border-t border-line-soft p-3">
+                        <FormPlan productoId={producto.id} precio={producto.precio} plan={pl} />
+                        <form action={eliminarPlan} className="mt-3">
+                          <input type="hidden" name="id" value={pl.id} />
+                          <button type="submit" className="cursor-pointer text-xs font-semibold text-danger">Eliminar plan</button>
+                        </form>
+                      </div>
+                    </details>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <h3 className="mb-3 text-base">Agregar plan</h3>
+          <FormPlan productoId={producto.id} precio={producto.precio} tasaSugerida={tasa} />
+        </Panel>
       </div>
     </>
   );

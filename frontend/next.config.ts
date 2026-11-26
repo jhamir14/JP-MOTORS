@@ -50,7 +50,7 @@ const nextConfig: NextConfig = {
       { source: "/vehiculos", destination: "/catalogo?linea=motos", permanent: true },
       { source: "/celulares/:slug", destination: "/catalogo/:slug", permanent: true },
       { source: "/celulares", destination: "/catalogo?linea=celulares", permanent: true },
-      { source: "/repuestos", destination: "/catalogo?linea=repuestos", permanent: true },
+      { source: "/repuestos", destination: "/catalogo", permanent: true },
       { source: "/financiamiento", destination: "/catalogo", permanent: false },
       // La web ya no ofrece préstamos en efectivo: solo financia motos, mototaxis y celulares.
       { source: "/prestamos", destination: "/", permanent: true },
