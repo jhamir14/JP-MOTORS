@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Encabezado, Panel, Vacio } from "@/components/admin/ui";
 import { FormCredito } from "@/components/admin/FormCredito";
+import { FormPrestamo } from "@/components/admin/FormPrestamo";
 import { ScoreCliente } from "@/components/admin/ScoreCliente";
 import { Badge } from "@/components/ui";
 import { ROLES_CREDITOS } from "@/lib/creditos";
@@ -12,13 +13,17 @@ import { configCreditos, opcionesAltaCredito } from "@/lib/server/creditos";
 import { sql } from "@/lib/server/db";
 import { evaluarCliente, describirBeneficio } from "@/lib/scoring";
 import { configBeneficios, perfilParaCredito, perfilScore } from "@/lib/server/scoring";
-import { crearCredito } from "../actions";
+import { crearCredito, crearPrestamo } from "../actions";
+import { PestanasTipo } from "../PestanasTipo";
 
 export const metadata = { title: "Nuevo crédito" };
 
-export default async function NuevoCreditoPage({ searchParams }: { searchParams: Promise<{ cliente?: string; q?: string }> }) {
+export default async function NuevoCreditoPage({ searchParams }: { searchParams: Promise<{ cliente?: string; q?: string; tipo?: string }> }) {
   await requerirSesion(...ROLES_CREDITOS);
   const sp = await searchParams;
+  const prestamo = sp.tipo === "prestamo";
+  const titulo = prestamo ? "Nuevo préstamo de dinero" : "Nuevo crédito";
+  const extra = prestamo ? "&tipo=prestamo" : "";
   const db = sql();
   const clienteId = /^[0-9a-f-]{36}$/.test(sp.cliente ?? "") ? sp.cliente! : null;
 
@@ -34,10 +39,12 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
       : [];
     return (
       <>
-        <Link href="/admin/creditos" className="text-sm font-medium text-muted hover:text-brand">← Créditos</Link>
-        <Encabezado titulo="Nuevo crédito">Busca al cliente. Si aún no está registrado, regístralo primero con sus garantes.</Encabezado>
+        <Link href={prestamo ? "/admin/creditos?tipo=prestamo" : "/admin/creditos"} className="text-sm font-medium text-muted hover:text-brand">← {prestamo ? "Préstamos" : "Créditos"}</Link>
+        <Encabezado titulo={titulo}>Paso 1 de 2: busca al cliente por DNI, nombre o celular. Si aún no está registrado, regístralo primero (solo toma un minuto).</Encabezado>
+        <PestanasTipo activo={prestamo ? "prestamo" : "credito"} base="/admin/creditos/nuevo" q={q} />
         <Panel>
           <form className="flex flex-col gap-2 sm:flex-row" role="search">
+            {prestamo && <input type="hidden" name="tipo" value="prestamo" />}
             <input name="q" defaultValue={q} placeholder="DNI, nombre o celular" aria-label="Buscar cliente" className="flex-1 rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm" autoFocus />
             <button type="submit" className="cursor-pointer rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white">Buscar</button>
           </form>
@@ -53,7 +60,7 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
                   {c.estado === "BLOQUEADO_LEGAL" ? (
                     <Badge tone="outline">Bloqueado</Badge>
                   ) : (
-                    <Link href={`/admin/creditos/nuevo?cliente=${c.id}`} className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white">Elegir</Link>
+                    <Link href={`/admin/creditos/nuevo?cliente=${c.id}${extra}`} className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white">Elegir</Link>
                   )}
                 </li>
               ))}
@@ -90,10 +97,12 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
   return (
     <>
       <Link href={`/admin/clientes/${clienteId}`} className="text-sm font-medium text-muted hover:text-brand">← Ficha del cliente</Link>
-      <Encabezado titulo="Nuevo crédito">
-        Para <strong className="text-fg">{cliente.nombres} {cliente.apellidos}</strong> · {ETIQUETA_ESTADO_CLIENTE[cliente.estado]}
+      <Encabezado titulo={titulo}>
+        Paso 2 de 2 · para <strong className="text-fg">{cliente.nombres} {cliente.apellidos}</strong> · {ETIQUETA_ESTADO_CLIENTE[cliente.estado]}
         {activos[0].n > 0 && ` · ya tiene ${activos[0].n} crédito${activos[0].n > 1 ? "s" : ""} activo${activos[0].n > 1 ? "s" : ""}`}
       </Encabezado>
+
+      <PestanasTipo activo={prestamo ? "prestamo" : "credito"} base="/admin/creditos/nuevo" cliente={clienteId} />
 
       <details className="mb-5 rounded-2xl border border-line-soft bg-surface shadow-card" open={evaluacion.alertaRiesgo != null || evaluacion.bloqueo != null}>
         <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 p-4 [&::-webkit-details-marker]:hidden">
@@ -131,14 +140,26 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
               <Link href={`/admin/clientes/${clienteId}`} className="font-semibold underline">Completar en la ficha</Link>
             </p>
           )}
-          {!bloqueaExpediente && (
+          {!bloqueaExpediente && prestamo && (
+            <FormPrestamo
+              action={crearPrestamo}
+              clienteId={clienteId}
+              garantes={garantes}
+              tasas={opciones.tasas.filter((t) => t.servicio === "PRESTAMO_EFECTIVO")}
+              feriados={config.feriados}
+              hoy={hoy}
+              topeTea={config.topeTea}
+              alertaRiesgo={evaluacion.alertaRiesgo}
+            />
+          )}
+          {!bloqueaExpediente && !prestamo && (
             <FormCredito
               action={crearCredito}
               clienteId={clienteId}
               garantes={garantes}
               unidades={opciones.unidades}
               planes={opciones.planes}
-              tasas={opciones.tasas}
+              tasas={opciones.tasas.filter((t) => t.servicio !== "PRESTAMO_EFECTIVO")}
               feriados={config.feriados}
               hoy={hoy}
               topeTea={config.topeTea}

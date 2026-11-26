@@ -118,7 +118,7 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
         <Link href="/admin/creditos" className="text-sm font-medium text-muted hover:text-brand">← Créditos</Link>
         <Link href={`/admin/clientes/${cr.cliente_id}`} className="text-sm font-semibold text-brand">Ficha del cliente →</Link>
       </div>
-      <Encabezado titulo={`Crédito ${cr.codigo}`} acciones={
+      <Encabezado titulo={`${cr.tipo === "PRESTAMO_EFECTIVO" ? "Préstamo" : "Crédito"} ${cr.codigo}`} acciones={
         <>
           {activo && <Link href={`/admin/creditos/${cr.id}/pagar`} className={buttonClasses({ variant: "primary", size: "sm" }, "print:hidden")}>Registrar pago</Link>}
           <a href={pdf("cronograma")} target="_blank" rel="noopener" className={buttonClasses({ variant: "outline", size: "sm" }, "print:hidden")}>Cronograma PDF</a>
@@ -130,7 +130,7 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
 
       {sp.creado && (
         <p role="status" className="mb-4 rounded-xl bg-accent-soft px-4 py-3 text-sm font-medium text-accent print:hidden">
-          Crédito registrado: {cr.numero_cuotas} cuotas generadas y la unidad quedó como vendida a crédito.
+          {cr.tipo === "PRESTAMO_EFECTIVO" ? `Préstamo registrado: ${cr.numero_cuotas} cuotas generadas.` : `Crédito registrado: ${cr.numero_cuotas} cuotas generadas y la unidad quedó como vendida a crédito.`}
         </p>
       )}
       {cr.estado === "ANULADO" && (
@@ -152,7 +152,7 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
       <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         <Panel titulo="Condiciones pactadas">
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
-            <Dato k="Precio">{formatSoles(cr.monto_total, true)}</Dato>
+            <Dato k={cr.tipo === "PRESTAMO_EFECTIVO" ? "Monto prestado" : "Precio"}>{formatSoles(cr.monto_total, true)}</Dato>
             <Dato k="Inicial">{formatSoles(cr.cuota_inicial, true)}</Dato>
             <Dato k="Financiado">{formatSoles(cr.monto_financiado, true)}</Dato>
             <Dato k={`Cuota ${f?.adjetivo ?? ""}`}>{formatSoles(cr.valor_cuota, true)}</Dato>

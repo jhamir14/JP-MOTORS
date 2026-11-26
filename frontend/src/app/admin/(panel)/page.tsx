@@ -155,6 +155,7 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Panel titulo="Cartera">
+          {cartera.length === 0 && <p className="text-sm text-muted">Aún no hay créditos activos.</p>}
           <ul className="divide-y divide-line-soft">
             {cartera.map((c) => (
               <li key={c.tipo} className="flex items-center justify-between gap-4 py-3 text-sm">

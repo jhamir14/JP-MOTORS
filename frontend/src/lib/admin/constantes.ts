@@ -18,7 +18,7 @@ export const SERVICIOS_FINANCIAMIENTO = ["CREDITO_VEHICULAR", "CREDITO_CELULAR"]
 export const ETIQUETA_SERVICIO: Record<(typeof SERVICIOS_CREDITO)[number], string> = {
   CREDITO_VEHICULAR: "Crédito vehicular",
   CREDITO_CELULAR: "Crédito celular",
-  PRESTAMO_EFECTIVO: "Préstamo en efectivo (sistema anterior)",
+  PRESTAMO_EFECTIVO: "Préstamo de dinero",
 };
 
 export const legible = (v: string) => v.charAt(0) + v.slice(1).toLowerCase().replace(/_/g, " ");

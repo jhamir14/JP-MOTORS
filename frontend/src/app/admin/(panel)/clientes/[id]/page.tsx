@@ -187,7 +187,7 @@ export default async function FichaClientePage({
     );
 
   const avisos = [
-    sp.creado && "Cliente registrado. Completa su expediente: ubicación, documentos y garantes.",
+    sp.creado && "Cliente registrado. Ya puedes registrarle un crédito o préstamo.",
     sp.guardado && "Cambios guardados.",
     sp.vinculada && "Solicitud vinculada a este cliente.",
   ].filter(Boolean);
@@ -245,15 +245,17 @@ export default async function FichaClientePage({
         <div className="grid min-w-0 grid-cols-1 content-start gap-6">
           <Panel titulo="Datos personales">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
-              <Dato k="Fecha de nacimiento" vacio={!cliente.fecha_nacimiento}>{fecha(cliente.fecha_nacimiento as string)}</Dato>
+              <Dato k={cliente.tipo_documento === "DNI" ? "DNI" : "Documento"}>{cliente.numero_documento}</Dato>
               <Dato k="Sexo" vacio={!cliente.sexo}>{legible(cliente.sexo ?? "")}</Dato>
-              <Dato k="Estado civil" vacio={!cliente.estado_civil}>{legible(cliente.estado_civil ?? "")}</Dato>
               <Dato k="Celular" vacio={!cliente.telefono}>{cliente.telefono}</Dato>
-              <Dato k="Teléfono 2">{cliente.telefono_secundario ?? "—"}</Dato>
-              <Dato k="Correo">{cliente.email ?? "—"}</Dato>
-              <Dato k="Ocupación / giro" vacio={!cliente.ocupacion}>{cliente.ocupacion}</Dato>
-              <Dato k="Ingreso mensual" vacio={cliente.ingreso_mensual == null}>{formatSoles(Number(cliente.ingreso_mensual))}</Dato>
-              <Dato k="Dirección del trabajo">{cliente.direccion_trabajo ?? "—"}</Dato>
+              <Dato k="Correo" vacio={!cliente.email}>{cliente.email}</Dato>
+              <Dato k="Trabajo">{cliente.ocupacion ?? "—"}</Dato>
+              {/* Datos antiguos (de clientes registrados antes de la ficha simple): solo si existen */}
+              {cliente.fecha_nacimiento ? <Dato k="Fecha de nacimiento">{fecha(cliente.fecha_nacimiento as string)}</Dato> : null}
+              {cliente.estado_civil ? <Dato k="Estado civil">{legible(cliente.estado_civil)}</Dato> : null}
+              {cliente.telefono_secundario ? <Dato k="Teléfono 2">{cliente.telefono_secundario}</Dato> : null}
+              {cliente.ingreso_mensual != null ? <Dato k="Ingreso mensual">{formatSoles(Number(cliente.ingreso_mensual))}</Dato> : null}
+              {cliente.direccion_trabajo ? <Dato k="Dirección del trabajo">{cliente.direccion_trabajo}</Dato> : null}
             </dl>
             {cliente.notas && (
               <div className="mt-4 rounded-xl bg-surface-2 p-3 text-sm whitespace-pre-line">
@@ -266,17 +268,15 @@ export default async function FichaClientePage({
           <Panel titulo="Domicilio y ubicación">
             <dl className="mb-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
               <div className="col-span-2 sm:col-span-3">
-                <Dato k="Dirección" vacio={!cliente.direccion}>
-                  {cliente.direccion}{cliente.urbanizacion ? `, ${cliente.urbanizacion}` : ""}
+                <Dato k="Domicilio">
+                  {cliente.direccion ? `${cliente.direccion}${cliente.urbanizacion ? `, ${cliente.urbanizacion}` : ""}` : "— (opcional)"}
                 </Dato>
               </div>
-              <Dato k="Distrito" vacio={!cliente.distrito}>{cliente.distrito}</Dato>
-              <Dato k="Provincia" vacio={!cliente.provincia}>{cliente.provincia}</Dato>
-              <Dato k="Departamento" vacio={!cliente.departamento}>{cliente.departamento}</Dato>
-              <div className="col-span-2">
-                <Dato k="Referencia" vacio={!cliente.referencia}>{cliente.referencia}</Dato>
-              </div>
-              <Dato k="Vivienda" vacio={!cliente.tipo_vivienda}>{legible(cliente.tipo_vivienda ?? "")}</Dato>
+              {cliente.distrito ? <Dato k="Distrito">{cliente.distrito}</Dato> : null}
+              {cliente.provincia ? <Dato k="Provincia">{cliente.provincia}</Dato> : null}
+              {cliente.departamento ? <Dato k="Departamento">{cliente.departamento}</Dato> : null}
+              {cliente.referencia ? <div className="col-span-2"><Dato k="Referencia">{cliente.referencia}</Dato></div> : null}
+              {cliente.tipo_vivienda ? <Dato k="Vivienda">{legible(cliente.tipo_vivienda)}</Dato> : null}
             </dl>
             {tieneGps ? (
               <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-brand-soft/60 p-3 text-sm">
@@ -288,7 +288,7 @@ export default async function FichaClientePage({
                 <a href={enlaceRuta(Number(cliente.latitud), Number(cliente.longitud))} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-semibold">Cómo llegar</a>
               </div>
             ) : (
-              <p className="mb-3 text-sm text-[#8a5d00]">Sin ubicación GPS. Regístrala desde el celular estando en el domicilio.</p>
+              <p className="mb-3 text-sm text-muted">Sin ubicación GPS (opcional). Puedes registrarla desde el celular estando en el domicilio.</p>
             )}
             {edita && <CapturarUbicacion clienteId={id} action={guardarUbicacion} tieneUbicacion={tieneGps} />}
           </Panel>

@@ -141,6 +141,7 @@ export interface DatosKyc {
   sexo: string | null;
   estado_civil: string | null;
   telefono: string | null;
+  email?: string | null;
   direccion: string | null;
   distrito: string | null;
   provincia: string | null;
@@ -157,27 +158,16 @@ export interface DatosKyc {
  * Lo que falta para que el expediente del cliente esté completo (vacío = completo).
  * Se usa para destacar pendientes en la ficha y para mantener `cliente.datos_incompletos`.
  */
-export function faltantesCliente(c: DatosKyc, documentos: readonly string[]): string[] {
+export function faltantesCliente(c: DatosKyc, _documentos: readonly string[] = []): string[] {
+  // Ficha simple: nombre, apellido, DNI, sexo, celular y correo. Domicilio, trabajo, GPS y fotos son opcionales.
   const falta: string[] = [];
   const vacio = (v: unknown) => v == null || (typeof v === "string" && v.trim() === "");
   const tipo = c.tipo_documento as TipoDocumento;
   if (esDocumentoProvisional(c.numero_documento) || (TIPOS_DOCUMENTO.includes(tipo) && errorDocumento(tipo, c.numero_documento)))
-    falta.push("Número de documento válido");
-  if (vacio(c.fecha_nacimiento)) falta.push("Fecha de nacimiento");
+    falta.push("Número de DNI válido");
   if (vacio(c.sexo)) falta.push("Sexo");
-  if (vacio(c.estado_civil)) falta.push("Estado civil");
   if (vacio(c.telefono) || !normalizarCelular(String(c.telefono))) falta.push("Celular");
-  if (vacio(c.direccion)) falta.push("Dirección del domicilio");
-  if (vacio(c.distrito) || vacio(c.provincia) || vacio(c.departamento)) falta.push("Distrito, provincia y departamento");
-  if (vacio(c.referencia)) falta.push("Referencia del domicilio");
-  if (vacio(c.tipo_vivienda)) falta.push("Tipo de vivienda");
-  if (vacio(c.latitud) || vacio(c.longitud)) falta.push("Ubicación GPS del domicilio");
-  if (vacio(c.ocupacion)) falta.push("Ocupación o negocio");
-  if (vacio(c.ingreso_mensual)) falta.push("Ingreso mensual");
-  const docs = new Set(documentos);
-  for (const t of ["DNI_ANVERSO", "DNI_REVERSO", "RECIBO_SERVICIO", "FACHADA"] as const) {
-    if (!docs.has(t)) falta.push(`Foto: ${ETIQUETA_DOCUMENTO_KYC[t]}`);
-  }
+  if (vacio(c.email)) falta.push("Correo");
   return falta;
 }
 

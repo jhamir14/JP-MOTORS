@@ -194,3 +194,28 @@ describe("utilidades", () => {
     expect(errorMotivoAnulacion("Cliente desistió antes de la entrega")).toBeNull();
   });
 });
+
+describe("préstamo de dinero", () => {
+  const prestamo = {
+    tipo: "PRESTAMO_EFECTIVO" as const,
+    precio: 1000,
+    cuotaInicial: 0,
+    numeroCuotas: 4,
+    frecuencia: "SEMANAL" as const,
+    tipoCalculo: "FLAT" as const,
+    tasaPorcentaje: 20,
+    montoCuota: null,
+    penalidadDiaria: 2,
+    fechaDesembolso: "2026-11-26",
+    primerVencimiento: "2026-12-03",
+  };
+  it("S/ 1,000 al 20 % en 4 cuotas semanales: 4 × S/ 300", () => {
+    const plan = planCredito(prestamo, new Set());
+    expect(plan.cuotas.map((c) => c.cuota)).toEqual([300, 300, 300, 300]);
+    expect(plan.totalPagar).toBe(1200);
+    expect(plan.totalIntereses).toBe(200);
+  });
+  it("no lleva inicial", () => {
+    expect(validarCredito({ ...prestamo, cuotaInicial: 100 }).cuotaInicial).toMatch(/inicial/);
+  });
+});

@@ -171,7 +171,7 @@ export function FormCredito(props: PropsFormCredito) {
       <div className="grid content-start gap-5">
         <fieldset className="grid gap-3 rounded-2xl border border-line-soft bg-surface p-5 shadow-card">
           <legend className="sr-only">Producto</legend>
-          <h2 className="text-lg">1 · Producto que se entrega</h2>
+          <h2 className="text-lg">1 · ¿Qué se lleva?</h2>
           <div role="radiogroup" aria-label="Tipo de crédito" className="grid grid-cols-2 gap-2">
             {(["CREDITO_VEHICULAR", "CREDITO_CELULAR"] as const).map((t) => (
               <button
@@ -225,7 +225,7 @@ export function FormCredito(props: PropsFormCredito) {
 
         <fieldset className="grid gap-3 rounded-2xl border border-line-soft bg-surface p-5 shadow-card sm:grid-cols-2">
           <legend className="sr-only">Condiciones</legend>
-          <h2 className="text-lg sm:col-span-2">2 · Condiciones</h2>
+          <h2 className="text-lg sm:col-span-2">2 · Precio y cuotas</h2>
           {props.beneficio && (
             <div className={cn("flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm sm:col-span-2", conBeneficio ? "border-accent bg-accent-soft" : "border-line-soft bg-surface-2")}>
               <div className="min-w-0 flex-1">
@@ -241,23 +241,6 @@ export function FormCredito(props: PropsFormCredito) {
               </button>
             </div>
           )}
-          {!v.planId && tasasTipo.length > 0 && (
-            <CampoSelect
-              label="Tasa vigente"
-              name="_tasa"
-              className="sm:col-span-2"
-              value={v.tasaId}
-              onChange={(e) => {
-                const t = tasas.find((x) => x.id === e.target.value);
-                if (t) reiniciar(aplicarTasa(t));
-                else reiniciar({ tasaId: "" });
-              }}
-              opciones={[
-                { value: "", label: "— Personalizada —" },
-                ...tasasTipo.map((t) => ({ value: t.id, label: `${t.nombre} · ${t.tasaPorcentaje} % ${t.tipoCalculo === "FLAT" ? "flat" : "por periodo"} · ${t.cuotasMin}–${t.cuotasMax} cuotas` })),
-              ]}
-            />
-          )}
           <CampoTexto label="Precio (S/)" name="precio" inputMode="decimal" value={v.precio} onChange={(e) => set({ precio: e.target.value })} hint={unidad && Number(v.precio) !== unidad.precio ? `Precio de lista: ${formatSoles(unidad.precio, true)}` : undefined} />
           <CampoTexto label="Inicial (S/)" name="cuotaInicial" inputMode="decimal" value={v.cuotaInicial} onChange={(e) => set({ cuotaInicial: e.target.value })} />
           <CampoSelect
@@ -271,44 +254,68 @@ export function FormCredito(props: PropsFormCredito) {
             opciones={FRECUENCIAS.map((f) => ({ value: f, label: ETIQUETA_FRECUENCIA[f].adjetivo.replace(/^./, (c) => c.toUpperCase()) }))}
           />
           <CampoTexto label="N.º de cuotas" name="numeroCuotas" inputMode="numeric" value={v.numeroCuotas} onChange={(e) => set({ numeroCuotas: e.target.value })} hint={errores.numeroCuotas ? undefined : reglas.cuotasMin ? `Rango de la tasa: ${reglas.cuotasMin}–${reglas.cuotasMax}` : undefined} />
-          <CampoSelect
-            label="Cálculo"
-            name="tipoCalculo"
-            value={v.tipoCalculo}
-            onChange={(e) => set({ tipoCalculo: e.target.value as TipoCalculo })}
-            opciones={[{ value: "FRANCES", label: "Francés (saldo)" }, { value: "FLAT", label: "Flat (% total)" }]}
-          />
-          <div>
-            <span className="mb-1 block text-xs font-semibold tracking-wide text-muted uppercase">Definir por</span>
-            <div className="grid grid-cols-2 gap-1 rounded-xl bg-surface-2 p-1" role="radiogroup" aria-label="Definir por">
-              {(["tasa", "cuota"] as const).map((m) => (
-                <button key={m} type="button" role="radio" aria-checked={v.modo === m} onClick={() => set({ modo: m })}
-                  className={cn("cursor-pointer rounded-lg py-2 text-sm font-semibold", v.modo === m ? "bg-surface text-brand shadow-card" : "text-muted")}>
-                  {m === "tasa" ? "Tasa" : "Cuota fija"}
-                </button>
-              ))}
-            </div>
-          </div>
-          {v.modo === "tasa" ? (
-            <CampoTexto label={v.tipoCalculo === "FLAT" ? "Tasa flat total (%)" : `Tasa por ${ETIQUETA_FRECUENCIA[v.frecuencia].singular} (%)`} name="tasaPorcentaje" inputMode="decimal" value={v.tasaPorcentaje} onChange={(e) => set({ tasaPorcentaje: e.target.value, tasaId: "" })} />
-          ) : (
-            <CampoTexto label="Cuota pactada (S/)" name="montoCuota" inputMode="decimal" value={v.montoCuota} onChange={(e) => set({ montoCuota: e.target.value })} />
-          )}
-          <input type="hidden" name={v.modo === "tasa" ? "montoCuota" : "tasaPorcentaje"} value="" />
-          <CampoTexto label="Penalidad por día de atraso (S/)" name="penalidadDiaria" inputMode="decimal" value={v.penalidadDiaria} onChange={(e) => set({ penalidadDiaria: e.target.value })} />
           <CampoTexto label="Fecha de entrega" name="fechaDesembolso" type="date" value={v.fechaDesembolso}
             onChange={(e) => set({ fechaDesembolso: e.target.value, primerVencimiento: vencimientoPara(e.target.value, v.frecuencia) })} />
-          <CampoTexto label="Primer vencimiento" name="primerVencimiento" type="date" value={v.primerVencimiento} onChange={(e) => set({ primerVencimiento: e.target.value })}
-            hint="Si cae en domingo o feriado pasa al siguiente día hábil." />
-          <CampoArea label="Notas (opcional)" name="notas" rows={2} className="sm:col-span-2" />
+          <details className="rounded-xl border border-line-soft bg-surface-2/60 px-4 py-3 sm:col-span-2" open={v.modo === "cuota" || !v.tasaId}>
+            <summary className="cursor-pointer text-sm font-semibold text-brand">
+              Más opciones <span className="font-normal text-muted">· tasa {v.modo === "tasa" ? `${v.tasaPorcentaje || "—"} %` : "por cuota fija"}, penalidad, primer pago y notas</span>
+            </summary>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {!v.planId && tasasTipo.length > 0 && (
+                <CampoSelect
+                  label="Tasa vigente"
+                  name="_tasa"
+                  className="sm:col-span-2"
+                  value={v.tasaId}
+                  onChange={(e) => {
+                    const t = tasas.find((x) => x.id === e.target.value);
+                    if (t) reiniciar(aplicarTasa(t));
+                    else reiniciar({ tasaId: "" });
+                  }}
+                  opciones={[
+                    { value: "", label: "— Personalizada —" },
+                    ...tasasTipo.map((t) => ({ value: t.id, label: `${t.nombre} · ${t.tasaPorcentaje} % ${t.tipoCalculo === "FLAT" ? "flat" : "por periodo"} · ${t.cuotasMin}–${t.cuotasMax} cuotas` })),
+                  ]}
+                />
+              )}
+              <CampoSelect
+                label="Cálculo"
+                name="tipoCalculo"
+                value={v.tipoCalculo}
+                onChange={(e) => set({ tipoCalculo: e.target.value as TipoCalculo })}
+                opciones={[{ value: "FRANCES", label: "Francés (saldo)" }, { value: "FLAT", label: "Flat (% total)" }]}
+              />
+              <div>
+                <span className="mb-1 block text-xs font-semibold tracking-wide text-muted uppercase">Definir por</span>
+                <div className="grid grid-cols-2 gap-1 rounded-xl bg-surface-2 p-1" role="radiogroup" aria-label="Definir por">
+                  {(["tasa", "cuota"] as const).map((m) => (
+                    <button key={m} type="button" role="radio" aria-checked={v.modo === m} onClick={() => set({ modo: m })}
+                      className={cn("cursor-pointer rounded-lg py-2 text-sm font-semibold", v.modo === m ? "bg-surface text-brand shadow-card" : "text-muted")}>
+                      {m === "tasa" ? "Tasa" : "Cuota fija"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {v.modo === "tasa" ? (
+                <CampoTexto label={v.tipoCalculo === "FLAT" ? "Tasa flat total (%)" : `Tasa por ${ETIQUETA_FRECUENCIA[v.frecuencia].singular} (%)`} name="tasaPorcentaje" inputMode="decimal" value={v.tasaPorcentaje} onChange={(e) => set({ tasaPorcentaje: e.target.value, tasaId: "" })} />
+              ) : (
+                <CampoTexto label="Cuota pactada (S/)" name="montoCuota" inputMode="decimal" value={v.montoCuota} onChange={(e) => set({ montoCuota: e.target.value })} />
+              )}
+              <input type="hidden" name={v.modo === "tasa" ? "montoCuota" : "tasaPorcentaje"} value="" />
+              <CampoTexto label="Penalidad por día de atraso (S/)" name="penalidadDiaria" inputMode="decimal" value={v.penalidadDiaria} onChange={(e) => set({ penalidadDiaria: e.target.value })} />
+              <CampoTexto label="Primer vencimiento" name="primerVencimiento" type="date" value={v.primerVencimiento} onChange={(e) => set({ primerVencimiento: e.target.value })}
+                hint="Si cae en domingo o feriado pasa al siguiente día hábil." />
+              <CampoArea label="Notas (opcional)" name="notas" rows={2} className="sm:col-span-2" />
+            </div>
+          </details>
         </fieldset>
       </div>
 
-      <section aria-labelledby="vista-previa" className="grid content-start gap-4 rounded-2xl border border-line-soft bg-surface p-5 shadow-card lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-hidden">
-        <h2 id="vista-previa" className="text-lg">3 · Vista previa del cronograma</h2>
+      <section aria-labelledby="vista-previa" className="grid content-start gap-4 rounded-2xl border border-line-soft bg-surface p-5 shadow-card lg:sticky lg:top-20">
+        <h2 id="vista-previa" className="text-lg">3 · Así quedan las cuotas</h2>
         {!plan ? (
           <div className="rounded-xl border border-dashed border-line p-6 text-sm text-muted">
-            <p className="font-semibold text-fg">Completa las condiciones para ver el cronograma.</p>
+            <p className="font-semibold text-fg">{v.unidadId ? "Completa el precio y las cuotas para ver el cronograma." : "Elige la unidad para ver el cronograma."}</p>
             <ul className="mt-2 list-disc pl-5">
               {Object.values(errores).slice(0, 4).map((e) => <li key={e}>{e}</li>)}
             </ul>
@@ -361,6 +368,17 @@ export function FormCredito(props: PropsFormCredito) {
             </label>
             <ErrorCampo name="confirmoRiesgo" />
           </>
+        )}
+        {(!v.unidadId || faltaGarante || (!plan && v.unidadId)) && (
+          <p role="status" className="rounded-xl bg-gold-soft/70 px-3 py-2 text-sm text-[#8a5d00]">
+            {!v.unidadId
+              ? unidadesTipo.length === 0
+                ? "No hay unidades en stock de este tipo: ingrésalas primero en Inventario."
+                : "Elige la unidad que se entrega (paso 1)."
+              : faltaGarante
+                ? "Este crédito requiere un garante: agrégalo en la ficha del cliente."
+                : "Revisa las condiciones (paso 2) para ver el cronograma."}
+          </p>
         )}
         <BotonEnviar variant="brand" disabled={!plan || !v.unidadId || faltaGarante} pendiente="Registrando…">
           Confirmar y registrar crédito
