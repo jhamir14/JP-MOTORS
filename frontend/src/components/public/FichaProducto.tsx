@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { IconArrowRight, IconCheck, IconWhatsApp } from "@/components/icons";
-import { hrefProducto, lineaDe, resultadoPlan, type Producto } from "@/lib/catalogo";
+import { CATALOGOS, catalogoDeLinea, hrefLinea, hrefProducto, lineaDe, resultadoPlan, type Producto } from "@/lib/catalogo";
 import { ETIQUETA_FRECUENCIA } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
 import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
@@ -18,6 +18,7 @@ const incluye: Record<string, string[]> = {
 /** Ficha pública de un producto: fotos, descripción, características y contacto por WhatsApp. */
 export function FichaProducto({ producto, relacionados }: { producto: Producto; relacionados: Producto[] }) {
   const linea = lineaDe(producto);
+  const catalogo = CATALOGOS[catalogoDeLinea(linea.id)];
   const [portada, ...galeria] = producto.imagenes;
   const specs = Object.entries(producto.specs).filter(([, v]) => v);
   const planes = producto.planes
@@ -30,9 +31,9 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
       <section className="noche relative isolate overflow-hidden">
         <div className="container pt-6 pb-16 md:pb-24">
           <nav aria-label="Ruta" className="text-sm text-white/55">
-            <Link href="/catalogo" className="transition-colors hover:text-white">Catálogo</Link>
+            <Link href={catalogo.href} className="transition-colors hover:text-white">{catalogo.nombre}</Link>
             <span className="mx-2">/</span>
-            <Link href={`/catalogo?linea=${linea.id}`} className="transition-colors hover:text-white">{linea.nombre}</Link>
+            <Link href={hrefLinea(linea.id)} className="transition-colors hover:text-white">{linea.nombre}</Link>
           </nav>
 
           <div className="mt-8 grid items-center gap-10 md:grid-cols-[1.1fr_1fr] md:gap-14">
@@ -99,7 +100,7 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
                 <a href={whatsappLink(whatsappMessages.producto(producto.nombre))} target="_blank" rel="noopener noreferrer" className="btn-oro">
                   <IconWhatsApp size={18} /> Consultar por este modelo
                 </a>
-                <Link href={`/catalogo?linea=${linea.id}`} className="btn-claro">Ver más {linea.nombre.toLowerCase()}</Link>
+                <Link href={hrefLinea(linea.id)} className="btn-claro">Ver más {linea.nombre.toLowerCase()}</Link>
               </div>
             </div>
           </div>
@@ -163,7 +164,7 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
           <div className="container">
             <div className="flex items-end justify-between gap-4">
               <h2 className="display text-[2rem] text-tinta md:text-[2.6rem]">También te puede interesar</h2>
-              <Link href={`/catalogo?linea=${linea.id}`} className="hidden items-center gap-2 font-semibold text-tinta hover:text-oro-oscuro md:inline-flex">
+              <Link href={hrefLinea(linea.id)} className="hidden items-center gap-2 font-semibold text-tinta hover:text-oro-oscuro md:inline-flex">
                 Ver {linea.nombre.toLowerCase()} <IconArrowRight size={18} />
               </Link>
             </div>

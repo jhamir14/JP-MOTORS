@@ -6,10 +6,11 @@ import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 
-/** Marco de la web pública: analítica, barra superior, pie, navegación móvil y botón de WhatsApp (el panel no lo usa). */
+/** El espacio que necesita la barra inferior móvil lo reserva el propio pie (oscuro), para que no quede una franja clara al final.
+ * Marco de la web pública: analítica, barra superior, pie, navegación móvil y botón de WhatsApp (el panel no lo usa). */
 export function PublicChrome({ children }: { children: ReactNode }) {
   return (
-    <div className="pb-[88px] md:pb-0">
+    <div>
       {siteConfig.gaId && (
         <>
           <Script strategy="afterInteractive" src={`https://www.googletagmanager.com/gtag/js?id=${siteConfig.gaId}`} />

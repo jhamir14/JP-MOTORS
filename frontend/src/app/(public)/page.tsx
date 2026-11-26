@@ -6,7 +6,7 @@ import { HeroOrbita } from "@/components/public/HeroOrbita";
 import { JsonLdEmpresa } from "@/components/public/JsonLdEmpresa";
 import { ProductoCard } from "@/components/public/ProductoCard";
 import { Revelar } from "@/components/public/Revelar";
-import { LINEAS, lineaDe, type LineaId, type Producto } from "@/lib/catalogo";
+import { hrefLinea, lineaDe, normalizarTexto, type LineaId, type Producto } from "@/lib/catalogo";
 import { siteConfig } from "@/lib/config";
 import { obtenerCatalogo } from "@/lib/server/catalogo";
 import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
@@ -20,26 +20,13 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-const fotosLinea: Record<LineaId, { src: string; alt: string; texto: string; posicion: string }> = {
-  motos: {
-    src: "/escenas/repartidora.webp",
-    alt: "Repartidora sonriente manejando su moto por una calle de Lima",
-    texto: "Para repartir, ir al trabajo o moverte por la ciudad.",
-    posicion: "50% 30%",
-  },
-  mototaxis: {
-    src: "/escenas/mototaxista.webp",
-    alt: "Mototaxista apoyado en su mototaxi roja al anochecer",
-    texto: "De pasajeros o de carga, listas para trabajar desde el primer día.",
-    posicion: "40% 40%",
-  },
-  celulares: {
-    src: "/escenas/celular-mercado.webp",
-    alt: "Comerciante usando su celular nuevo en un puesto del mercado",
-    texto: "Equipos nuevos para vender, cobrar y estar en contacto.",
-    posicion: "50% 50%",
-  },
-};
+/** Banners de cada línea (con su título ya en la imagen) para "Elige por dónde empezar". */
+const banners: { id: string; nombre: string; src: string; alt: string; texto: string }[] = [
+  { id: "motos", nombre: "Motos", src: "/lineas/motos.webp", alt: "Motos Honda lineales: CB190R, Navi y CB125F", texto: "Para repartir, ir al trabajo o moverte por la ciudad." },
+  { id: "celulares", nombre: "Celulares", src: "/lineas/celulares.webp", alt: "Celulares iPhone, Samsung, Xiaomi y Honor", texto: "Equipos nuevos para vender, cobrar y estar en contacto." },
+  { id: "motokar", nombre: "Motokar", src: "/lineas/motokar.webp", alt: "Dos mototaxis Honda Motokar, una azul y una roja", texto: "Mototaxis de pasajeros listas para trabajar desde el primer día." },
+  { id: "torito", nombre: "Torito Bajaj", src: "/lineas/torito-bajaj.webp", alt: "Dos mototaxis Torito Bajaj, una roja y una celeste", texto: "El clásico torito de cabina cerrada, para trabajar llueva o truene." },
+];
 
 const pasos = [
   { titulo: "Elige tu modelo", texto: "Revisa el catálogo y encuentra la moto, la mototaxi o el celular que necesitas." },
@@ -72,6 +59,19 @@ export default async function Home() {
   const catalogo = await obtenerCatalogo();
   const conteo = (id: LineaId) => catalogo.filter((p) => lineaDe(p).id === id).length;
   const destacados = seleccion(catalogo, 4);
+  const mototaxis = catalogo.filter((p) => lineaDe(p).id === "mototaxis");
+  const deMarca = (t: string) => mototaxis.filter((p) => normalizarTexto(`${p.marca} ${p.nombre}`).includes(t)).length;
+  const tarjetas = banners.map((b) => {
+    if (b.id === "motos" || b.id === "celulares") {
+      const total = conteo(b.id);
+      return { ...b, href: hrefLinea(b.id), externo: false, detalle: `${total} ${total === 1 ? "modelo" : "modelos"}` };
+    }
+    const termino = b.id === "torito" ? "bajaj" : "motokar";
+    const total = deMarca(termino);
+    return total > 0
+      ? { ...b, href: `/motos?tipo=mototaxis&q=${termino}`, externo: false, detalle: `${total} ${total === 1 ? "modelo" : "modelos"}` }
+      : { ...b, href: whatsappLink(`Hola, quisiera información sobre la ${b.nombre} a crédito.`), externo: true, detalle: "A pedido · consulta" };
+  });
 
   return (
     <main>
@@ -92,12 +92,12 @@ export default async function Home() {
               medio. Mira el catálogo y conversa con un asesor.
             </p>
             <div className="entrada mt-9 flex flex-col justify-center gap-3 sm:flex-row md:justify-start" style={{ "--retraso": "500ms" } as React.CSSProperties}>
-              <Link href="/catalogo" className="btn-oro">
-                Ver el catálogo <IconArrowRight size={18} />
+              <Link href="/motos" className="btn-oro">
+                Ver motos y mototaxis <IconArrowRight size={18} />
               </Link>
-              <a href={whatsappLink(whatsappMessages.general())} target="_blank" rel="noopener noreferrer" className="btn-claro">
-                <IconWhatsApp size={18} /> Escribir por WhatsApp
-              </a>
+              <Link href="/celulares" className="btn-claro">
+                Ver celulares <IconArrowRight size={18} />
+              </Link>
             </div>
           </div>
 
@@ -113,45 +113,45 @@ export default async function Home() {
           <Revelar className="grid gap-6 md:grid-cols-[1.2fr_1fr] md:items-end">
             <h2 className="display text-[2.2rem] text-tinta md:text-[3.2rem]">Elige por dónde empezar</h2>
             <p className="max-w-md text-[1.02rem] text-pizarra md:justify-self-end">
-              Tres líneas, un mismo trato: productos nuevos, asesoría de una persona real y documentos claros.
+              Motos, mototaxis y celulares con un mismo trato: productos nuevos, asesoría de una persona real y documentos claros.
             </p>
           </Revelar>
 
           <Revelar retraso={120} className="mt-12">
-            <ul className="flex flex-col gap-3 md:h-[520px] md:flex-row">
-              {LINEAS.map((l) => {
-                const foto = fotosLinea[l.id];
-                const total = conteo(l.id);
-                return (
-                  <li key={l.id} className="group/linea relative md:flex-1 md:transition-[flex-grow] md:duration-700 md:ease-[cubic-bezier(0.2,0.8,0.2,1)] md:hover:flex-[2.4] md:focus-within:flex-[2.4]">
-                    <Link
-                      href={`/catalogo?linea=${l.id}`}
-                      className="relative flex h-[220px] overflow-hidden rounded-[1.75rem] bg-noche focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-oro md:h-full"
-                    >
-                      <Image
-                        src={foto.src}
-                        alt={foto.alt}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        className="object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover/linea:scale-105"
-                        style={{ objectPosition: foto.posicion }}
-                      />
-                      <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-noche via-noche/40 to-transparent" />
-                      <span className="relative mt-auto flex w-full items-end justify-between gap-4 p-6">
-                        <span>
-                          <span className="block text-sm font-medium text-oro-claro tabular">
-                            {total} {total === 1 ? "modelo" : "modelos"}
-                          </span>
-                          <span className="display-sm mt-1 block text-[1.7rem] text-white">{l.nombre}</span>
-                          <span className="mt-2 block max-w-xs text-sm text-white/70 md:max-h-0 md:overflow-hidden md:opacity-0 md:transition-[max-height,opacity] md:duration-500 md:group-hover/linea:max-h-20 md:group-hover/linea:opacity-100 md:group-focus-within/linea:max-h-20 md:group-focus-within/linea:opacity-100">
-                            {foto.texto}
-                          </span>
-                        </span>
-                        <span className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/30 text-white transition-colors duration-500 group-hover/linea:border-oro group-hover/linea:bg-oro group-hover/linea:text-noche">
-                          <IconArrowRight size={18} />
-                        </span>
+            <ul className="grid gap-4 md:grid-cols-2 md:gap-5">
+              {tarjetas.map((t, i) => {
+                const contenido = (
+                  <>
+                    <Image
+                      src={t.src}
+                      alt={t.alt}
+                      fill
+                      priority={i < 2}
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover/linea:scale-[1.04]"
+                    />
+                    <span aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-noche/90 via-noche/45 to-transparent" />
+                    <span className="relative mt-auto flex w-full items-end justify-between gap-4 p-4 md:p-6">
+                      <span className="min-w-0">
+                        <span className="inline-flex rounded-full bg-noche/70 px-3 py-1 text-xs font-semibold text-oro-claro tabular backdrop-blur-md">{t.detalle}</span>
+                        <span className="mt-2 block max-w-sm text-sm text-white/85 md:text-[0.95rem]">{t.texto}</span>
                       </span>
-                    </Link>
+                      <span className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/40 bg-noche/40 text-white backdrop-blur-md transition-colors duration-500 group-hover/linea:border-oro group-hover/linea:bg-oro group-hover/linea:text-noche md:size-12">
+                        <IconArrowRight size={18} />
+                        <span className="sr-only">Ver {t.nombre}</span>
+                      </span>
+                    </span>
+                  </>
+                );
+                const clase =
+                  "group/linea relative flex aspect-[16/10] overflow-hidden rounded-[1.75rem] bg-noche shadow-[0_24px_50px_-34px_rgba(5,14,36,0.8)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-oro sm:aspect-[16/9]";
+                return (
+                  <li key={t.id}>
+                    {t.externo ? (
+                      <a href={t.href} target="_blank" rel="noopener noreferrer" className={clase}>{contenido}</a>
+                    ) : (
+                      <Link href={t.href} className={clase}>{contenido}</Link>
+                    )}
                   </li>
                 );
               })}
@@ -170,9 +170,14 @@ export default async function Home() {
                 Los modelos que más eligen nuestros clientes este mes. Consulta disponibilidad con un asesor.
               </p>
             </div>
-            <Link href="/catalogo" className="btn-linea self-start md:self-auto">
-              Ver todo el catálogo <IconArrowRight size={18} />
-            </Link>
+            <div className="flex flex-wrap gap-3 self-start md:self-auto">
+              <Link href="/motos" className="btn-linea">
+                Ver motos <IconArrowRight size={18} />
+              </Link>
+              <Link href="/celulares" className="btn-linea">
+                Ver celulares <IconArrowRight size={18} />
+              </Link>
+            </div>
           </Revelar>
 
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
