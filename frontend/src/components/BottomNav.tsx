@@ -1,36 +1,39 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IconHome, IconMoto, IconPhone, IconWrench } from "@/components/icons";
+import { IconHome, IconMoto, IconUser } from "@/components/icons";
 import { cn } from "@/lib/cn";
 
 const items = [
   { href: "/", label: "Inicio", Icon: IconHome, exact: true },
-  { href: "/vehiculos", label: "Vehículos", Icon: IconMoto },
-  { href: "/celulares", label: "Celulares", Icon: IconPhone },
-  { href: "/repuestos", label: "Repuestos", Icon: IconWrench },
+  { href: "/catalogo", label: "Catálogo", Icon: IconMoto, exact: false },
+  { href: "/nosotros", label: "Nosotros", Icon: IconUser, exact: false },
 ];
 
-/** Barra de navegación inferior estilo app, solo en móvil. */
+/** Barra inferior estilo app, solo en móvil. */
 export default function BottomNav() {
   const pathname = usePathname();
 
   return (
     <nav
       aria-label="Navegación móvil"
-      className="fixed inset-x-0 bottom-0 z-[1000] flex items-center justify-around border-t border-line bg-white/95 pt-2 pb-[max(10px,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(11,31,58,0.08)] backdrop-blur-md md:hidden"
+      className="fixed inset-x-3 bottom-3 z-[1000] flex items-center justify-around rounded-full border border-white/10 bg-noche/90 px-2 py-1.5 shadow-[0_18px_40px_-12px_rgba(5,14,36,0.7)] backdrop-blur-xl md:hidden"
+      style={{ marginBottom: "env(safe-area-inset-bottom)" }}
     >
       {items.map(({ href, label, Icon, exact }) => {
-        const active = exact ? pathname === href : pathname?.startsWith(href);
+        const activo = exact ? pathname === href : pathname?.startsWith(href);
         return (
           <Link
             key={href}
             href={href}
-            aria-current={active ? "page" : undefined}
-            className={cn("flex min-w-14 flex-col items-center gap-1 rounded-lg py-1 transition-colors", active ? "text-brand" : "text-muted")}
+            aria-current={activo ? "page" : undefined}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-2 rounded-full py-2.5 text-[0.8rem] font-semibold transition-colors duration-300",
+              activo ? "bg-oro text-noche" : "text-white/70",
+            )}
           >
-            <Icon size={22} strokeWidth={active ? 2.4 : 2} />
-            <span className={cn("text-[0.66rem]", active ? "font-bold" : "font-medium")}>{label}</span>
+            <Icon size={18} strokeWidth={activo ? 2.4 : 2} />
+            {label}
           </Link>
         );
       })}

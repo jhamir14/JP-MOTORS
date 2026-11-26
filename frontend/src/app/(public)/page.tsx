@@ -1,424 +1,275 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ButtonLink, Card, ExternalButton } from "@/components/ui";
-import {
-  IconArrowRight,
-  IconCalendar,
-  IconCheck,
-  IconClock,
-  IconFile,
-  IconShield,
-  IconTrend,
-  IconUser,
-  IconWallet,
-  IconWhatsApp,
-} from "@/components/icons";
-import { SectionHeading } from "@/components/public/SectionHeading";
-import { Simulador } from "@/components/public/Simulador";
-import { SelectorVertical } from "@/components/public/SelectorVertical";
-import type { Producto } from "@/lib/catalogo";
-import { obtenerCatalogo, obtenerTasasPublicas } from "@/lib/server/catalogo";
-import { servicios } from "@/data/servicios";
+import { IconArrowRight, IconClock, IconMapPin, IconWhatsApp } from "@/components/icons";
+import { HeroOrbita } from "@/components/public/HeroOrbita";
+import { ProductoCard } from "@/components/public/ProductoCard";
+import { Revelar } from "@/components/public/Revelar";
+import { LINEAS, lineaDe, type LineaId, type Producto } from "@/lib/catalogo";
+import { siteConfig } from "@/lib/config";
+import { obtenerCatalogo } from "@/lib/server/catalogo";
 import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
-
-const confianza = [
-  { Icon: IconClock, texto: "Respuesta en 24 horas" },
-  { Icon: IconCalendar, texto: "Pagos diarios, semanales o mensuales" },
-  { Icon: IconWallet, texto: "Paga con Yape, Plin o efectivo" },
-];
-
-const lineas = [
-  { titulo: "Motos", detalle: "Honda 0 km", href: "/vehiculos", imagen: "/motos/cb190r.webp", alt: "Moto Honda CB190R", sobreNegro: true },
-  { titulo: "Mototaxis", detalle: "Para tu negocio", href: "/vehiculos/torito-bajaj", imagen: "/motos/nl150.webp", alt: "Mototaxi roja", sobreNegro: true },
-  { titulo: "Celulares", detalle: "Cuotas semanales", href: "/celulares", imagen: "/celulares/celulares-cuadrado.webp", alt: "Celulares", sobreNegro: false },
-  { titulo: "Repuestos", detalle: "Cascos, llantas y más", href: "/repuestos", imagen: "/repuestos/llantas.webp", alt: "Llantas para moto", sobreNegro: true },
-];
-
-const galeria = [
-  { src: "/motos/gallery/gallery-4.webp", alt: "Cliente junto a su moto", texto: "Tu moto, tu negocio", clase: "col-span-2 row-span-2" },
-  { src: "/motos/gallery/gallery-2.webp", alt: "Moto vista desde atrás en la calle", texto: "Lista para la ruta", clase: "" },
-  { src: "/motos/nl125.webp", alt: "Mototaxi azul", texto: "Mototaxis", clase: "" },
-  { src: "/motos/gallery/gallery-3.webp", alt: "Moto naked roja", texto: "Diseño y potencia", clase: "" },
-  { src: "/motos/xr190l.webp", alt: "Moto de aventura", texto: "Para todo terreno", clase: "" },
-];
-
-const pasos = [
-  { Icon: IconUser, titulo: "Elige tu producto", texto: "Moto, mototaxi o celular. Simula tu cuota en segundos." },
-  { Icon: IconFile, titulo: "Envía tu solicitud", texto: "Solo tu DNI y datos de contacto. Sin boletas de pago ni trámites bancarios." },
-  { Icon: IconShield, titulo: "Te evaluamos", texto: "Un asesor revisa tu perfil y te llama o escribe por WhatsApp en menos de 24 h." },
-  { Icon: IconTrend, titulo: "Llévatelo y trabaja", texto: "Recibe tu producto y págalo en cuotas. Con buen historial accedes a mejores condiciones." },
-];
-
-const frecuencias = [
-  { nombre: "Diario", detalle: "Lunes a sábado (sin feriados)", uso: "Mototaxis y trabajo diario" },
-  { nombre: "Semanal", detalle: "Cada 7 días", uso: "Celulares" },
-  { nombre: "Quincenal", detalle: "Cada 15 días", uso: "Celulares" },
-  { nombre: "Mensual", detalle: "Cada 30 días", uso: "Motos y mototaxis" },
-];
-
-const requisitos = [
-  "DNI vigente (o carné de extranjería)",
-  "Recibo de luz o agua de tu domicilio",
-  "Celular con WhatsApp activo",
-  "Garante para créditos vehiculares",
-];
-
-const preguntas = [
-  {
-    p: "¿Necesito boletas de pago o estar en planilla?",
-    r: "No. Evaluamos a trabajadores independientes, mototaxistas, comerciantes y emprendedores según su actividad y capacidad de pago.",
-  },
-  {
-    p: "¿Cuánto demora la aprobación?",
-    r: "Normalmente te respondemos en menos de 24 horas hábiles después de recibir tu solicitud completa.",
-  },
-  {
-    p: "¿Cómo pago mis cuotas?",
-    r: "Puedes pagar en efectivo con nuestro cobrador, por Yape, Plin o transferencia. Te enviamos un recordatorio por WhatsApp antes de cada vencimiento.",
-  },
-  {
-    p: "¿Prestan dinero en efectivo?",
-    r: "No. Inversiones JP financia productos: motos, mototaxis y celulares. Te llevas el producto y lo pagas en cuotas.",
-  },
-  {
-    p: "¿Qué pasa si una cuota vence en feriado?",
-    r: "Los domingos y feriados no se cobran: el cronograma de pagos los excluye y la cuota pasa al siguiente día hábil.",
-  },
-];
 
 export const revalidate = 300;
 
-/** Destacados primero; si no hay suficientes, se completa con el resto de la línea. */
-const destacados = (lista: Producto[], n: number) =>
-  [...lista].sort((a, b) => Number(b.destacado) - Number(a.destacado)).slice(0, n);
+const fotosLinea: Record<LineaId, { src: string; alt: string; texto: string; posicion: string }> = {
+  motos: {
+    src: "/escenas/repartidora.webp",
+    alt: "Repartidora sonriente manejando su moto por una calle de Lima",
+    texto: "Para repartir, ir al trabajo o moverte por la ciudad.",
+    posicion: "50% 30%",
+  },
+  mototaxis: {
+    src: "/escenas/mototaxista.webp",
+    alt: "Mototaxista apoyado en su mototaxi roja al anochecer",
+    texto: "De pasajeros o de carga, listas para trabajar desde el primer día.",
+    posicion: "40% 40%",
+  },
+  celulares: {
+    src: "/escenas/celular-mercado.webp",
+    alt: "Comerciante usando su celular nuevo en un puesto del mercado",
+    texto: "Equipos nuevos para vender, cobrar y estar en contacto.",
+    posicion: "50% 50%",
+  },
+  repuestos: {
+    src: "/repuestos/llantas.webp",
+    alt: "Llanta para moto",
+    texto: "Aceites, llantas, cascos y lo que tu moto necesite.",
+    posicion: "50% 50%",
+  },
+};
+
+const pasos = [
+  { titulo: "Elige tu modelo", texto: "Revisa el catálogo y encuentra la moto, la mototaxi o el celular que necesitas." },
+  { titulo: "Conversa con un asesor", texto: "Por WhatsApp o en nuestra oficina de Santa Anita. Te explicamos los requisitos y resolvemos tus dudas." },
+  { titulo: "Llévatelo", texto: "Recibes tu producto nuevo, con garantía y con sus documentos en regla." },
+];
+
+const historias = [
+  { src: "/escenas/mototaxista.webp", alt: "Mototaxista junto a su mototaxi en una avenida iluminada", titulo: "Para quien trabaja con su mototaxi", clase: "md:col-span-7 md:row-span-2", posicion: "35% 45%" },
+  { src: "/escenas/repartidora.webp", alt: "Repartidora manejando su moto", titulo: "Para quien reparte en moto", clase: "md:col-span-5", posicion: "50% 25%" },
+  { src: "/escenas/celular-mercado.webp", alt: "Manos de una comerciante con su celular nuevo", titulo: "Para quien vende desde su celular", clase: "md:col-span-5", posicion: "50% 55%" },
+];
+
+/** Destacados primero; se reparte entre líneas para que el bloque no quede todo de un solo tipo. */
+function seleccion(catalogo: Producto[], n: number) {
+  const orden = [...catalogo].filter((p) => p.categoria !== "REPUESTO").sort((a, b) => Number(b.destacado) - Number(a.destacado));
+  const elegidos: Producto[] = [];
+  const porLinea = new Map<string, number>();
+  for (const p of orden) {
+    const l = lineaDe(p).id;
+    if ((porLinea.get(l) ?? 0) >= 2) continue;
+    porLinea.set(l, (porLinea.get(l) ?? 0) + 1);
+    elegidos.push(p);
+    if (elegidos.length === n) break;
+  }
+  return elegidos;
+}
 
 export default async function Home() {
-  const [catalogo, tasas] = await Promise.all([obtenerCatalogo(), obtenerTasasPublicas()]);
-  const motos = destacados(catalogo.filter((p) => p.categoria === "MOTO_LINEAL"), 3);
-  const toritos = destacados(catalogo.filter((p) => p.categoria === "TRIMOVIL_PASAJEROS" || p.categoria === "TRIMOVIL_CARGA"), 3);
-  const celulares = destacados(catalogo.filter((p) => p.categoria === "CELULAR"), 4);
+  const catalogo = await obtenerCatalogo();
+  const conteo = (id: LineaId) => catalogo.filter((p) => lineaDe(p).id === id).length;
+  const destacados = seleccion(catalogo, 4);
 
   return (
     <main>
-      {/* ───────────── Hero con foto ───────────── */}
-      <section className="relative isolate overflow-hidden bg-brand-ink text-white">
-        <Image
-          src="/hero_bg.webp"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="-z-10 object-cover object-[60%_center]"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(90deg,#071d45_0%,rgba(7,29,69,0.85)_38%,rgba(7,29,69,0.25)_70%,rgba(7,29,69,0.6)_100%),radial-gradient(50%_60%_at_0%_100%,rgba(37,99,235,0.35)_0%,transparent_70%)]"
-        />
-        <div className="container relative grid items-center gap-10 pt-12 pb-14 md:grid-cols-[1.1fr_1fr] md:gap-14 md:pt-20 md:pb-24">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-[#7ff0c4] backdrop-blur">
-              <span className="size-1.5 rounded-full bg-[#2fd39b]" /> Financiamiento para emprendedores
-            </span>
-            <h1 className="mt-5 text-[2.3rem] leading-[1.08] text-white md:text-[3.4rem]">
-              Financiamos tu trabajo
-              <br className="hidden md:block" /> y <span className="text-[#7ff0c4]">tus proyectos</span>
-            </h1>
-            <p className="mt-5 max-w-xl text-lg text-white/80">
-              Motos y mototaxis para trabajar y celulares en cuotas. Crédito directo, sin bancos y con pagos que se
-              adaptan a cómo generas tus ingresos.
+      {/* ───────────── Hero ───────────── */}
+      <section className="noche relative isolate overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:120px_100%] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]" />
+        <div className="container grid items-center gap-12 pt-10 pb-16 md:grid-cols-[1.05fr_1fr] md:gap-10 md:pt-16 md:pb-24 lg:gap-16">
+          <div className="text-center md:text-left">
+            <p className="entrada inline-flex items-center gap-2 text-sm font-medium text-oro-claro" style={{ "--retraso": "100ms" } as React.CSSProperties}>
+              <IconMapPin size={16} /> Santa Anita, Lima
             </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/financiamiento" size="lg">
-                Solicitar mi crédito <IconArrowRight size={18} />
-              </ButtonLink>
-              <ExternalButton href={whatsappLink(whatsappMessages.general())} variant="light" size="lg">
-                <IconWhatsApp size={20} className="text-whatsapp" /> Hablar con un asesor
-              </ExternalButton>
+            <h1 className="display entrada mt-5 text-[2.6rem] text-white sm:text-[3.3rem] lg:text-[4.3rem]" style={{ "--retraso": "200ms" } as React.CSSProperties}>
+              Motos, mototaxis y celulares para salir a trabajar.
+            </h1>
+            <p className="entrada mx-auto mt-6 max-w-[34rem] text-[1.08rem] leading-relaxed text-white/70 md:mx-0" style={{ "--retraso": "350ms" } as React.CSSProperties}>
+              Te ayudamos a tener tu moto, tu mototaxi o tu celular nuevo con financiamiento directo, sin bancos de por
+              medio. Mira el catálogo y conversa con un asesor.
+            </p>
+            <div className="entrada mt-9 flex flex-col justify-center gap-3 sm:flex-row md:justify-start" style={{ "--retraso": "500ms" } as React.CSSProperties}>
+              <Link href="/catalogo" className="btn-oro">
+                Ver el catálogo <IconArrowRight size={18} />
+              </Link>
+              <a href={whatsappLink(whatsappMessages.general())} target="_blank" rel="noopener noreferrer" className="btn-claro">
+                <IconWhatsApp size={18} /> Escribir por WhatsApp
+              </a>
             </div>
+          </div>
 
-            <div className="mt-8 flex items-center gap-4">
-              <div className="flex -space-x-3">
-                {["/financing_person.webp", "/financing_worker.webp", "/motos/gallery/gallery-4.webp"].map((src) => (
-                  <span key={src} className="relative size-11 overflow-hidden rounded-full border-2 border-brand-ink bg-brand">
-                    <Image src={src} alt="" fill sizes="44px" className="object-cover object-top" />
-                  </span>
-                ))}
-              </div>
-              <p className="text-sm text-white/80">
-                <strong className="text-white">Emprendedores que ya trabajan</strong>
-                <br />con su moto, mototaxi o celular JP
+          <div className="entrada" style={{ "--retraso": "150ms" } as React.CSSProperties}>
+            <HeroOrbita />
+          </div>
+        </div>
+      </section>
+
+      {/* ───────────── Líneas ───────────── */}
+      <section className="bg-niebla py-20 md:py-28">
+        <div className="container">
+          <Revelar className="grid gap-6 md:grid-cols-[1.2fr_1fr] md:items-end">
+            <h2 className="display text-[2.2rem] text-tinta md:text-[3.2rem]">Elige por dónde empezar</h2>
+            <p className="max-w-md text-[1.02rem] text-pizarra md:justify-self-end">
+              Cuatro líneas, un mismo trato: productos nuevos, asesoría de una persona real y documentos claros.
+            </p>
+          </Revelar>
+
+          <Revelar retraso={120} className="mt-12">
+            <ul className="flex flex-col gap-3 md:h-[520px] md:flex-row">
+              {LINEAS.map((l) => {
+                const foto = fotosLinea[l.id];
+                const total = conteo(l.id);
+                const esProducto = l.id === "repuestos";
+                return (
+                  <li key={l.id} className="group/linea relative md:flex-1 md:transition-[flex-grow] md:duration-700 md:ease-[cubic-bezier(0.2,0.8,0.2,1)] md:hover:flex-[2.4] md:focus-within:flex-[2.4]">
+                    <Link
+                      href={`/catalogo?linea=${l.id}`}
+                      className="relative flex h-[220px] overflow-hidden rounded-[1.75rem] bg-noche focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-oro md:h-full"
+                    >
+                      <Image
+                        src={foto.src}
+                        alt={foto.alt}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className={`object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover/linea:scale-105 ${esProducto ? "mix-blend-lighten" : ""}`}
+                        style={{ objectPosition: foto.posicion }}
+                      />
+                      <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-noche via-noche/40 to-transparent" />
+                      <span className="relative mt-auto flex w-full items-end justify-between gap-4 p-6">
+                        <span>
+                          <span className="block text-sm font-medium text-oro-claro tabular">
+                            {total} {total === 1 ? "modelo" : "modelos"}
+                          </span>
+                          <span className="display-sm mt-1 block text-[1.7rem] text-white">{l.nombre}</span>
+                          <span className="mt-2 block max-w-xs text-sm text-white/70 md:max-h-0 md:overflow-hidden md:opacity-0 md:transition-[max-height,opacity] md:duration-500 md:group-hover/linea:max-h-20 md:group-hover/linea:opacity-100 md:group-focus-within/linea:max-h-20 md:group-focus-within/linea:opacity-100">
+                            {foto.texto}
+                          </span>
+                        </span>
+                        <span className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/30 text-white transition-colors duration-500 group-hover/linea:border-oro group-hover/linea:bg-oro group-hover/linea:text-noche">
+                          <IconArrowRight size={18} />
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </Revelar>
+        </div>
+      </section>
+
+      {/* ───────────── Destacados ───────────── */}
+      <section className="bg-white py-20 md:py-28">
+        <div className="container">
+          <Revelar className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h2 className="display text-[2.2rem] text-tinta md:text-[3.2rem]">Los más pedidos</h2>
+              <p className="mt-4 max-w-lg text-[1.02rem] text-pizarra">
+                Los modelos que más eligen nuestros clientes este mes. Consulta disponibilidad con un asesor.
               </p>
             </div>
+            <Link href="/catalogo" className="btn-linea self-start md:self-auto">
+              Ver todo el catálogo <IconArrowRight size={18} />
+            </Link>
+          </Revelar>
 
-            <ul className="mt-8 grid gap-3 text-sm text-white/80 sm:grid-cols-3">
-              {confianza.map(({ Icon, texto }) => (
-                <li key={texto} className="flex items-center gap-2.5">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-[#7ff0c4]">
-                    <Icon size={16} />
-                  </span>
-                  {texto}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div id="simulador" className="scroll-mt-28 text-fg">
-            <Simulador tasas={tasas} />
-          </div>
-        </div>
-      </section>
-
-      {/* ───────────── Lo que financiamos (franja de fotos) ───────────── */}
-      <section aria-label="Lo que financiamos" className="relative z-10 -mt-8 md:-mt-12">
-        <div className="container">
-          <ul className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-            {lineas.map((l) => (
-              <li key={l.titulo}>
-                <Link href={l.href} className="showcase group relative block aspect-[4/3] overflow-hidden rounded-2xl shadow-lift ring-1 ring-white/10">
-                  <Image
-                    src={l.imagen}
-                    alt={l.alt}
-                    fill
-                    sizes="(max-width: 768px) 45vw, 280px"
-                    className={`object-cover transition-transform duration-500 group-hover:scale-105 ${l.sobreNegro ? "mix-blend-lighten" : ""}`}
-                  />
-                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3 pt-10 md:p-4 md:pt-12">
-                    <span className="block text-base font-bold text-white md:text-lg">{l.titulo}</span>
-                    <span className="flex items-center gap-1 text-xs font-medium text-white/75">
-                      {l.detalle} <IconArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* ───────────── Servicios ───────────── */}
-      <section className="py-16 md:py-24">
-        <div className="container">
-          <SectionHeading eyebrow="Nuestros servicios" title="Un solo lugar para financiar lo que necesitas">
-            Elige el producto que mejor se ajusta a tu momento. Todos con evaluación rápida y atención personalizada.
-          </SectionHeading>
-
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {servicios.map(({ id, titulo, resumen, href, cta, Icon, puntos, etiqueta, imagen }) => (
-              <Card key={id} interactive className="flex flex-col">
-                <Link href={href} className={`group relative block h-48 overflow-hidden ${imagen.sobreNegro ? "showcase" : "bg-brand-ink"}`}>
-                  <Image
-                    src={imagen.src}
-                    alt={imagen.alt}
-                    fill
-                    sizes="(max-width: 768px) 90vw, 380px"
-                    className={imagen.sobreNegro ? "object-contain p-4 mix-blend-lighten transition-transform duration-500 group-hover:scale-105" : "object-cover transition-transform duration-500 group-hover:scale-105"}
-                  />
-                  {etiqueta && (
-                    <span className="absolute top-3 right-3 rounded-full bg-gold-soft px-2.5 py-1 text-[0.7rem] font-bold text-[#8a5d00]">{etiqueta}</span>
-                  )}
-                </Link>
-                <div className="relative flex flex-1 flex-col p-6 pt-9">
-                  <span className="absolute -top-6 left-6 flex size-12 items-center justify-center rounded-xl bg-surface text-brand shadow-lift">
-                    <Icon size={24} />
-                  </span>
-                  <h3 className="text-xl">{titulo}</h3>
-                  <p className="mt-2 text-sm text-muted">{resumen}</p>
-                  <ul className="mt-4 flex flex-col gap-2 text-sm">
-                    {puntos.map((p) => (
-                      <li key={p} className="flex items-center gap-2">
-                        <IconCheck size={16} className="shrink-0 text-accent" strokeWidth={2.6} /> {p}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link href={href} className="mt-auto flex items-center gap-1.5 pt-6 text-sm font-semibold text-brand transition-all hover:gap-2.5">
-                    {cta} <IconArrowRight size={16} />
-                  </Link>
-                </div>
-              </Card>
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {destacados.map((p, i) => (
+              <ProductoCard key={p.id} producto={p} indice={i} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* ───────────── Cómo funciona ───────────── */}
-      <section className="border-y border-line-soft bg-surface py-16 md:py-24">
-        <div className="container grid items-center gap-10 md:grid-cols-[0.9fr_1.1fr] md:gap-16">
-          <div className="relative mx-auto w-full max-w-md md:max-w-none">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-brand-ink shadow-lift">
-              <Image src="/financing_worker.webp" alt="Cliente feliz con las llaves de su moto nueva" fill sizes="(max-width: 768px) 90vw, 480px" className="object-cover object-top" />
-              <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-brand-ink/80 to-transparent" />
+      {/* ───────────── Cómo trabajamos ───────────── */}
+      <section className="relative overflow-hidden bg-niebla py-20 md:py-28">
+        <div className="container grid items-center gap-14 md:grid-cols-2 lg:gap-20">
+          <Revelar className="relative mx-auto w-full max-w-[520px]">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-noche">
+              <Image
+                src="/escenas/entrega-llaves.webp"
+                alt="Asesor de Inversiones JP entregando las llaves de su moto a un cliente"
+                fill
+                sizes="(max-width: 768px) 90vw, 520px"
+                className="object-cover object-[45%_50%]"
+              />
             </div>
-            <div className="absolute -right-2 bottom-8 max-w-[230px] rounded-2xl bg-surface p-4 shadow-lift md:-right-8">
-              <div className="flex items-center gap-2 text-sm font-bold text-accent">
-                <IconCheck size={18} strokeWidth={3} /> Crédito aprobado
-              </div>
-              <p className="mt-1 text-xs text-muted">Recibe tu producto y págalo en cuotas que se ajustan a tus ingresos.</p>
-            </div>
-            <div className="absolute top-6 -left-2 flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white shadow-lift md:-left-6">
-              <IconClock size={14} /> Respuesta en 24 h
-            </div>
-          </div>
+            <div aria-hidden className="anillo girar-medio absolute -right-8 -bottom-8 size-40 [--grosor:2px] md:-right-12 md:size-48" />
+            <div aria-hidden className="anillo absolute -top-6 -left-6 size-20 opacity-60 [--grosor:1.5px]" />
+          </Revelar>
+
           <div>
-            <SectionHeading eyebrow="Cómo funciona" title="Tu crédito en 4 pasos">
-              Sin colas ni papeleo innecesario. Te acompañamos de principio a fin.
-            </SectionHeading>
-            <ol className="mt-10 grid gap-6">
-              {pasos.map(({ Icon, titulo, texto }, i) => (
-                <li key={titulo} className="flex gap-4">
-                  <span className="relative flex size-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-white shadow-[0_8px_20px_rgba(11,59,140,0.25)]">
-                    <Icon size={22} />
-                    <span className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-white">
-                      {i + 1}
-                    </span>
+            <Revelar>
+              <h2 className="display text-[2.2rem] text-tinta md:text-[3.2rem]">Así de simple</h2>
+              <p className="mt-4 max-w-md text-[1.02rem] text-pizarra">
+                Sin colas ni trámites bancarios. Te atiende una persona que conoce tu trabajo y tu zona.
+              </p>
+            </Revelar>
+            <ol className="relative mt-10 flex flex-col gap-9 border-l border-tinta/10 pl-8">
+              {pasos.map((p, i) => (
+                <Revelar as="li" key={p.titulo} retraso={i * 140} className="relative">
+                  <span className="absolute top-0.5 -left-[3.05rem] flex size-9 items-center justify-center rounded-full bg-noche text-sm font-bold text-oro-claro ring-4 ring-niebla">
+                    {i + 1}
                   </span>
-                  <div>
-                    <h3 className="text-lg">{titulo}</h3>
-                    <p className="mt-1 text-sm text-muted">{texto}</p>
-                  </div>
-                </li>
+                  <h3 className="display-sm text-[1.35rem] text-tinta">{p.titulo}</h3>
+                  <p className="mt-2 max-w-md text-pizarra">{p.texto}</p>
+                </Revelar>
               ))}
             </ol>
           </div>
         </div>
       </section>
 
-      {/* ───────────── Frecuencias ───────────── */}
-      <section className="py-16 md:py-24">
-        <div className="container grid items-center gap-10 md:grid-cols-[1fr_1.3fr] md:gap-16">
-          <div>
-            <SectionHeading eyebrow="Pagos flexibles" title="Paga como trabajas">
-              Si cobras por día, paga por día. Elegimos contigo la frecuencia que mejor acompaña tus ingresos y te
-              recordamos cada cuota por WhatsApp.
-            </SectionHeading>
-            <div className="relative mt-8 aspect-[16/10] overflow-hidden rounded-3xl shadow-lift">
-              <Image src="/motos/gallery/gallery-1.webp" alt="Moto estacionada en una calle de la ciudad" fill sizes="(max-width: 768px) 90vw, 460px" className="object-cover" />
-              <span className="absolute bottom-3 left-3 flex items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-brand-ink backdrop-blur">
-                <IconWallet size={14} className="text-accent" /> Yape · Plin · Efectivo
-              </span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {frecuencias.map((f) => (
-              <Card key={f.nombre} className="p-5">
-                <div className="text-2xl font-extrabold text-brand">{f.nombre}</div>
-                <div className="mt-1 text-sm font-semibold">{f.detalle}</div>
-                <div className="mt-3 text-xs text-muted">{f.uso}</div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ───────────── Productos a crédito: selector Motos / Toritos / Celulares ───────────── */}
-      <section className="bg-surface-2 py-16 md:py-24">
+      {/* ───────────── Historias en la calle ───────────── */}
+      <section className="noche py-20 md:py-28">
         <div className="container">
-          <SectionHeading eyebrow="Productos a crédito" title="¿Qué quieres financiar?">
-            Elige una línea y mira la cuota desde la que puedes llevártelo.
-          </SectionHeading>
-          <div className="mt-8">
-            <SelectorVertical motos={motos} toritos={toritos} celulares={celulares} />
-          </div>
-        </div>
-      </section>
-
-      {/* ───────────── Galería ───────────── */}
-      <section className="py-16 md:py-24">
-        <div className="container">
-          <SectionHeading eyebrow="En la calle" title="Hechas para trabajar todos los días" align="center">
-            Motos y mototaxis 0 km, listas para salir a trabajar desde el primer día.
-          </SectionHeading>
-          <div className="mt-10 grid auto-rows-[160px] grid-cols-2 gap-3 md:auto-rows-[220px] md:grid-cols-4 md:gap-4">
-            {galeria.map((g) => (
-              <figure key={g.src} className={`group relative overflow-hidden rounded-2xl bg-brand-ink ${g.clase}`}>
-                <Image src={g.src} alt={g.alt} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
-                <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8 text-sm font-semibold text-white">
-                  {g.texto}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ───────────── Historial + requisitos ───────────── */}
-      <section className="py-16 md:py-24">
-        <div className="container grid gap-6 md:grid-cols-[1.3fr_1fr]">
-          <div className="relative isolate overflow-hidden rounded-3xl bg-brand-ink p-8 text-white md:p-12">
-            <Image src="/finance_cta.webp" alt="" fill sizes="(max-width: 768px) 100vw, 700px" className="-z-10 object-cover object-center" />
-            <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(100deg,rgba(7,29,69,0.92)_0%,rgba(11,59,140,0.7)_50%,rgba(7,29,69,0.1)_100%)]" />
-            <span className="eyebrow text-[#7ff0c4]">Clientes puntuales</span>
-            <h2 className="mt-3 text-[1.9rem] text-white md:text-[2.3rem]">Tu puntualidad abre más puertas</h2>
-            <p className="mt-4 max-w-lg text-white/80">
-              Empieza con tu primer producto y, a medida que pagas a tiempo, accedes a mejores condiciones para tu
-              siguiente moto, mototaxi o celular.
+          <Revelar className="max-w-2xl">
+            <h2 className="display text-[2.2rem] text-white md:text-[3.2rem]">Hecho para quienes trabajan por su cuenta</h2>
+            <p className="mt-5 text-[1.02rem] text-white/65">
+              Mototaxistas, repartidores, comerciantes. Financiamos la herramienta con la que generas tus ingresos.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/vehiculos" variant="light">Ver vehículos</ButtonLink>
-              <ButtonLink href="/celulares" variant="primary">Ver celulares</ButtonLink>
-            </div>
-          </div>
-
-          <Card className="relative overflow-hidden p-8 md:p-10">
-            <span className="eyebrow">Requisitos</span>
-            <h2 className="mt-3 text-[1.6rem]">Lo que necesitas</h2>
-            <ul className="mt-6 flex flex-col gap-4">
-              {requisitos.map((r) => (
-                <li key={r} className="flex items-start gap-3">
-                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-                    <IconCheck size={14} strokeWidth={3} />
-                  </span>
-                  {r}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-6 text-xs text-muted">Los requisitos pueden variar según el producto y el monto solicitado.</p>
-          </Card>
-        </div>
-      </section>
-
-      {/* ───────────── Preguntas frecuentes ───────────── */}
-      <section className="border-t border-line-soft bg-surface py-16 md:py-24">
-        <div className="container grid gap-10 md:grid-cols-[1fr_1.5fr]">
-          <SectionHeading eyebrow="Preguntas frecuentes" title="Resolvemos tus dudas">
-            ¿No encuentras tu respuesta? Escríbenos por WhatsApp y un asesor te atiende.
-          </SectionHeading>
-          <div className="divide-y divide-line-soft rounded-2xl border border-line-soft">
-            {preguntas.map(({ p, r }) => (
-              <details key={p} className="group px-5 py-4 [&_summary::-webkit-details-marker]:hidden">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
-                  {p}
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-2 text-brand transition-transform group-open:rotate-45">
-                    +
-                  </span>
-                </summary>
-                <p className="mt-3 text-sm text-muted">{r}</p>
-              </details>
+          </Revelar>
+          <div className="mt-12 grid auto-rows-[260px] gap-4 md:auto-rows-[280px] md:grid-cols-12">
+            {historias.map((h, i) => (
+              <Revelar key={h.src} retraso={i * 120} className={`group relative overflow-hidden rounded-[1.75rem] bg-marino ${h.clase}`}>
+                <figure className="absolute inset-0 m-0">
+                  <Image
+                    src={h.src}
+                    alt={h.alt}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 60vw"
+                    className="object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover:scale-[1.04]"
+                    style={{ objectPosition: h.posicion }}
+                  />
+                  <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-noche/85 via-transparent to-transparent" />
+                  <figcaption className="display-sm absolute inset-x-0 bottom-0 p-6 text-[1.25rem] text-white md:p-8 md:text-[1.45rem]">{h.titulo}</figcaption>
+                </figure>
+              </Revelar>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ───────────── CTA final ───────────── */}
-      <section className="relative overflow-hidden bg-brand-ink text-white">
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_80%_at_80%_50%,rgba(47,211,155,0.25)_0%,transparent_70%)]" />
-        <div className="container relative grid items-center gap-8 py-14 md:grid-cols-[1.2fr_1fr] md:py-16">
-          <div>
-            <span className="eyebrow text-[#7ff0c4]">Empieza hoy</span>
-            <h2 className="mt-2 text-[1.9rem] text-white md:text-[2.4rem]">¿Listo para recibir tus llaves?</h2>
-            <p className="mt-2 max-w-md text-white/75">Solicita tu evaluación hoy. Es gratis, sin compromiso y te respondemos por WhatsApp.</p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/financiamiento" size="lg">
-                Solicitar evaluación <IconArrowRight size={18} />
-              </ButtonLink>
-              <ExternalButton href={whatsappLink(whatsappMessages.general())} variant="light" size="lg">
-                <IconWhatsApp size={20} className="text-whatsapp" /> WhatsApp
-              </ExternalButton>
+      {/* ───────────── Visítanos ───────────── */}
+      <section className="relative isolate overflow-hidden bg-noche">
+        <Image src="/escenas/showroom.webp" alt="" fill sizes="100vw" className="-z-10 object-cover object-center" />
+        <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,#050e24_0%,rgba(5,14,36,0.88)_40%,rgba(5,14,36,0.35)_100%)]" />
+        <div className="container py-24 md:py-32">
+          <Revelar className="max-w-xl">
+            <h2 className="display text-[2.4rem] text-white md:text-[3.6rem]">Ven a verlos en persona</h2>
+            <p className="mt-5 text-[1.05rem] text-white/70">
+              Escríbenos y separa tu cita. Te mostramos los modelos y te explicamos todo con calma.
+            </p>
+            <ul className="mt-8 flex flex-col gap-3 text-white/80">
+              <li className="flex items-center gap-3"><IconMapPin size={18} className="text-oro" /> {siteConfig.address.lines.join(" ")}</li>
+              <li className="flex items-center gap-3"><IconClock size={18} className="text-oro" /> {siteConfig.horario}</li>
+            </ul>
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+              <a href={whatsappLink(whatsappMessages.general())} target="_blank" rel="noopener noreferrer" className="btn-oro">
+                <IconWhatsApp size={18} /> Separar una cita
+              </a>
+              <Link href="/nosotros" className="btn-claro">Conocer Inversiones JP</Link>
             </div>
-          </div>
-          <div className="relative mx-auto aspect-square w-full max-w-[340px] overflow-hidden rounded-[2rem] shadow-lift ring-4 ring-white/10">
-            <Image src="/financing_person.webp" alt="Clienta sonriente con las llaves de su moto" fill sizes="340px" className="object-cover" />
-          </div>
+          </Revelar>
         </div>
       </section>
     </main>

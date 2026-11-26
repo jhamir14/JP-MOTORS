@@ -11,25 +11,25 @@ export const metadata: Metadata = {
 export default function LibroReclamacionesPage() {
   return (
     <main className="pb-20">
-      <section className="border-b border-line-soft bg-surface">
-        <div className="container max-w-[900px] py-10 md:py-14">
-          <span className="eyebrow">Libro de Reclamaciones</span>
-          <h1 className="mt-3 text-[2.1rem] md:text-[2.6rem]">Hoja de reclamación virtual</h1>
-          <p className="mt-3 text-muted">
+      <section className="noche">
+        <div className="container max-w-[900px] pt-10 pb-14 md:pt-14 md:pb-20">
+          <p className="text-sm font-medium text-oro-claro">Libro de Reclamaciones</p>
+          <h1 className="display mt-4 text-[2.2rem] text-white md:text-[3rem]">Hoja de reclamación virtual</h1>
+          <p className="mt-4 text-white/70">
             Conforme al Código de Protección y Defensa del Consumidor (Ley 29571), ponemos a tu disposición este Libro de
             Reclamaciones. Al enviarlo recibirás un código de seguimiento y te responderemos en un plazo máximo de 15 días hábiles.
           </p>
-          <dl className="mt-6 grid gap-3 rounded-2xl border border-line-soft bg-surface-2 p-5 text-sm sm:grid-cols-3">
+          <dl className="mt-8 grid gap-4 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6 text-sm text-white sm:grid-cols-3">
             <div>
-              <dt className="text-muted">Razón social</dt>
+              <dt className="text-white/55">Razón social</dt>
               <dd className="font-semibold">{siteConfig.legalName}</dd>
             </div>
             <div>
-              <dt className="text-muted">RUC</dt>
+              <dt className="text-white/55">RUC</dt>
               <dd className="font-semibold tabular">{siteConfig.ruc || "—"}</dd>
             </div>
             <div>
-              <dt className="text-muted">Domicilio</dt>
+              <dt className="text-white/55">Domicilio</dt>
               <dd className="font-semibold">{siteConfig.address.lines.join(", ")}</dd>
             </div>
           </dl>

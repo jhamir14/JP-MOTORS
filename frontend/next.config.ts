@@ -42,12 +42,20 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      ...Object.entries(motosLegado).map(([id, slug]) => ({ source: `/motos/${id}`, destination: `/vehiculos/${slug}`, permanent: true })),
-      { source: "/motos", destination: "/vehiculos", permanent: true },
+      ...Object.entries(motosLegado).map(([id, slug]) => ({ source: `/motos/${id}`, destination: `/catalogo/${slug}`, permanent: true })),
+      { source: "/motos", destination: "/catalogo?linea=motos", permanent: true },
+      // Rediseño: todas las líneas viven ahora en /catalogo y la web ya no muestra simulador ni solicitud en línea.
+      { source: "/vehiculos/torito-bajaj", destination: "/catalogo?linea=mototaxis", permanent: true },
+      { source: "/vehiculos/:slug", destination: "/catalogo/:slug", permanent: true },
+      { source: "/vehiculos", destination: "/catalogo?linea=motos", permanent: true },
+      { source: "/celulares/:slug", destination: "/catalogo/:slug", permanent: true },
+      { source: "/celulares", destination: "/catalogo?linea=celulares", permanent: true },
+      { source: "/repuestos", destination: "/catalogo?linea=repuestos", permanent: true },
+      { source: "/financiamiento", destination: "/catalogo", permanent: false },
       // La web ya no ofrece préstamos en efectivo: solo financia motos, mototaxis y celulares.
       { source: "/prestamos", destination: "/", permanent: true },
       // Solo ids numéricos: /motos/*.webp son fotos de public/ y no deben redirigirse.
-      { source: "/motos/:id(\\d+)", destination: "/vehiculos", permanent: true },
+      { source: "/motos/:id(\\d+)", destination: "/catalogo?linea=motos", permanent: true },
     ];
   },
 };

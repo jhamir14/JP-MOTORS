@@ -66,11 +66,23 @@ export interface TasaPublica {
 export const esVehiculo = (p: Pick<Producto, "categoria">) =>
   (CATEGORIAS_VEHICULO as readonly string[]).includes(p.categoria);
 
-export function hrefProducto(p: Pick<Producto, "categoria" | "slug" | "nombre">) {
-  if (p.categoria === "CELULAR") return `/celulares/${p.slug}`;
-  if (p.categoria === "REPUESTO") return `/repuestos?q=${encodeURIComponent(p.nombre)}`;
-  return `/vehiculos/${p.slug}`;
+/** Ficha pública del producto (todas las líneas viven en /catalogo). */
+export function hrefProducto(p: Pick<Producto, "slug">) {
+  return `/catalogo/${p.slug}`;
 }
+
+/** Líneas que se muestran en la web pública (agrupan categorías del catálogo). */
+export const LINEAS = [
+  { id: "motos", nombre: "Motos", singular: "Moto", categorias: ["MOTO_LINEAL"] },
+  { id: "mototaxis", nombre: "Mototaxis", singular: "Mototaxi", categorias: ["TRIMOVIL_PASAJEROS", "TRIMOVIL_CARGA"] },
+  { id: "celulares", nombre: "Celulares", singular: "Celular", categorias: ["CELULAR"] },
+  { id: "repuestos", nombre: "Repuestos", singular: "Repuesto", categorias: ["REPUESTO"] },
+] as const satisfies readonly { id: string; nombre: string; singular: string; categorias: readonly CategoriaProducto[] }[];
+
+export type LineaId = (typeof LINEAS)[number]["id"];
+
+export const lineaDe = (p: Pick<Producto, "categoria">) =>
+  LINEAS.find((l) => (l.categorias as readonly string[]).includes(p.categoria)) ?? LINEAS[0];
 
 export const servicioDeProducto = (p: Pick<Producto, "categoria">) =>
   p.categoria === "CELULAR" ? "CREDITO_CELULAR" : "CREDITO_VEHICULAR";

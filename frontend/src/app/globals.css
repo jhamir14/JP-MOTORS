@@ -1,6 +1,8 @@
 /* src/app/globals.css
- * Tailwind CSS v4 · Sistema de diseño "financiera": fondo claro, azul institucional
- * para la marca y verde para las acciones y montos (confianza + crecimiento).
+ * Tailwind CSS v4.
+ * · Panel (/admin): fondo claro, azul institucional y verde para acciones y montos.
+ * · Web pública: paleta tomada del logotipo — noche/marino, azul eléctrico y oro —
+ *   con el anillo dorado del logo como motivo recurrente.
  */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
@@ -34,7 +36,19 @@
   --color-danger: #c8323c;
   --color-whatsapp: #1fa855;
 
-  --font-sans: var(--font-jakarta), system-ui, sans-serif;
+  /* Web pública (logotipo) */
+  --color-noche: #050e24;
+  --color-marino: #0a1f4d;
+  --color-marino-2: #102a63;
+  --color-electrico: #1c6bff;
+  --color-oro: #e7b24a;
+  --color-oro-claro: #f6d58a;
+  --color-oro-oscuro: #a8761c;
+  --color-niebla: #f1f4fa;
+  --color-tinta: #0a1633;
+  --color-pizarra: #55627d;
+
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
   --breakpoint-md: 769px; /* md: = escritorio; coincide con el corte móvil ≤768px usado en todo el sitio */
 
   --shadow-card: 0 1px 2px rgba(11, 31, 58, 0.04), 0 4px 16px rgba(11, 31, 58, 0.06);
@@ -102,4 +116,164 @@
       radial-gradient(120% 80% at 50% 100%, rgba(12, 154, 106, 0.22) 0%, transparent 60%),
       linear-gradient(180deg, #0a2350 0%, #071d45 100%);
   }
+}
+
+/* ───────────────────────── Web pública ───────────────────────── */
+@layer components {
+  /* Titular expandido, como el "INVERSIONES JP" del logotipo */
+  .display {
+    font-family: var(--font-archivo), system-ui, sans-serif;
+    font-variation-settings: "wdth" 125;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 0.98;
+    text-wrap: balance;
+  }
+  .display-sm {
+    font-variation-settings: "wdth" 112;
+    font-weight: 750;
+    letter-spacing: -0.025em;
+    line-height: 1.08;
+    text-wrap: balance;
+  }
+
+  /* Superficie oscura con el brillo azul del logotipo */
+  .noche {
+    background:
+      radial-gradient(70% 60% at 85% 10%, rgba(28, 107, 255, 0.22) 0%, transparent 60%),
+      radial-gradient(60% 50% at 0% 100%, rgba(231, 178, 74, 0.08) 0%, transparent 70%),
+      var(--color-noche);
+    color: #fff;
+  }
+
+  /* Placa de producto: marino profundo con un halo en el centro */
+  .placa {
+    background:
+      radial-gradient(55% 55% at 50% 55%, rgba(28, 107, 255, 0.28) 0%, transparent 70%),
+      linear-gradient(180deg, var(--color-marino-2) 0%, var(--color-noche) 100%);
+  }
+
+  /* Anillo dorado (motivo del logotipo) */
+  .anillo {
+    border-radius: 9999px;
+    background: conic-gradient(from 210deg, #f6d58a, #a8761c 25%, #f6d58a 45%, #e7b24a 60%, #8a5d12 80%, #f6d58a);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--grosor, 3px)), #000 calc(100% - var(--grosor, 3px)));
+    mask: radial-gradient(farthest-side, transparent calc(100% - var(--grosor, 3px)), #000 calc(100% - var(--grosor, 3px)));
+  }
+
+  .texto-oro {
+    background: linear-gradient(100deg, #f6d58a 0%, #e7b24a 45%, #c48a2a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Botones de la web pública */
+  .btn-oro,
+  .btn-claro,
+  .btn-linea {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    border-radius: 9999px;
+    padding: 0.95rem 1.6rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.25s, box-shadow 0.25s, color 0.25s, border-color 0.25s;
+  }
+  .btn-oro {
+    background: linear-gradient(180deg, #f6d58a 0%, #e7b24a 100%);
+    color: var(--color-noche);
+    box-shadow: 0 10px 30px -10px rgba(231, 178, 74, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+  .btn-oro:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 36px -12px rgba(231, 178, 74, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+  .btn-claro {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(8px);
+  }
+  .btn-claro:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+  .btn-linea {
+    border: 1.5px solid var(--color-tinta);
+    color: var(--color-tinta);
+  }
+  .btn-linea:hover {
+    background: var(--color-tinta);
+    color: #fff;
+  }
+  .btn-oro:focus-visible,
+  .btn-claro:focus-visible,
+  .btn-linea:focus-visible {
+    outline: 2px solid var(--color-oro);
+    outline-offset: 3px;
+  }
+
+  /* Aparición al hacer scroll (ver components/public/Revelar.tsx) */
+  [data-revelar] {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: var(--retraso, 0ms);
+  }
+  [data-revelar="visible"] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dibujar-trazo {
+  from { stroke-dashoffset: var(--largo, 1000); }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+@keyframes subir-entrada {
+  from { opacity: 0; transform: translateY(36px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes aparecer {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes lente-entrada {
+  from { opacity: 0; transform: scale(1.12) rotate(-6deg); filter: blur(10px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+@keyframes tarjeta-entrada {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes progreso {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes flotar {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.entrada { animation: subir-entrada 1s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: var(--retraso, 0ms); }
+.trazo { stroke-dasharray: var(--largo, 1000); animation: dibujar-trazo 1.8s cubic-bezier(0.65, 0, 0.35, 1) both; animation-delay: var(--retraso, 0ms); }
+.girar-lento { animation: girar 40s linear infinite; }
+.girar-medio { animation: girar 16s linear infinite; }
+.flotar { animation: flotar 6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  [data-revelar] { opacity: 1; transform: none; }
 }

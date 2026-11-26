@@ -4,9 +4,17 @@ import { cn } from "@/lib/cn";
 import { PhoneMock } from "./PhoneMock";
 
 /**
- * Foto principal del producto sobre el panel oscuro. Las fotos de motos vienen recortadas sobre negro
- * (se funden con `mix-blend-lighten`); las subidas desde el panel se muestran tal cual.
+ * Fotos recortadas sobre negro: se funden con la placa oscura usando `mix-blend-lighten`.
+ * Si un contenedor de la foto se transforma o anima, ese contenedor también debe llevar `mix-blend-lighten`
+ * (un `transform` o `filter` aísla la composición y el negro volvería a verse).
  */
+export const sobreNegro = (url: string) => url.startsWith("/motos/") || url.startsWith("/repuestos/") || url.startsWith("/escenas/celulares-estudio");
+
+/**
+ * Foto principal del producto sobre la placa oscura. Las fotos subidas desde el panel se muestran tal cual.
+ */
+export const fotoSobreNegro = (p: Producto) => Boolean(p.imagenes[0] && sobreNegro(p.imagenes[0].url));
+
 export function ProductoImagen({
   producto,
   sizes,
@@ -27,7 +35,6 @@ export function ProductoImagen({
       </div>
     );
   }
-  const recorteSobreNegro = imagen.url.startsWith("/motos/");
   return (
     <Image
       src={imagen.url}
@@ -35,7 +42,7 @@ export function ProductoImagen({
       fill
       priority={priority}
       sizes={sizes}
-      className={cn(recorteSobreNegro ? "object-cover mix-blend-lighten" : "object-contain", className)}
+      className={cn(sobreNegro(imagen.url) ? "object-contain mix-blend-lighten" : "object-contain", className)}
     />
   );
 }

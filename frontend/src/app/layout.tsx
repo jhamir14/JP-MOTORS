@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Archivo } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/lib/config";
 
-const jakarta = Plus_Jakarta_Sans({
+// Archivo variable con eje de ancho: los titulares usan la versión expandida (como el logotipo).
+const archivo = Archivo({
   subsets: ["latin"],
-  variable: "--font-jakarta",
+  variable: "--font-archivo",
+  axes: ["wdth"],
 });
 
 export const metadata: Metadata = {
@@ -15,12 +17,14 @@ export const metadata: Metadata = {
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
+  icons: { icon: "/marca/logo-inversiones-jp.png", apple: "/marca/logo-inversiones-jp.png" },
   openGraph: {
     title: `${siteConfig.name} | ${siteConfig.tagline}`,
     description: siteConfig.description,
     siteName: siteConfig.name,
     locale: siteConfig.locale,
     type: "website",
+    images: [{ url: "/marca/logo-inversiones-jp.png", width: 640, height: 640, alt: "Inversiones JP" }],
   },
 };
 
@@ -28,7 +32,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#071d45",
+  themeColor: "#050e24",
 };
 
 export default function RootLayout({
@@ -38,7 +42,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={jakarta.variable}>{children}</body>
+      <body className={archivo.variable}>{children}</body>
     </html>
   );
 }

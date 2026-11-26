@@ -4,11 +4,11 @@ import type { ReactNode } from "react";
 export function PaginaLegal({ titulo, actualizado, children }: { titulo: string; actualizado: string; children: ReactNode }) {
   return (
     <main className="pb-20">
-      <section className="border-b border-line-soft bg-surface">
-        <div className="container max-w-[820px] py-10 md:py-14">
-          <span className="eyebrow">Información legal</span>
-          <h1 className="mt-3 text-[2.1rem] md:text-[2.6rem]">{titulo}</h1>
-          <p className="mt-2 text-sm text-muted">Última actualización: {actualizado}</p>
+      <section className="noche">
+        <div className="container max-w-[820px] pt-10 pb-14 md:pt-14 md:pb-20">
+          <p className="text-sm font-medium text-oro-claro">Información legal</p>
+          <h1 className="display mt-4 text-[2.2rem] text-white md:text-[3rem]">{titulo}</h1>
+          <p className="mt-3 text-sm text-white/55">Última actualización: {actualizado}</p>
         </div>
       </section>
       <article className="container mt-10 max-w-[820px] [&_h2]:mt-10 [&_h2]:text-xl [&_li]:mt-1.5 [&_p]:mt-3 [&_p]:text-muted [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:text-muted">

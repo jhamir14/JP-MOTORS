@@ -9,7 +9,7 @@ import WhatsAppFloat from "@/components/WhatsAppFloat";
 /** Marco de la web pública: analítica, barra superior, pie, navegación móvil y botón de WhatsApp (el panel no lo usa). */
 export function PublicChrome({ children }: { children: ReactNode }) {
   return (
-    <div className="pb-[72px] md:pb-0">
+    <div className="pb-[88px] md:pb-0">
       {siteConfig.gaId && (
         <>
           <Script strategy="afterInteractive" src={`https://www.googletagmanager.com/gtag/js?id=${siteConfig.gaId}`} />
