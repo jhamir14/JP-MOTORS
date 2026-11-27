@@ -25,11 +25,11 @@ describe("reglasCotizacion", () => {
     expect(r.cuota).toBe(33);
   });
 
-  it("celulares: metodología JP (semanal, inicial del plan, plazo del plan)", () => {
+  it("celulares: metodología JP (semanal, inicial del plan, plazos de 12 en adelante con cuota de S/ 200 o menos)", () => {
     const r = reglasCotizacion(celular, tasasRespaldo);
     expect(r.inicialMin).toBe(300);
     expect(r.tasas).toHaveLength(1);
-    expect(r.tasas[0]).toMatchObject({ frecuencia: "SEMANAL", tasaPorcentaje: 7.5, metodoJP: true, plazos: [16, 32] });
+    expect(r.tasas[0]).toMatchObject({ frecuencia: "SEMANAL", tasaPorcentaje: 7.5, metodoJP: true, plazos: [20, 24, 28, 32, 36], plazoSugerido: 24 });
   });
 
   it("los plazos sugeridos respetan el rango de la tasa", () => {

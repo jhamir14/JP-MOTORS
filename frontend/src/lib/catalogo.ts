@@ -65,6 +65,8 @@ export interface TasaPublica {
   metodoJP?: boolean;
   /** Plazos fijos que se ofrecen (si no, los sugeridos por frecuencia). */
   plazos?: number[];
+  /** Plazo con el que arranca el cotizador (celulares: cuota pequeña, de S/ 200 por semana o menos). */
+  plazoSugerido?: number;
 }
 
 export const esVehiculo = (p: Pick<Producto, "categoria">) =>

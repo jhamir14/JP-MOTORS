@@ -262,7 +262,10 @@ export function Cotizador({ productos, tasas, slugInicial }: Props) {
                 </div>
               )}
               <div className="mt-4 flex flex-wrap gap-2">
-                {plazosSugeridos(tasa).map((n) => (
+                {plazosSugeridos(tasa).map((n) => {
+                  // Celulares: la cuota de cada plazo, para comparar de un vistazo.
+                  const cuotaPlazo = tasa.metodoJP && reglas ? cotizar(producto, reglas, { ...sel, numeroCuotas: n })?.cuota : null;
+                  return (
                   <button
                     key={n}
                     type="button"
@@ -275,8 +278,10 @@ export function Cotizador({ productos, tasas, slugInicial }: Props) {
                   >
                     <span className="block text-lg leading-tight font-extrabold tabular">{n}</span>
                     <span className="block text-xs">{n === 1 ? etq.singular : etq.plural}</span>
+                    {cuotaPlazo ? <span className="mt-1 block text-[0.72rem] font-semibold text-oro-oscuro tabular">{formatSoles(cuotaPlazo)}/sem</span> : null}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

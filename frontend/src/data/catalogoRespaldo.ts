@@ -5,7 +5,7 @@
  * para que la web pública nunca quede vacía. En producción los datos se editan desde /admin.
  */
 import type { PlanPublico, Producto, TasaPublica } from "@/lib/catalogo";
-import { cotizarCelularJP, gamaCelular, planJP, slugCelular, specsCelular } from "@/lib/celularesJP";
+import { cotizarCelularJP, gamaCelular, planJP, plazosCelular, slugCelular, specsCelular } from "@/lib/celularesJP";
 import { CELULARES_JP } from "./celularesJP";
 import { fotoPorDefecto } from "./fotosProducto";
 
@@ -25,7 +25,9 @@ const planesVehiculo = (slug: string, precio: number): PlanPublico[] =>
 const planCelular = (slug: string, precio: number): PlanPublico[] => {
   const oficial = CELULARES_JP.find((c) => slugCelular(c) === slug);
   const g = gamaCelular(precio);
-  const c = oficial ? cotizarCelularJP(precio, oficial.inicial, oficial.semanas, oficial.tasaMensual) : cotizarCelularJP(precio, g.inicial, g.semanas);
+  // Misma inicial de la lista oficial, en el plazo sugerido (cuota pequeña): igual que la migración 20261213000100.
+  const inicial = oficial?.inicial ?? g.inicial;
+  const c = cotizarCelularJP(precio, inicial, plazosCelular(precio, inicial, g.tasaMensual).sugerido, g.tasaMensual);
   const p = planJP(c);
   return [{ id: `${slug}-jp`, nombre: p.nombre, cuotaInicial: p.cuota_inicial, numeroCuotas: p.numero_cuotas, frecuencia: "SEMANAL", tipoCalculo: "FLAT", tasaPorcentaje: p.tasa_porcentaje, montoCuota: p.monto_cuota }];
 };

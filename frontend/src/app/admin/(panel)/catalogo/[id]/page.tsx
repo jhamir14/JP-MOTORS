@@ -11,7 +11,7 @@ import { productoEnArea } from "@/lib/server/areas";
 import { requerirSeccion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { CampoTexto } from "@/components/admin/ui";
-import { PREFIJO_PLAN_JP, cotizarCelularJP, gamaCelular } from "@/lib/celularesJP";
+import { CUOTA_MAXIMA_SEMANAL, PREFIJO_PLAN_JP, cotizarCelularJP, gamaCelular, plazosCelular } from "@/lib/celularesJP";
 import { aplicarPlanJP, eliminarImagen, eliminarPlan, marcarPortada, subirImagenes } from "../actions";
 import { FormProducto, type ProductoEditable } from "../FormProducto";
 import { FormPlan, type PlanEditable } from "./FormPlan";
@@ -178,12 +178,14 @@ function MetodologiaJP({ productoId, precio, planes }: { productoId: string; pre
   const g = gamaCelular(precio);
   const actual = planes.find((p) => p.publicado && p.nombre?.startsWith(PREFIJO_PLAN_JP));
   const inicial = actual?.cuotaInicial ?? Math.min(g.inicial, Math.floor(precio / 2));
-  const semanas = actual?.numeroCuotas ?? g.semanas;
+  const { plazos, sugerido } = plazosCelular(precio, inicial);
+  const semanas = actual?.numeroCuotas ?? sugerido;
   const c = cotizarCelularJP(precio, inicial, semanas);
   return (
     <Panel titulo="Metodología JP" className="border-brand/30">
       <p className="mb-3 text-sm text-muted">
-        {g.nombre}: <strong className="text-fg">{g.tasaMensual} % mensual</strong> · plazo {g.plazos.length > 1 ? `de ${g.plazos[0]} a ${g.plazos[g.plazos.length - 1]}` : g.semanas} semanas.
+        {g.nombre}: <strong className="text-fg">{g.tasaMensual} % mensual</strong> · en la web se ofrecen {plazos.length > 1 ? `de ${plazos[0]} a ${plazos[plazos.length - 1]} semanas (de 4 en 4)` : `${plazos[0]} semanas`},
+        con cuota de S/ {CUOTA_MAXIMA_SEMANAL} o menos; sugerido: {sugerido} semanas.
         Interés = saldo × tasa × semanas ÷ 4; la cuota semanal se redondea al sol. Si cambias el precio, la cuota del plan JP se recalcula sola.
       </p>
       <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-surface-2 p-3 text-sm sm:grid-cols-4">

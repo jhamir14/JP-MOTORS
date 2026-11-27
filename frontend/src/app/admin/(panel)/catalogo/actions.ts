@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { datosDe, erroresZod, exito, fallo, mensajeErrorBD, type EstadoAccion } from "@/lib/admin/accion";
 import { CATEGORIAS } from "@/lib/catalogo";
-import { PREFIJO_PLAN_JP, cotizarCelularJP, gamaCelular, planJP } from "@/lib/celularesJP";
+import { PREFIJO_PLAN_JP, cotizarCelularJP, gamaCelular, planJP, plazosCelular } from "@/lib/celularesJP";
 import { FRECUENCIAS, TIPOS_CALCULO, calcularCredito } from "@/lib/finance";
 import { categoriasDe } from "@/lib/areas";
 import { productoEnArea } from "@/lib/server/areas";
@@ -112,7 +112,8 @@ export async function guardarProducto(_prev: EstadoAccion, fd: FormData): Promis
         // Celular nuevo: nace con su plan semanal según la metodología JP.
         if (d.categoria === "CELULAR") {
           const g = gamaCelular(d.precio);
-          const c = cotizarCelularJP(d.precio, Math.min(g.inicial, Math.floor(d.precio / 2)), g.semanas);
+          const inicial = Math.min(g.inicial, Math.floor(d.precio / 2));
+          const c = cotizarCelularJP(d.precio, inicial, plazosCelular(d.precio, inicial).sugerido);
           if (c.cuota > 0) await tx`insert into public.plan_credito ${tx({ ...planJP(c), producto_id: id, publicado: true, orden: 0 })}`;
         }
       }
