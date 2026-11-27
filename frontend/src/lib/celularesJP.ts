@@ -1,12 +1,16 @@
 /**
  * Metodología de financiamiento de celulares de Inversiones JP (cuotas semanales, interés simple mensual).
  *
- *   Tasa mensual según el precio al contado:
- *     · menos de S/ 1,000 ........ 15 %   (16 semanas)
- *     · S/ 1,000 a S/ 1,500 ...... 10 %   (16 semanas)
- *     · S/ 1,501 a S/ 2,000 ......  8 %   (16 semanas)
- *     · S/ 2,001 a S/ 3,000 ...... 7.5 %  (16 semanas)
- *     · más de S/ 3,000 ..........  5 %   (30 a 40 semanas)
+ *   Tasa mensual según el precio al contado (plazo sugerido · plazo máximo):
+ *     · menos de S/ 1,000 ........ 15 %   (16 · hasta 24 semanas)
+ *     · S/ 1,000 a S/ 1,500 ...... 10 %   (20 · hasta 28 semanas)
+ *     · S/ 1,501 a S/ 2,000 ......  8 %   (20 · hasta 28 semanas)
+ *     · S/ 2,001 a S/ 3,000 ...... 7.5 %  (24 · hasta 36 semanas)
+ *     · más de S/ 3,000 ..........  5 %   (28 · hasta 48 semanas; iPhones y gama premium)
+ *
+ *   Plazos que se ofrecen: desde 12 semanas, de 4 en 4, solo los que dejan la cuota en S/ 200 por semana
+ *   o menos (CUOTA_MAXIMA_SEMANAL). El sugerido es el primero desde el plazo sugerido de la gama que cumple
+ *   ese tope: cuotas pequeñas para que el cliente se anime a comprar.
  *
  *   Saldo = Precio − Inicial · Meses = Semanas / 4 · Interés = round(Saldo × Tasa × Meses)
  *   Cuota semanal = round((Saldo + Interés) / Semanas) · Total pagado = Inicial + Cuota × Semanas
@@ -22,18 +26,40 @@ export interface GamaCelular {
   nombre: string;
   tasaMensual: number;
   inicial: number;
+  /** Plazo sugerido de la gama (semanas). */
   semanas: number;
-  /** Plazos (semanas) que se ofrecen en la web. */
-  plazos: number[];
+  /** Plazo más largo que se ofrece (semanas). */
+  semanasMax: number;
 }
 
-/** Gama, tasa mensual, inicial y plazo por defecto según el precio al contado. */
+/** Cuota semanal más alta que se ofrece en la web: los plazos que la superan no se muestran. */
+export const CUOTA_MAXIMA_SEMANAL = 200;
+/** Plazo más corto y salto entre plazos (semanas). */
+export const PLAZO_MINIMO = 12;
+export const PASO_PLAZO = 4;
+
+/** Gama, tasa mensual, inicial y plazos según el precio al contado. */
 export function gamaCelular(precio: number): GamaCelular {
-  if (precio < 1000) return { nombre: "Gama económica", tasaMensual: 15, inicial: 150, semanas: 16, plazos: [16] };
-  if (precio <= 1500) return { nombre: "Gama media", tasaMensual: 10, inicial: 150, semanas: 16, plazos: [16] };
-  if (precio <= 2000) return { nombre: "Gama media-alta", tasaMensual: 8, inicial: 200, semanas: 16, plazos: [16] };
-  if (precio <= 3000) return { nombre: "Gama alta", tasaMensual: 7.5, inicial: 300, semanas: 16, plazos: [16] };
-  return { nombre: "Gama premium", tasaMensual: 5, inicial: 500, semanas: 32, plazos: [30, 32, 35, 38, 40] };
+  if (precio < 1000) return { nombre: "Gama económica", tasaMensual: 15, inicial: 150, semanas: 16, semanasMax: 24 };
+  if (precio <= 1500) return { nombre: "Gama media", tasaMensual: 10, inicial: 150, semanas: 20, semanasMax: 28 };
+  if (precio <= 2000) return { nombre: "Gama media-alta", tasaMensual: 8, inicial: 200, semanas: 20, semanasMax: 28 };
+  if (precio <= 3000) return { nombre: "Gama alta", tasaMensual: 7.5, inicial: 300, semanas: 24, semanasMax: 36 };
+  return { nombre: "Gama premium", tasaMensual: 5, inicial: 500, semanas: 28, semanasMax: 48 };
+}
+
+/**
+ * Plazos (semanas) que se ofrecen para un celular con esa inicial: 12, 16, 20… hasta el máximo de su gama,
+ * sin los que dejan la cuota por encima de S/ 200 (si ninguno cumple, queda el más largo).
+ * Subir la inicial solo baja las cuotas, así que con la inicial mínima la lista vale para cualquier inicial.
+ */
+export function plazosCelular(precio: number, inicial: number, tasaMensual = gamaCelular(precio).tasaMensual): { plazos: number[]; sugerido: number } {
+  const g = gamaCelular(precio);
+  const todos: number[] = [];
+  for (let s = PLAZO_MINIMO; s <= g.semanasMax; s += PASO_PLAZO) todos.push(s);
+  const caben = todos.filter((s) => cotizarCelularJP(precio, inicial, s, tasaMensual).cuota <= CUOTA_MAXIMA_SEMANAL);
+  const plazos = caben.length ? caben : [todos[todos.length - 1]];
+  const sugerido = plazos.find((s) => s >= g.semanas) ?? plazos[plazos.length - 1];
+  return { plazos, sugerido };
 }
 
 export interface CotizacionJP {

@@ -7,7 +7,7 @@
  */
 import { z } from "zod";
 import { esVehiculo, planDestacado, servicioDeProducto, type Producto, type TasaPublica } from "./catalogo";
-import { cotizarCelularJP, gamaCelular, PREFIJO_PLAN_JP } from "./celularesJP";
+import { cotizarCelularJP, gamaCelular, plazosCelular, PREFIJO_PLAN_JP } from "./celularesJP";
 import { ETIQUETA_FRECUENCIA, FRECUENCIAS, calcularCredito, type Frecuencia } from "./finance";
 import { formatSoles } from "./format";
 
@@ -50,14 +50,15 @@ export function reglasCotizacion(producto: Producto, tasasPublicas: TasaPublica[
 
 /**
  * Celulares: metodología JP. Tasa mensual de su gama, cuotas semanales y la inicial del plan JP del
- * producto (o la de su gama) como mínimo; el plazo es el del plan (16 semanas, o 30–40 en gama premium).
+ * producto (o la de su gama) como mínimo. Plazos desde 12 semanas, de 4 en 4, con cuota de S/ 200 o menos;
+ * arranca en el plazo sugerido de su gama (cuotas pequeñas). Ver src/lib/celularesJP.ts.
  */
 function reglasCelularJP(producto: Producto): ReglasCotizacion {
   const g = gamaCelular(producto.precio);
   const plan = producto.planes.find((p) => p.nombre?.startsWith(PREFIJO_PLAN_JP) && p.frecuencia === "SEMANAL");
-  const plazos = Array.from(new Set([...g.plazos, ...(plan ? [plan.numeroCuotas] : [])])).sort((a, b) => a - b);
   const paso = 10;
   const inicialMin = Math.min(plan?.cuotaInicial ?? g.inicial, Math.floor(producto.precio / 2));
+  const { plazos, sugerido } = plazosCelular(producto.precio, inicialMin, g.tasaMensual);
   const inicialMax = Math.max(inicialMin, Math.floor((producto.precio * 0.6) / paso) * paso);
   const tasa: TasaPublica = {
     servicio: "CREDITO_CELULAR",
@@ -68,6 +69,7 @@ function reglasCelularJP(producto: Producto): ReglasCotizacion {
     cuotasMax: plazos[plazos.length - 1],
     metodoJP: true,
     plazos,
+    plazoSugerido: sugerido,
   };
   return { tasas: producto.precio > 0 ? [tasa] : [], inicialMin, inicialMax, paso };
 }
@@ -94,7 +96,7 @@ export function seleccionInicial(producto: Producto, reglas: ReglasCotizacion): 
   // Vehículos: se parte de la inicial mínima y el plazo más largo (como se ofrece en tienda).
   const n = vehiculo
     ? tasa.cuotasMax
-    : plan && plan.frecuencia === tasa.frecuencia ? plan.numeroCuotas : sugeridos[Math.floor(sugeridos.length / 2)];
+    : tasa.plazoSugerido ?? (plan && plan.frecuencia === tasa.frecuencia ? plan.numeroCuotas : sugeridos[Math.floor(sugeridos.length / 2)]);
   const inicialBase = vehiculo ? reglas.inicialMin : plan ? plan.cuotaInicial : 0;
   return {
     frecuencia: tasa.frecuencia,
