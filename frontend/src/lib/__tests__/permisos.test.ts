@@ -16,10 +16,10 @@ describe("matriz de permisos del panel", () => {
     expect(puedeVerSeccion("ADMIN_CREDITOS", "solicitudes")).toBe(true);
   });
 
-  it("los administradores de motos y celulares ven su catálogo e inventario, no la configuración general", () => {
+  it("los administradores de motos y celulares ven su catálogo e inventario, no la caja ni la configuración general", () => {
     for (const rol of ["ADMIN_MOTOS", "ADMIN_CELULARES"] as const) {
-      for (const s of ["catalogo", "inventario", "reportes", "solicitudes", "caja"] as const) expect(puedeVerSeccion(rol, s)).toBe(true);
-      for (const s of ["tasas", "reclamos", "personal", "sistema"] as const) expect(puedeVerSeccion(rol, s)).toBe(false);
+      for (const s of ["catalogo", "inventario", "reportes", "solicitudes"] as const) expect(puedeVerSeccion(rol, s)).toBe(true);
+      for (const s of ["caja", "tasas", "reclamos", "personal", "sistema"] as const) expect(puedeVerSeccion(rol, s)).toBe(false);
     }
   });
 

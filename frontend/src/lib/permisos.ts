@@ -22,7 +22,7 @@ export const SECCIONES = {
   creditos: { href: "/admin/creditos", label: "Créditos", roles: TODOS },
   cobranzas: { href: "/admin/cobranzas", label: "Cobranzas", roles: TODOS },
   pagos: { href: "/admin/pagos", label: "Pagos", roles: TODOS },
-  caja: { href: "/admin/caja", label: "Caja", roles: ["SUPERADMIN", "ADMIN_MOTOS", "ADMIN_CELULARES", "ASESOR_VENTAS", "COBRADOR"] as readonly Rol[] },
+  caja: { href: "/admin/caja", label: "Caja", roles: ["SUPERADMIN", "ASESOR_VENTAS", "COBRADOR"] as readonly Rol[] },
   catalogo: { href: "/admin/catalogo", label: "Catálogo", roles: PRODUCTOS },
   inventario: { href: "/admin/inventario", label: "Inventario", roles: PRODUCTOS },
   tasas: { href: "/admin/tasas", label: "Tasas por servicio", roles: GENERAL },

@@ -16,6 +16,8 @@ Matriz única en `src/lib/permisos.ts`: el menú muestra solo lo que el rol pued
 | Solicitudes web, Tasas, Libro de Reclamaciones | ✔ | — | ✔ | — |
 | Personal, Sistema | ✔ | — | — | — |
 
+Los administradores de motos y de celulares no ven Caja (igual que el de créditos).
+
 Cambio respecto a fases anteriores: el **cobrador** ya no ve Solicitudes, Catálogo, Inventario, Tasas ni Reclamos (no los necesita para cobrar).
 
 ## 2. Rate-limit compartido
