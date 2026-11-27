@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Encabezado, Tabla, Vacio } from "@/components/admin/ui";
 import { Badge } from "@/components/ui";
 import { inputClasses } from "@/components/ui/Field";
+import { tiposDe } from "@/lib/areas";
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
 import { ETIQUETA_METODO, METODOS_PAGO, resumenCaja, type MetodoPago } from "@/lib/pagos";
@@ -19,7 +20,8 @@ interface Fila {
 }
 
 export default async function PagosPage({ searchParams }: { searchParams: Promise<{ desde?: string; hasta?: string; metodo?: string; usuario?: string; q?: string }> }) {
-  await requerirSesion();
+  const sesion = await requerirSesion();
+  const tipos = tiposDe(sesion.rol);
   const sp = await searchParams;
   const db = sql();
   const hoy = await hoyLima(db);
@@ -40,6 +42,7 @@ export default async function PagosPage({ searchParams }: { searchParams: Promis
       join public.cliente cl on cl.id = cr.cliente_id
       left join public.perfil_usuario u on u.id = p.registrado_por
       where p.fecha_pago between ${desde} and ${hasta}
+        and cr.tipo::text = any(${tipos})
         and (${metodo}::text is null or p.metodo::text = ${metodo})
         and (${usuario}::uuid is null or p.registrado_por = ${usuario})
         and (${q} = '' or cr.codigo ilike ${"%" + q + "%"} or cl.numero_documento = ${q}

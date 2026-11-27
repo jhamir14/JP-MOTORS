@@ -4,6 +4,7 @@ import { FormCredito } from "@/components/admin/FormCredito";
 import { FormPrestamo } from "@/components/admin/FormPrestamo";
 import { ScoreCliente } from "@/components/admin/ScoreCliente";
 import { Badge } from "@/components/ui";
+import { areaDe } from "@/lib/areas";
 import { ROLES_CREDITOS } from "@/lib/creditos";
 import { ETIQUETA_ESTADO_CLIENTE, faltantesCliente, type DatosKyc, type EstadoCliente } from "@/lib/clientes";
 import { ETIQUETA_ROL, requerirSesion } from "@/lib/server/auth";
@@ -23,12 +24,14 @@ type ClienteAlta = DatosKyc & { id: string; nombres: string; apellidos: string; 
 
 /**
  * Alta de crédito o préstamo en UNA sola pantalla: el cliente se busca con sugerencias dentro del mismo
- * formulario (se puede elegir antes o después de escribir el monto) y se muestra/elige su asesor de ventas.
+ * formulario (se puede elegir antes o después de escribir el monto) y se elige el responsable (administrador del área).
+ * Cada administrador de área solo registra lo suyo: préstamos, motos o celulares (src/lib/areas.ts).
  */
 export default async function NuevoCreditoPage({ searchParams }: { searchParams: Promise<{ cliente?: string; tipo?: string }> }) {
   const sesion = await requerirSesion(...ROLES_CREDITOS);
   const sp = await searchParams;
-  const prestamo = sp.tipo === "prestamo";
+  const area = areaDe(sesion.rol);
+  const prestamo = area ? area === "PRESTAMO_EFECTIVO" : sp.tipo === "prestamo";
   const db = sql();
   const clienteId = /^[0-9a-f-]{36}$/.test(sp.cliente ?? "") ? sp.cliente! : null;
 
@@ -39,8 +42,8 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
     db<{ id: string; nombre: string; rol: keyof typeof ETIQUETA_ROL }[]>`
       select p.id, p.nombres || ' ' || p.apellidos as nombre, p.rol
       from public.perfil_usuario p join auth.users u on u.id = p.id and u.activo
-      where p.activo and p.rol in ('ASESOR_VENTAS', 'SUPERADMIN', 'ADMIN_CREDITOS')
-      order by (p.rol = 'ASESOR_VENTAS') desc, p.nombres, p.apellidos`,
+      where p.activo and p.rol::text = any(${area ? ["SUPERADMIN", sesion.rol] : prestamo ? ["SUPERADMIN", "ADMIN_CREDITOS"] : ["SUPERADMIN", "ADMIN_MOTOS", "ADMIN_CELULARES", "ASESOR_VENTAS"]})
+      order by (p.rol = 'SUPERADMIN'), p.rol, p.nombres, p.apellidos`,
     clienteId
       ? db<ClienteAlta[]>`
           select c.id, c.nombres, c.apellidos, c.estado, c.registrado_por,
@@ -75,10 +78,12 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
       ? "El cliente tiene bloqueo legal: no puede recibir créditos ni préstamos."
       : evaluacion?.bloqueo ?? (bloqueaExpediente ? `Expediente incompleto. Falta: ${faltan.join(", ")}.` : null);
 
-  // Asesor por defecto: quien registró al cliente (si es del equipo de ventas) o quien registra el crédito.
-  const asesorInicial = (cliente?.registrado_por && asesores.some((a) => a.id === cliente.registrado_por) ? cliente.registrado_por : null)
-    ?? (asesores.some((a) => a.id === sesion.usuarioId) ? sesion.usuarioId : asesores[0]?.id ?? "");
-  const listaAsesores = asesores.map((a) => ({ id: a.id, nombre: a.rol === "ASESOR_VENTAS" ? a.nombre : `${a.nombre} (${ETIQUETA_ROL[a.rol]})` }));
+  // Responsable por defecto: el administrador del área que lo registra; si no, quien registró al cliente.
+  const enLista = (id: string | null | undefined) => !!id && asesores.some((a) => a.id === id);
+  const asesorInicial = (area && enLista(sesion.usuarioId) ? sesion.usuarioId : null)
+    ?? (enLista(cliente?.registrado_por) ? cliente!.registrado_por! : null)
+    ?? (enLista(sesion.usuarioId) ? sesion.usuarioId : asesores[0]?.id ?? "");
+  const listaAsesores = asesores.map((a) => ({ id: a.id, nombre: `${a.nombre} (${ETIQUETA_ROL[a.rol]})` }));
 
   const comunes = {
     clienteId: cliente?.id ?? null,
@@ -137,16 +142,17 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
       <Encabezado titulo={prestamo ? "Nuevo préstamo de dinero" : "Nuevo crédito"}>
         Todo en una sola pantalla: busca al cliente, completa {prestamo ? "el monto y las cuotas" : "la unidad, el precio y las cuotas"} y confirma.
       </Encabezado>
-      <PestanasTipo activo={prestamo ? "prestamo" : "credito"} base="/admin/creditos/nuevo" cliente={cliente?.id} />
+      {!area && <PestanasTipo activo={prestamo ? "prestamo" : "credito"} base="/admin/creditos/nuevo" cliente={cliente?.id} />}
       {panelCliente}
       {prestamo ? (
         <FormPrestamo action={crearPrestamo} tasas={opciones.tasas.filter((t) => t.servicio === "PRESTAMO_EFECTIVO")} {...comunes} />
       ) : (
         <FormCredito
           action={crearCredito}
-          unidades={opciones.unidades}
+          unidades={opciones.unidades.filter((u) => !area || u.tipo === (area === "CREDITO_VEHICULAR" ? "vehiculo" : "celular"))}
           planes={opciones.planes}
           tasas={opciones.tasas.filter((t) => t.servicio !== "PRESTAMO_EFECTIVO")}
+          tiposPermitidos={area === "CREDITO_VEHICULAR" || area === "CREDITO_CELULAR" ? [area] : ["CREDITO_VEHICULAR", "CREDITO_CELULAR"]}
           vehicularExigeGarante={config.vehicularExigeGarante}
           beneficio={evaluacion?.nivel ?? null}
           puntaje={perfil?.puntaje ?? null}

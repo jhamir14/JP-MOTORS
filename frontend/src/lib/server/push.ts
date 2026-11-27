@@ -1,5 +1,7 @@
 import "server-only";
 import webpush, { WebPushError, type PushSubscription } from "web-push";
+import { tiposDe } from "@/lib/areas";
+import type { Rol } from "@/lib/roles";
 import { sql } from "./db";
 import { leerPendientes, textoCobranza } from "./pendientes";
 
@@ -66,8 +68,12 @@ export interface Aviso {
   etiqueta?: string;
 }
 
-/** Envía un aviso a las suscripciones indicadas (por defecto, todas las del personal activo). Devuelve cuántas lo recibieron. */
-export async function enviarAviso(aviso: Aviso, soloUsuario?: string): Promise<{ enviados: number; fallidos: number }> {
+/**
+ * Envía un aviso a las suscripciones indicadas (por defecto, todas las del personal activo). Devuelve cuántas lo recibieron.
+ * `destino`: un usuario (id) o una lista de usuarios.
+ */
+export async function enviarAviso(aviso: Aviso, destino?: string | string[]): Promise<{ enviados: number; fallidos: number }> {
+  const usuarios = destino == null ? null : Array.isArray(destino) ? destino : [destino];
   const { publica, privada } = await clavesVapid();
   const db = sql();
   const subs = await db<{ id: string; endpoint: string; p256dh: string; auth: string }[]>`
@@ -75,7 +81,7 @@ export async function enviarAviso(aviso: Aviso, soloUsuario?: string): Promise<{
     from public.push_suscripcion s
     join auth.users u on u.id = s.usuario_id and u.activo
     join public.perfil_usuario p on p.id = u.id and p.activo
-    where ${soloUsuario ?? null}::uuid is null or s.usuario_id = ${soloUsuario ?? null}::uuid`;
+    where ${usuarios == null} or s.usuario_id::text = any(${usuarios ?? []})`;
   const contacto = process.env.VAPID_SUBJECT?.trim() || "mailto:avisos@inversionesjp.pe";
   const carga = JSON.stringify({ title: aviso.titulo, body: aviso.cuerpo, url: aviso.url, tag: aviso.etiqueta ?? "jp-aviso" });
 
@@ -127,13 +133,36 @@ export async function enviarAvisoCobranza(tramo: Tramo = tramoActual()) {
            returning 1)
     select exists (select 1 from up) as nuevo`;
   if (!nuevo) return { tramo, omitido: "ya se envió este tramo hoy" as const };
-  const texto = textoCobranza(p);
-  if (!texto) return { tramo, omitido: "no hay cobranzas pendientes" as const };
-  const r = await enviarAviso({
-    titulo: tramo === "manana" ? "Cobranzas de hoy · Inversiones JP" : "Siguen cobranzas pendientes · Inversiones JP",
-    cuerpo: `${texto}. Toca para ver a quién cobrar.`,
-    url: p.mora > 0 && p.vencen_hoy === 0 ? "/admin/cobranzas?ver=mora" : "/admin/cobranzas",
-    etiqueta: "jp-cobranzas",
-  });
-  return { tramo, ...r };
+
+  // Cada administrador de área recibe solo los números de su área; el resto del personal, los de toda la cartera.
+  const personas = await db<{ id: string; rol: Rol }[]>`
+    select distinct p.id, p.rol from public.push_suscripcion s
+    join auth.users u on u.id = s.usuario_id and u.activo
+    join public.perfil_usuario p on p.id = u.id and p.activo`;
+  const grupos = new Map<string, { tipos: string[]; usuarios: string[] }>();
+  for (const per of personas) {
+    const tipos = tiposDe(per.rol);
+    const clave = tipos.join(",");
+    const g = grupos.get(clave) ?? { tipos, usuarios: [] };
+    g.usuarios.push(per.id);
+    grupos.set(clave, g);
+  }
+
+  let enviados = 0;
+  let fallidos = 0;
+  for (const g of grupos.values()) {
+    const pg = g.tipos.length === 3 ? p : await leerPendientes(db, g.tipos);
+    const texto = textoCobranza(pg);
+    if (!texto) continue;
+    const r = await enviarAviso({
+      titulo: tramo === "manana" ? "Cobranzas de hoy · Inversiones JP" : "Siguen cobranzas pendientes · Inversiones JP",
+      cuerpo: `${texto}. Toca para ver a quién cobrar.`,
+      url: pg.mora > 0 && pg.vencen_hoy === 0 ? "/admin/cobranzas?ver=mora" : "/admin/cobranzas",
+      etiqueta: "jp-cobranzas",
+    }, g.usuarios);
+    enviados += r.enviados;
+    fallidos += r.fallidos;
+  }
+  if (!enviados && !fallidos && !textoCobranza(p)) return { tramo, omitido: "no hay cobranzas pendientes" as const };
+  return { tramo, enviados, fallidos };
 }

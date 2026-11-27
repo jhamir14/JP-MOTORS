@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Encabezado, Tabla, Vacio } from "@/components/admin/ui";
 import { Badge, ButtonLink } from "@/components/ui";
 import { CATEGORIAS, ETIQUETA_CATEGORIA, hrefProducto, type CategoriaProducto } from "@/lib/catalogo";
+import { categoriasDe } from "@/lib/areas";
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
 import { requerirSeccion } from "@/lib/server/auth";
@@ -16,9 +17,12 @@ interface Fila {
 }
 
 export default async function CatalogoAdminPage({ searchParams }: { searchParams: Promise<{ categoria?: string; q?: string }> }) {
-  await requerirSeccion("catalogo");
+  const sesion = await requerirSeccion("catalogo");
   const sp = await searchParams;
-  const categoria = (CATEGORIAS as readonly string[]).includes(sp.categoria ?? "") ? sp.categoria! : null;
+  // Cada administrador ve solo las categorías de su área (motos o celulares).
+  const categorias = categoriasDe(sesion.rol);
+  const visibles = CATEGORIAS.filter((c) => categorias.includes(c));
+  const categoria = (visibles as readonly string[]).includes(sp.categoria ?? "") ? sp.categoria! : null;
   const q = (sp.q ?? "").trim().slice(0, 60);
 
   const filas = await sql()<Fila[]>`
@@ -31,6 +35,7 @@ export default async function CatalogoAdminPage({ searchParams }: { searchParams
     left join public.v_stock_producto s on s.producto_id = p.id
     where p.categoria <> 'REPUESTO'
       and (${categoria}::text is null or p.categoria::text = ${categoria})
+      and p.categoria::text = any(${categorias})
       and (${q} = '' or p.nombre ilike ${"%" + q + "%"} or p.marca ilike ${"%" + q + "%"} or p.slug ilike ${"%" + q + "%"})
     order by p.categoria, p.orden, p.nombre`;
 
@@ -54,7 +59,7 @@ export default async function CatalogoAdminPage({ searchParams }: { searchParams
         {categoria && <input type="hidden" name="categoria" value={categoria} />}
         <button type="submit" className="cursor-pointer rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white">Buscar</button>
         <div className="flex flex-wrap gap-2 md:ml-3">
-          {[null, ...CATEGORIAS].map((c) => {
+          {visibles.length > 1 && [null, ...visibles].map((c) => {
             const params = new URLSearchParams();
             if (c) params.set("categoria", c);
             if (q) params.set("q", q);

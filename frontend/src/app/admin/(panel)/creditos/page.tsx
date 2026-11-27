@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Encabezado, Estado, Tabla, Vacio } from "@/components/admin/ui";
 import { ButtonLink } from "@/components/ui";
 import { ETIQUETA_SERVICIO } from "@/lib/admin/constantes";
+import { areaDe, tiposDe } from "@/lib/areas";
 import { cn } from "@/lib/cn";
 import { puedeGestionarCreditos } from "@/lib/creditos";
 import { ETIQUETA_FRECUENCIA, type Frecuencia } from "@/lib/finance";
@@ -31,8 +32,11 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const estado = FILTROS.some((f) => f.valor === sp.estado) ? sp.estado! : "activos";
   // Dos pestañas: créditos de productos (motos, motokar, toritos y celulares) y préstamos de dinero.
-  const vista = sp.tipo === "prestamo" || sp.tipo === "PRESTAMO_EFECTIVO" ? "prestamo" : "credito";
-  const tipo = vista === "credito" && (sp.tipo === "CREDITO_VEHICULAR" || sp.tipo === "CREDITO_CELULAR") ? sp.tipo : null;
+  // Cada administrador de área ve solo su tipo de crédito (src/lib/areas.ts).
+  const area = areaDe(sesion.rol);
+  const tipos = tiposDe(sesion.rol);
+  const vista = area ? (area === "PRESTAMO_EFECTIVO" ? "prestamo" : "credito") : sp.tipo === "prestamo" || sp.tipo === "PRESTAMO_EFECTIVO" ? "prestamo" : "credito";
+  const tipo = area && area !== "PRESTAMO_EFECTIVO" ? area : vista === "credito" && (sp.tipo === "CREDITO_VEHICULAR" || sp.tipo === "CREDITO_CELULAR") ? sp.tipo : null;
   const esPrestamo = vista === "prestamo";
   const q = (sp.q ?? "").trim().slice(0, 60);
   const pagina = Math.max(1, Number(sp.pagina) || 1);
@@ -60,6 +64,7 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
       where ${filtroEstado}
         and (case when ${esPrestamo} then cr.tipo = 'PRESTAMO_EFECTIVO' else cr.tipo <> 'PRESTAMO_EFECTIVO' end)
         and (${tipo}::text is null or cr.tipo::text = ${tipo})
+        and cr.tipo::text = any(${tipos})
         and (${q} = '' or cr.codigo ilike ${patron} or (cl.nombres || ' ' || cl.apellidos) ilike ${patron} or cl.numero_documento ilike ${patron})
       order by cr.fecha_desembolso desc, cr.created_at desc
       limit 50 offset ${(pagina - 1) * 50}`,
@@ -71,15 +76,16 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
              count(*) filter (where cr.estado <> 'ANULADO' and date_trunc('month', cr.fecha_desembolso) = date_trunc('month', (now() at time zone 'America/Lima')::date))::int as creditos_mes
       from public.credito cr
       left join lateral (select sum(least(cu.monto_pagado, cu.monto_cuota)) as pagado from public.cuota cu where cu.credito_id = cr.id) p on true
-      where case when ${esPrestamo} then cr.tipo = 'PRESTAMO_EFECTIVO' else cr.tipo <> 'PRESTAMO_EFECTIVO' end`,
+      where case when ${esPrestamo} then cr.tipo = 'PRESTAMO_EFECTIVO' else cr.tipo <> 'PRESTAMO_EFECTIVO' end
+        and cr.tipo::text = any(${tipos})`,
     db<{ credito: number; prestamo: number }[]>`
       select count(*) filter (where tipo <> 'PRESTAMO_EFECTIVO' and estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO'))::int as credito,
              count(*) filter (where tipo = 'PRESTAMO_EFECTIVO' and estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO'))::int as prestamo
-      from public.credito`,
+      from public.credito where tipo::text = any(${tipos})`,
   ]);
   const total = filas[0]?.total ?? 0;
   const qs = (cambios: Record<string, string | null>) => {
-    const p = new URLSearchParams({ estado, ...(esPrestamo ? { tipo: "prestamo" } : tipo ? { tipo } : {}), ...(q ? { q } : {}) });
+    const p = new URLSearchParams({ estado, ...(esPrestamo ? { tipo: "prestamo" } : tipo && !area ? { tipo } : {}), ...(q ? { q } : {}) });
     for (const [k, v] of Object.entries(cambios)) {
       if (v == null) p.delete(k);
       else p.set(k, v);
@@ -93,18 +99,21 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
         <p role="status" className="mb-5 rounded-xl bg-accent-soft px-4 py-3 text-sm font-medium text-accent">Eliminado definitivamente, con su cronograma y pagos.</p>
       )}
       <Encabezado
-        titulo={esPrestamo ? "Préstamos de dinero" : "Créditos"}
+        titulo={esPrestamo ? "Préstamos de dinero" : area === "CREDITO_VEHICULAR" ? "Créditos de motos" : area === "CREDITO_CELULAR" ? "Créditos de celulares" : "Créditos"}
         acciones={puedeGestionarCreditos(sesion.rol) && (
           <div className="flex flex-wrap gap-2">
-            <ButtonLink href="/admin/creditos/nuevo" variant={esPrestamo ? "outline" : "brand"} size="sm">+ Nuevo crédito</ButtonLink>
-            <ButtonLink href="/admin/creditos/nuevo?tipo=prestamo" variant={esPrestamo ? "brand" : "outline"} size="sm">+ Nuevo préstamo</ButtonLink>
+            {!(area === "PRESTAMO_EFECTIVO") && <ButtonLink href="/admin/creditos/nuevo" variant={esPrestamo ? "outline" : "brand"} size="sm">+ Nuevo crédito</ButtonLink>}
+            {(!area || area === "PRESTAMO_EFECTIVO") && <ButtonLink href="/admin/creditos/nuevo?tipo=prestamo" variant={esPrestamo ? "brand" : "outline"} size="sm">+ Nuevo préstamo</ButtonLink>}
           </div>
         )}
       >
-        {esPrestamo ? "Dinero prestado a clientes, con sus cuotas y su saldo." : "Financiamientos de motos, motokar, toritos y celulares con su cronograma."}
+        {esPrestamo ? "Dinero prestado a clientes, con sus cuotas y su saldo."
+          : area === "CREDITO_VEHICULAR" ? "Financiamientos de motos, motokar y toritos con su cronograma."
+          : area === "CREDITO_CELULAR" ? "Financiamientos de celulares con su cronograma."
+          : "Financiamientos de motos, motokar, toritos y celulares con su cronograma."}
       </Encabezado>
 
-      <PestanasTipo activo={vista} base="/admin/creditos" conteos={conteos} />
+      {!area && <PestanasTipo activo={vista} base="/admin/creditos" conteos={conteos} />}
 
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi k={esPrestamo ? "Préstamos activos" : "Créditos activos"} v={String(resumen.activos)} />
@@ -126,6 +135,8 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
           <input type="hidden" name="estado" value={estado} />
           {esPrestamo ? (
             <input type="hidden" name="tipo" value="prestamo" />
+          ) : area ? (
+            null
           ) : (
             <select name="tipo" defaultValue={tipo ?? ""} aria-label="Tipo" className="w-full rounded-xl border border-line bg-surface px-2 py-2 text-sm md:w-auto">
               <option value="">Motos y celulares</option>

@@ -6,6 +6,7 @@ import { datosDe, exito, fallo, mensajeErrorBD, type EstadoAccion } from "@/lib/
 import { ROLES_CREDITOS } from "@/lib/creditos";
 import { ROLES_DOCUMENTOS_LEGALES, TIPOS_DOCUMENTO_FIRMADO } from "@/lib/documentos";
 import { detectarTipo } from "@/lib/server/archivos";
+import { creditoEnArea } from "@/lib/server/areas";
 import { comoUsuario, requerirSesion } from "@/lib/server/auth";
 
 const MAX_DOC = 10 * 1024 * 1024;
@@ -26,8 +27,7 @@ export async function subirDocumentoCredito(_prev: EstadoAccion, fd: FormData): 
 
   try {
     const r = await comoUsuario(sesion, async (tx) => {
-      const [cr] = await tx<{ estado: string }[]>`select estado from public.credito where id = ${p.data.creditoId}`;
-      if (!cr) return "El crédito no existe.";
+      if (!(await creditoEnArea(sesion, p.data.creditoId, tx))) return "El crédito no existe o no es de tu área.";
       await tx`
         insert into public.documento_credito ${tx({
           credito_id: p.data.creditoId,
@@ -54,8 +54,10 @@ export async function eliminarDocumentoCredito(fd: FormData) {
   const sesion = await requerirSesion(...ROLES_CREDITOS);
   const id = z.string().uuid().parse(fd.get("id"));
   const creditoId = await comoUsuario(sesion, async (tx) => {
-    const [doc] = await tx<{ credito_id: string }[]>`delete from public.documento_credito where id = ${id} returning credito_id`;
-    return doc?.credito_id;
+    const [doc] = await tx<{ credito_id: string }[]>`select credito_id from public.documento_credito where id = ${id}`;
+    if (!doc || !(await creditoEnArea(sesion, doc.credito_id, tx))) return undefined;
+    await tx`delete from public.documento_credito where id = ${id}`;
+    return doc.credito_id;
   });
   if (creditoId) revalidatePath(`/admin/creditos/${creditoId}`);
 }

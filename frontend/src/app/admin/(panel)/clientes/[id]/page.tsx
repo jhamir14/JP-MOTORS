@@ -10,6 +10,7 @@ import { BotonRecordatorio } from "@/components/admin/BotonRecordatorio";
 import { CampoArea, CampoSelect, CampoTexto, Encabezado, Estado, Panel, Tabla, Vacio, fechaCorta } from "@/components/admin/ui";
 import { Badge, ButtonLink } from "@/components/ui";
 import { ETIQUETA_SERVICIO, legible } from "@/lib/admin/constantes";
+import { tiposDe } from "@/lib/areas";
 import { puedeGestionarCreditos } from "@/lib/creditos";
 import {
   DOCUMENTOS_GARANTE,
@@ -102,6 +103,8 @@ export default async function FichaClientePage({
     from public.cliente c left join public.perfil_usuario p on p.id = c.registrado_por
     where c.id = ${id}`;
   if (!cliente) notFound();
+  // Los créditos del cliente que se listan son solo los del área de quien consulta.
+  const tipos = tiposDe(sesion.rol);
 
   const [garantes, creditos, cuotas, solicitudes, historial, cobranza, score] = await Promise.all([
     db<Garante[]>`
@@ -124,12 +127,12 @@ export default async function FichaClientePage({
       left join public.unidad_vehiculo uv on uv.id = cr.unidad_vehiculo_id
       left join public.unidad_celular uc on uc.id = cr.unidad_celular_id
       left join public.garante g on g.id = cr.garante_id
-      where cr.cliente_id = ${id}
+      where cr.cliente_id = ${id} and cr.tipo::text = any(${tipos})
       order by cr.fecha_desembolso desc, cr.created_at desc`,
     db<Cuota[]>`
       select cu.credito_id, cu.numero, cu.fecha_vencimiento, cu.monto_cuota::float8, cu.mora::float8, cu.monto_pagado::float8, cu.estado, cu.fecha_pago
       from public.cuota cu join public.credito cr on cr.id = cu.credito_id
-      where cr.cliente_id = ${id} order by cu.credito_id, cu.numero`,
+      where cr.cliente_id = ${id} and cr.tipo::text = any(${tipos}) order by cu.credito_id, cu.numero`,
     db<{ id: string; servicio: keyof typeof ETIQUETA_SERVICIO | "OTRO"; producto_interes: string | null; monto_solicitado: number | null; created_at: Date }[]>`
       select id, servicio, producto_interes, monto_solicitado::float8, created_at
       from public.solicitud_credito where cliente_id = ${id} order by created_at desc`,
@@ -142,7 +145,7 @@ export default async function FichaClientePage({
              or (a.tabla = 'documento_kyc' and coalesce(a.despues, a.antes) ->> 'cliente_id' = ${id})
           order by a.created_at desc limit 15`
       : Promise.resolve([]),
-    creditosPorCobrar(db, { clienteId: id }),
+    creditosPorCobrar(db, { clienteId: id, tipos }),
     perfilScore(db, id),
   ]);
   const porCobrar = new Map(cobranza.creditos.map((c) => [c.id, c]));

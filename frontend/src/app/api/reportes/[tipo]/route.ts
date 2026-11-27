@@ -1,3 +1,4 @@
+import { areaDe } from "@/lib/areas";
 import { aCsv, aXlsx } from "@/lib/exportar";
 import { COLUMNAS, ETIQUETA_REPORTE, ROLES_REPORTES, TIPOS_REPORTE, nombreArchivo, parsearFiltros, usaRango, type TipoReporte } from "@/lib/reportes";
 import { obtenerSesion, puede } from "@/lib/server/auth";
@@ -32,6 +33,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ tipo: st
   const hoy = await hoyLima(db);
   const { filtros } = parsearFiltros(url.searchParams, hoy);
   if (!usaRango(t)) filtros.hasta = hoy;
+  const area = areaDe(sesion.rol);
+  if (area) filtros.tipo = area;
   const filas = await filasReporte(db, t, filtros);
   await auditarDescarga(db, sesion.usuarioId, t, formato, filtros, filas.length, ipDe(req.headers));
 

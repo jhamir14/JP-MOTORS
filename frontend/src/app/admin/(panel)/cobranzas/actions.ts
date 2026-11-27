@@ -1,6 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { creditoEnArea } from "@/lib/server/areas";
 import { comoUsuario, requerirSesion } from "@/lib/server/auth";
 
 const schema = z.object({
@@ -12,7 +13,7 @@ const schema = z.object({
 export async function registrarRecordatorio(creditoId: string, tipo: string): Promise<void> {
   const sesion = await requerirSesion();
   const parsed = schema.safeParse({ creditoId, tipo });
-  if (!parsed.success) return;
+  if (!parsed.success || !(await creditoEnArea(sesion, parsed.data.creditoId))) return;
   try {
     await comoUsuario(sesion, (tx) => tx`
       insert into public.recordatorio_pago (credito_id, tipo, enviado_por)

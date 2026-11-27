@@ -1,13 +1,16 @@
 import { AdminForm, BotonEnviar } from "@/components/admin/AdminForm";
 import { CampoSelect, CampoTexto, Check, Encabezado, Panel, fechaCorta } from "@/components/admin/ui";
 import { Badge } from "@/components/ui";
-import { ETIQUETA_ROL, ROLES, requerirSesion, type Rol } from "@/lib/server/auth";
+import { ROLES_ASIGNABLES } from "@/lib/roles";
+import { ETIQUETA_ROL, requerirSesion, type Rol } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { crearPersonal, editarPersonal } from "./actions";
 
 export const metadata = { title: "Personal" };
 
-const opcionesRol = ROLES.map((r) => ({ value: r, label: ETIQUETA_ROL[r] }));
+const opcionesRol = ROLES_ASIGNABLES.map((r) => ({ value: r, label: ETIQUETA_ROL[r] }));
+/** Una cuenta antigua de asesor conserva su rol en la lista hasta que el superadmin la reasigne. */
+const opcionesPara = (rol: Rol) => ((ROLES_ASIGNABLES as readonly Rol[]).includes(rol) ? opcionesRol : [{ value: rol, label: ETIQUETA_ROL[rol] }, ...opcionesRol]);
 
 export default async function PersonalPage() {
   const sesion = await requerirSesion("SUPERADMIN");
@@ -19,8 +22,9 @@ export default async function PersonalPage() {
   return (
     <>
       <Encabezado titulo="Personal">
-        Cuentas del panel y sus roles. Superadministrador: todo · Admin. de créditos: tasas, créditos y reclamos · Asesor: catálogo,
-        inventario y clientes · Cobrador: pagos y cobranzas.
+        Cuentas del panel y sus roles. Cada administrador ve y gestiona solo su área, con sus cobranzas:
+        Superadministrador: todo · Admin. de créditos: préstamos de dinero · Admin. de motos: créditos, catálogo e inventario de motos,
+        motokar y toritos · Admin. de celulares: créditos, catálogo e inventario de celulares · Cobrador: cobranzas y pagos de todas las áreas.
       </Encabezado>
 
       <ul className="grid gap-3">
@@ -40,7 +44,7 @@ export default async function PersonalPage() {
               <div className="border-t border-line-soft p-4">
                 <AdminForm action={editarPersonal} className="grid items-end gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
                   <input type="hidden" name="id" value={p.id} />
-                  <CampoSelect label="Rol" name="rol" id={`rol-${p.id}`} defaultValue={p.rol} opciones={opcionesRol} />
+                  <CampoSelect label="Rol" name="rol" id={`rol-${p.id}`} defaultValue={p.rol} opciones={opcionesPara(p.rol)} />
                   <CampoTexto label="Nueva contraseña" name="password" id={`pass-${p.id}`} type="password" autoComplete="new-password" placeholder="Vacío = no cambiar" />
                   <Check label="Activo" name="activo" defaultChecked={p.activo} />
                   <BotonEnviar size="sm">Guardar</BotonEnviar>
@@ -57,7 +61,7 @@ export default async function PersonalPage() {
           <CampoTexto label="Nombres" name="nombres" required />
           <CampoTexto label="Apellidos" name="apellidos" />
           <CampoTexto label="Teléfono" name="telefono" inputMode="tel" />
-          <CampoSelect label="Rol" name="rol" defaultValue="ASESOR_VENTAS" opciones={opcionesRol} />
+          <CampoSelect label="Rol" name="rol" defaultValue="ADMIN_MOTOS" opciones={opcionesRol} />
           <CampoTexto label="Contraseña inicial" name="password" type="password" autoComplete="new-password" hint="Mínimo 10 caracteres, con letras y números." required />
           <div className="md:col-span-3"><BotonEnviar>Crear cuenta</BotonEnviar></div>
         </AdminForm>

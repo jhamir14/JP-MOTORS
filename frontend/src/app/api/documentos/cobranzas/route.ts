@@ -1,3 +1,4 @@
+import { tiposDe } from "@/lib/areas";
 import { listaCobranza } from "@/lib/documentos";
 import { renderizarPdf } from "@/lib/pdf/render";
 import { obtenerSesion } from "@/lib/server/auth";
@@ -17,7 +18,7 @@ export async function GET(req: Request) {
   const sesion = await obtenerSesion();
   if (!sesion) return noEncontrado();
   const db = sql();
-  const [{ hoy, creditos }, empresa] = await Promise.all([creditosPorCobrar(db), datosEmpresa(db)]);
+  const [{ hoy, creditos }, empresa] = await Promise.all([creditosPorCobrar(db, { tipos: tiposDe(sesion.rol) }), datosEmpresa(db)]);
   const filas = creditos
     .filter((c) => c.situacion === "MORA" || c.situacion === "VENCE_HOY")
     .map((c) => ({

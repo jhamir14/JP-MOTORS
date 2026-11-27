@@ -20,6 +20,7 @@ import {
   normalizarDocumento,
 } from "@/lib/clientes";
 import { detectarTipo } from "@/lib/server/archivos";
+import { ADMINS_AREA } from "@/lib/roles";
 import { comoUsuario, requerirSesion } from "@/lib/server/auth";
 import { actualizarCompletitud, clientesConDocumento, garantesConDocumento } from "@/lib/server/clientes";
 import { sql } from "@/lib/server/db";
@@ -362,7 +363,7 @@ const bloqueoSchema = z.object({
 });
 
 export async function cambiarBloqueo(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
-  const sesion = await requerirSesion("SUPERADMIN", "ADMIN_CREDITOS");
+  const sesion = await requerirSesion("SUPERADMIN", ...ADMINS_AREA);
   const parsed = bloqueoSchema.safeParse(datosDe(fd));
   if (!parsed.success) return fallo("Datos no válidos.");
   const { clienteId, bloquear, motivo } = parsed.data;

@@ -1,3 +1,4 @@
+import { pagoEnArea } from "@/lib/server/areas";
 import { obtenerSesion } from "@/lib/server/auth";
 import { dbConfigurada, sql } from "@/lib/server/db";
 
@@ -20,7 +21,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const db = sql();
   const [doc] = await db<{ tipo_mime: string; nombre: string; datos: Buffer; pago_id: string }[]>`
     select tipo_mime, nombre, datos, pago_id from public.voucher_pago where id = ${id}`;
-  if (!doc) return noEncontrado();
+  if (!doc || !(await pagoEnArea(sesion, doc.pago_id))) return noEncontrado();
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
   await db`

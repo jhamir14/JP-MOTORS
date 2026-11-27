@@ -17,17 +17,11 @@ import { sql } from "./db";
 export const COOKIE_SESION = "jp_sesion";
 const DURACION_MS = 12 * 60 * 60 * 1000;
 
-import { ROLES, type Rol } from "@/lib/roles";
+import { ETIQUETA_ROL, ROLES, type Rol } from "@/lib/roles";
 import { SECCIONES, type Seccion } from "@/lib/permisos";
 import { COOKIE_PUERTA, huellaPuerta, rutaSecreta } from "@/lib/rutaPanel";
 
-export { ROLES, type Rol };
-export const ETIQUETA_ROL: Record<Rol, string> = {
-  SUPERADMIN: "Superadministrador",
-  ADMIN_CREDITOS: "Administrador de créditos",
-  ASESOR_VENTAS: "Asesor de ventas",
-  COBRADOR: "Cobrador",
-};
+export { ETIQUETA_ROL, ROLES, type Rol };
 
 export interface Sesion {
   usuarioId: string;
@@ -57,6 +51,20 @@ export async function crearSesion(usuarioId: string) {
     path: "/",
     expires: expira,
   });
+}
+
+/** Cierra las sesiones del usuario en otros dispositivos (deja abierta la de este navegador). Devuelve cuántas cerró. */
+export async function cerrarOtrasSesiones(usuarioId: string): Promise<number> {
+  const token = (await cookies()).get(COOKIE_SESION)?.value;
+  const actual = token ? hashToken(token) : "";
+  const r = await sql()`delete from public.sesion_panel where usuario_id = ${usuarioId} and token_hash <> ${actual}`;
+  return r.count;
+}
+
+/** Hash de la sesión de este navegador (para marcarla como «este dispositivo» en Mi cuenta). */
+export async function hashSesionActual(): Promise<string | null> {
+  const token = (await cookies()).get(COOKIE_SESION)?.value;
+  return token ? hashToken(token) : null;
 }
 
 export async function cerrarSesion() {

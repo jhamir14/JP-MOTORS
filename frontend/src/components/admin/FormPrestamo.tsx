@@ -118,12 +118,12 @@ export function FormPrestamo(props: PropsFormPrestamo) {
         <CampoTexto label="Fecha de entrega" name="fechaDesembolso" type="date" value={v.fechaDesembolso}
           onChange={(e) => set({ fechaDesembolso: e.target.value, primerVencimiento: vencimientoPara(e.target.value, v.frecuencia) })} />
         <CampoSelect
-          label="Asesor de ventas"
+          label="Responsable"
           name="_asesor"
           value={asesorId || props.asesorInicial}
           onChange={(e) => setAsesorId(e.target.value)}
-          opciones={props.asesores.length ? props.asesores.map((a) => ({ value: a.id, label: a.nombre })) : [{ value: "", label: "Sin asesores activos" }]}
-          hint={props.clienteId ? "Por defecto, quien registró al cliente." : undefined}
+          opciones={props.asesores.length ? props.asesores.map((a) => ({ value: a.id, label: a.nombre })) : [{ value: "", label: "Sin administradores activos" }]}
+          hint="Administrador del área a cargo de este crédito."
         />
         <CampoSelect
           label="Garante (opcional)"

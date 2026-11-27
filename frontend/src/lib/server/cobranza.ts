@@ -1,5 +1,6 @@
 import "server-only";
 import type postgres from "postgres";
+import { TIPOS_CREDITO } from "@/lib/areas";
 import { enlaceRecordatorio, mensajeRecordatorio, tipoRecordatorio, type CuotaPendiente, type TipoRecordatorio } from "@/lib/recordatorios";
 
 type Db = postgres.Sql | postgres.TransactionSql;
@@ -36,10 +37,12 @@ export async function hoyLima(db: Db): Promise<string> {
 /**
  * Créditos activos con cuotas por pagar, con el mensaje de recordatorio ya armado.
  * Con `clienteId` se limita a un cliente (ficha); sin él, toda la cartera (Cobranzas).
+ * Con `tipos`, solo esos tipos de crédito (cada administrador de área ve lo suyo: src/lib/areas.ts).
  */
-export async function creditosPorCobrar(db: Db, opciones: { clienteId?: string } = {}): Promise<{ hoy: string; creditos: CreditoPorCobrar[] }> {
+export async function creditosPorCobrar(db: Db, opciones: { clienteId?: string; tipos?: readonly string[] } = {}): Promise<{ hoy: string; creditos: CreditoPorCobrar[] }> {
   const hoy = await hoyLima(db);
   const clienteId = opciones.clienteId ?? null;
+  const tipos = [...(opciones.tipos ?? TIPOS_CREDITO)];
   const filas = await db<Omit<CreditoPorCobrar, "situacion" | "vencido" | "cuotasVencidas" | "diasAtraso" | "proxima" | "mensaje" | "whatsapp">[]>`
     select cr.id, cr.codigo, cr.tipo, cr.numero_cuotas as "numeroCuotas", cl.id as "clienteId",
            cl.nombres || ' ' || cl.apellidos as cliente, cl.telefono, cl.distrito, cl.direccion,
@@ -59,6 +62,7 @@ export async function creditosPorCobrar(db: Db, opciones: { clienteId?: string }
     left join public.unidad_celular uc on uc.id = cr.unidad_celular_id
     where cr.estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO')
       and (${clienteId}::uuid is null or cr.cliente_id = ${clienteId})
+      and cr.tipo::text = any(${tipos})
     group by cr.id, cl.id, uv.id, uc.id
     order by min(cu.fecha_vencimiento), cr.codigo`;
 

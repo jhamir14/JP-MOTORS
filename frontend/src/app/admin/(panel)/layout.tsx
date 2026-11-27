@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AdminNav, AdminNavMovil, type ItemNav } from "@/components/admin/AdminNav";
 import { CampanaCobranza } from "@/components/admin/CampanaCobranza";
 import { Logo } from "@/components/Logo";
+import { tiposDe } from "@/lib/areas";
 import { SECCIONES, seccionesDe, type Seccion } from "@/lib/permisos";
 import { ETIQUETA_ROL, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
@@ -23,7 +24,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const sesion = await requerirSesion();
   // Mora y estados del día (una vez por día; si el job programado ya corrió, no hace nada).
   await asegurarProcesoDiario();
-  const [pendientes, clavePush] = await Promise.all([leerPendientes(sql()), clavePublicaPush()]);
+  const [pendientes, clavePush] = await Promise.all([leerPendientes(sql(), tiposDe(sesion.rol)), clavePublicaPush()]);
 
   // Menú según la matriz de permisos (src/lib/permisos.ts): cada rol ve solo lo que puede abrir.
   const badges: Partial<Record<Seccion, number>> = { solicitudes: pendientes.solicitudes, cobranzas: pendientes.mora, reclamos: pendientes.reclamos };
@@ -70,7 +71,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           <Link href="/admin" aria-label="Inicio del panel" className="min-w-0 md:hidden">
             <Logo size={36} />
           </Link>
-          <div className="hidden min-w-0 md:block">{cuenta}</div>
+          <Link href="/admin/cuenta" title="Mi cuenta: datos y contraseña" className="-mx-2 hidden min-w-0 rounded-xl px-2 py-1 transition-colors hover:bg-surface-2 md:block">{cuenta}</Link>
           <div className="flex shrink-0 items-center gap-2">
             <CampanaCobranza vencenHoy={pendientes.vencen_hoy} enMora={pendientes.mora} clavePush={clavePush} />
             <form action={salir} className="hidden md:block">

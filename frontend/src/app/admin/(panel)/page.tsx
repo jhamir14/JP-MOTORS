@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Barra, Encabezado, Estado, Kpi, Panel, fechaCorta } from "@/components/admin/ui";
+import { ETIQUETA_AREA, areaDe, categoriasDe, inventariosDe, tiposDe } from "@/lib/areas";
 import { formatSoles } from "@/lib/format";
 import { puedeVerSeccion } from "@/lib/permisos";
 import { ETIQUETA_TRAMO, TRAMOS_MORA, distribucionScore, indicadores, porcentaje } from "@/lib/reportes";
@@ -19,27 +20,36 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
   const sesion = await requerirSesion();
   const { sinPermiso } = await searchParams;
   const db = sql();
+  // Cada administrador de área ve el resumen de lo suyo (src/lib/areas.ts).
+  const area = areaDe(sesion.rol);
+  const tipos = tiposDe(sesion.rol);
+  const categorias = categoriasDe(sesion.rol);
+  const inv = inventariosDe(sesion.rol);
+  const conOtros = !area;
 
   const [[kpis], cartera, solicitudes] = await Promise.all([
     db<{ productos: number; publicados: number; en_stock: number; solicitudes_nuevas: number; reclamos_abiertos: number; cuotas_hoy: number; clientes: number; incompletos: number }[]>`
-      select (select count(*) from public.producto_catalogo)::int as productos,
-             (select count(*) from public.producto_catalogo where publicado)::int as publicados,
-             ((select count(*) from public.unidad_vehiculo where estado = 'EN_STOCK') +
-              (select count(*) from public.unidad_celular where estado = 'EN_STOCK'))::int as en_stock,
-             (select count(*) from public.solicitud_credito where estado = 'NUEVA')::int as solicitudes_nuevas,
+      select (select count(*) from public.producto_catalogo where categoria::text = any(${categorias}))::int as productos,
+             (select count(*) from public.producto_catalogo where publicado and categoria::text = any(${categorias}))::int as publicados,
+             ((select count(*) from public.unidad_vehiculo where estado = 'EN_STOCK' and ${inv.includes("vehiculos")}) +
+              (select count(*) from public.unidad_celular where estado = 'EN_STOCK' and ${inv.includes("celulares")}))::int as en_stock,
+             (select count(*) from public.solicitud_credito where estado = 'NUEVA' and (servicio::text = any(${tipos}) or (servicio = 'OTRO' and ${conOtros})))::int as solicitudes_nuevas,
              (select count(*) from public.reclamo where estado <> 'RESPONDIDO')::int as reclamos_abiertos,
-             (select count(*) from public.v_cobranza where tramo = 'VENCE_HOY')::int as cuotas_hoy,
+             (select count(*) from public.v_cobranza where tramo = 'VENCE_HOY' and tipo::text = any(${tipos}))::int as cuotas_hoy,
              (select count(*) from public.cliente)::int as clientes,
              (select count(*) from public.cliente where datos_incompletos)::int as incompletos`,
     db<{ tipo: string; creditos_activos: number; creditos_en_mora: number; saldo_por_cobrar: number }[]>`
-      select tipo, creditos_activos::int, creditos_en_mora::int, saldo_por_cobrar::float8 from public.v_resumen_cartera order by tipo`,
+      select tipo, creditos_activos::int, creditos_en_mora::int, saldo_por_cobrar::float8 from public.v_resumen_cartera
+      where tipo::text = any(${tipos}) order by tipo`,
     db<{ id: string; nombres: string; apellidos: string; servicio: string; producto_interes: string | null; estado: string; created_at: Date }[]>`
       select id, nombres, apellidos, servicio, producto_interes, estado, created_at
-      from public.solicitud_credito order by created_at desc limit 5`,
+      from public.solicitud_credito where servicio::text = any(${tipos}) or (servicio = 'OTRO' and ${conOtros})
+      order by created_at desc limit 5`,
   ]);
 
   // Fase 8: indicadores financieros (solo quienes ven Reportes).
-  const verFinanzas = puedeVerSeccion(sesion.rol, "reportes");
+  // Los indicadores globales son de toda la empresa: los ve quien no tiene área (cada área los ve en Reportes, filtrados).
+  const verFinanzas = puedeVerSeccion(sesion.rol, "reportes") && !area;
   const faltaMigracion = verFinanzas && !(await reportesDisponibles(db));
   const [kpi, tramos, scores] = verFinanzas && !faltaMigracion
     ? await Promise.all([leerKpis(db), moraPorTramoHoy(db), distribucionScoreClientes(db)])
@@ -53,7 +63,7 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
     { titulo: "Productos publicados", valor: `${kpis.publicados} / ${kpis.productos}`, href: "/admin/catalogo", seccion: "catalogo" as const },
     { titulo: "Unidades en stock", valor: kpis.en_stock, href: "/admin/inventario", seccion: "inventario" as const },
     { titulo: "Reclamos abiertos", valor: kpis.reclamos_abiertos, href: "/admin/reclamos", seccion: "reclamos" as const },
-  ].filter((t) => puedeVerSeccion(sesion.rol, t.seccion));
+  ].filter((t) => puedeVerSeccion(sesion.rol, t.seccion) && (!["catalogo", "inventario"].includes(t.seccion) || inv.length > 0));
 
   return (
     <>
@@ -62,7 +72,9 @@ export default async function AdminInicio({ searchParams }: { searchParams: Prom
           Tu rol no tiene acceso a esa sección.
         </p>
       )}
-      <Encabezado titulo={`Hola, ${sesion.nombres}`}>Resumen del día en Inversiones JP.</Encabezado>
+      <Encabezado titulo={`Hola, ${sesion.nombres}`}>
+        {area ? <>Resumen del día de tu área: <strong className="text-fg">{ETIQUETA_AREA[area]}</strong>.</> : "Resumen del día en Inversiones JP."}
+      </Encabezado>
 
       <nav aria-label="Accesos rápidos de cobranza" className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         {[

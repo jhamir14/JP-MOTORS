@@ -1,6 +1,7 @@
 import { textoDocumento } from "@/lib/clientes";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { creditoEnArea } from "@/lib/server/areas";
 import { FormPago } from "@/components/admin/FormPago";
 import { Encabezado, Panel, Vacio } from "@/components/admin/ui";
 import { ETIQUETA_SERVICIO } from "@/lib/admin/constantes";
@@ -16,6 +17,8 @@ export default async function PagarPage({ params }: { params: Promise<{ id: stri
   const sesion = await requerirSesion();
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
+  // Cada administrador de área solo abre lo suyo.
+  if (!(await creditoEnArea(sesion, id))) notFound();
   const db = sql();
   const [cr] = await db<{ codigo: string; tipo: keyof typeof ETIQUETA_SERVICIO; estado: string; cliente: string; documento: string; telefono: string | null; penalidad: number }[]>`
     select cr.codigo, cr.tipo, cr.estado, cl.nombres || ' ' || cl.apellidos as cliente, cl.numero_documento as documento, cl.telefono,

@@ -1,3 +1,4 @@
+import { creditoEnArea } from "@/lib/server/areas";
 import { obtenerSesion } from "@/lib/server/auth";
 import { dbConfigurada, sql } from "@/lib/server/db";
 import { UUID_RE, auditarDescarga, noEncontrado } from "@/lib/server/documentos";
@@ -14,9 +15,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!dbConfigurada || !UUID_RE.test(id)) return noEncontrado();
   const sesion = await obtenerSesion();
   if (!sesion) return noEncontrado();
-  const [doc] = await sql()<{ tipo_mime: string; nombre: string; datos: Buffer }[]>`
-    select tipo_mime, nombre, datos from public.documento_credito where id = ${id}`;
-  if (!doc) return noEncontrado();
+  const [doc] = await sql()<{ tipo_mime: string; nombre: string; datos: Buffer; credito_id: string }[]>`
+    select tipo_mime, nombre, datos, credito_id from public.documento_credito where id = ${id}`;
+  if (!doc || !(await creditoEnArea(sesion, doc.credito_id))) return noEncontrado();
   await auditarDescarga({ tabla: "documento_credito", registroId: id, documento: "FIRMADO", usuarioId: sesion.usuarioId, req });
 
   const nombre = doc.nombre.replace(/[^\w.\- ]+/g, "_");

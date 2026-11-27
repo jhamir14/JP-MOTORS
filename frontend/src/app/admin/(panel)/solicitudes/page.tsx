@@ -4,6 +4,7 @@ import { CampoArea, CampoSelect, Encabezado, Estado, Vacio, fechaCorta } from "@
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
 import { whatsappLink } from "@/lib/whatsapp";
+import { areaDe, tiposDe } from "@/lib/areas";
 import { requerirSeccion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { ESTADOS_SOLICITUD } from "@/lib/admin/constantes";
@@ -31,6 +32,9 @@ interface Fila {
 
 export default async function SolicitudesPage({ searchParams }: { searchParams: Promise<{ estado?: string }> }) {
   const sesion = await requerirSeccion("solicitudes");
+  // Cada administrador de área atiende las solicitudes de su servicio.
+  const area = areaDe(sesion.rol);
+  const tipos = tiposDe(sesion.rol);
   const convierte = puedeEditarKyc(sesion.rol);
   const correoListo = correoConfigurado();
   const { estado } = await searchParams;
@@ -44,7 +48,8 @@ export default async function SolicitudesPage({ searchParams }: { searchParams: 
               and c.numero_documento = upper(regexp_replace(s.numero_documento, '[[:space:].-]', '', 'g'))
             limit 1) as cliente_existente
     from public.solicitud_credito s
-    where ${filtro}::text is null or estado::text = ${filtro}
+    where (${filtro}::text is null or estado::text = ${filtro})
+      and (servicio::text = any(${tipos}) or (servicio = 'OTRO' and ${!area}))
     order by created_at desc
     limit 200`;
 

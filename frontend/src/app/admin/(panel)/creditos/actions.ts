@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { datosDe, erroresZod, fallo, mensajeErrorBD, type EstadoAccion } from "@/lib/admin/accion";
 import { ROLES_CREDITOS, TIPOS_CREDITO_NUEVO, errorMotivoAnulacion, planCredito, validarCredito, type EntradaCredito, type ReglasCredito } from "@/lib/creditos";
+import { ETIQUETA_AREA, areaDe, puedeVerTipo } from "@/lib/areas";
 import { FRECUENCIAS, TIPOS_CALCULO } from "@/lib/finance";
 import { comoUsuario, requerirSesion } from "@/lib/server/auth";
 import { configCreditos } from "@/lib/server/creditos";
@@ -71,6 +72,7 @@ export async function crearCredito(_prev: EstadoAccion, fd: FormData): Promise<E
   const p = altaSchema.safeParse({ ...datos, confirmo: datos.confirmo ?? "" });
   if (!p.success) return fallo("Revisa los campos marcados.", erroresZod(p.error));
   const d = p.data;
+  if (!puedeVerTipo(sesion.rol, d.tipo)) return fallo(`Tu área es ${ETIQUETA_AREA[areaDe(sesion.rol)!]}: no puedes registrar este tipo de crédito.`);
   const db = sql();
 
   const entrada: EntradaCredito = {
@@ -216,6 +218,7 @@ export async function crearPrestamo(_prev: EstadoAccion, fd: FormData): Promise<
   const p = prestamoSchema.safeParse({ ...datos, confirmo: datos.confirmo ?? "" });
   if (!p.success) return fallo("Revisa los campos marcados.", erroresZod(p.error));
   const d = p.data;
+  if (!puedeVerTipo(sesion.rol, "PRESTAMO_EFECTIVO")) return fallo(`Tu área es ${ETIQUETA_AREA[areaDe(sesion.rol)!]}: los préstamos de dinero los registra el administrador de créditos.`);
   const db = sql();
 
   const entrada: EntradaCredito = {
@@ -302,10 +305,10 @@ export async function anularCredito(_prev: EstadoAccion, fd: FormData): Promise<
 
   try {
     const r = await comoUsuario(sesion, async (tx) => {
-      const [cr] = await tx<{ estado: string; pagado: number }[]>`
-        select cr.estado, coalesce((select sum(cu.monto_pagado) from public.cuota cu where cu.credito_id = cr.id), 0)::float8 as pagado
+      const [cr] = await tx<{ estado: string; tipo: string; pagado: number }[]>`
+        select cr.estado, cr.tipo::text, coalesce((select sum(cu.monto_pagado) from public.cuota cu where cu.credito_id = cr.id), 0)::float8 as pagado
         from public.credito cr where cr.id = ${p.data.creditoId} for update`;
-      if (!cr) return "El crédito no existe.";
+      if (!cr || !puedeVerTipo(sesion.rol, cr.tipo)) return "El crédito no existe.";
       if (cr.estado === "ANULADO") return "El crédito ya estaba anulado.";
       if (cr.estado === "FINALIZADO_LIQUIDADO") return "Un crédito cancelado no se puede anular.";
       if (cr.pagado > 0) return "El crédito tiene pagos aplicados a sus cuotas: no se puede anular.";

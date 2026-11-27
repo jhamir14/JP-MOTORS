@@ -11,6 +11,7 @@ import {
   legible,
   opcionesLegibles,
 } from "@/lib/admin/constantes";
+import { inventariosDe } from "@/lib/areas";
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
 import { puede, requerirSeccion } from "@/lib/server/auth";
@@ -45,11 +46,13 @@ function FormEstado({ id, tipo, estado }: { id: string; tipo: "vehiculo" | "celu
 export default async function InventarioPage({ searchParams }: { searchParams: Promise<{ tipo?: string; producto?: string; estado?: string }> }) {
   const sesion = await requerirSeccion("inventario");
   const sp = await searchParams;
-  const tipo = sp.tipo === "celulares" ? "celulares" : "vehiculos";
+  // Cada administrador ve solo su inventario: motos o celulares.
+  const inventarios = inventariosDe(sesion.rol);
+  const tipo = inventarios.length === 1 ? inventarios[0] : sp.tipo === "celulares" ? "celulares" : "vehiculos";
   const producto = /^[0-9a-f-]{36}$/.test(sp.producto ?? "") ? sp.producto! : null;
   const estado = sp.estado === "todos" ? null : (sp.estado ?? "EN_STOCK");
   const db = sql();
-  const puedeIngresar = puede(sesion, "SUPERADMIN", "ADMIN_CREDITOS", "ASESOR_VENTAS");
+  const puedeIngresar = puede(sesion, "SUPERADMIN", "ADMIN_MOTOS", "ADMIN_CELULARES", "ASESOR_VENTAS") && inventarios.includes(tipo);
 
   const [productos, conteo] = await Promise.all([
     db<{ id: string; nombre: string; categoria: string }[]>`
@@ -95,7 +98,7 @@ export default async function InventarioPage({ searchParams }: { searchParams: P
       </Encabezado>
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        {(["vehiculos", "celulares"] as const).map((t) => (
+        {inventarios.length > 1 && (["vehiculos", "celulares"] as const).map((t) => (
           <Link
             key={t}
             href={enlace({ tipo: t, producto: null })}
@@ -104,7 +107,7 @@ export default async function InventarioPage({ searchParams }: { searchParams: P
             {t === "vehiculos" ? `Motos y trimóviles (${conteo[0].vehiculos})` : `Celulares (${conteo[0].celulares})`}
           </Link>
         ))}
-        <span className="mx-2 hidden h-6 w-px bg-line md:block" />
+        {inventarios.length > 1 && <span className="mx-2 hidden h-6 w-px bg-line md:block" />}
         {[{ v: null, l: "En stock" }, { v: "todos", l: "Todos" }, { v: "RESERVADO", l: "Reservados" }, { v: "VENDIDO_CREDITO", l: "Vendidos a crédito" }].map((o) => (
           <Link
             key={o.l}

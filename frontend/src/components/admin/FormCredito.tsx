@@ -22,6 +22,8 @@ export interface PropsFormCredito {
   /** Equipo de ventas para el campo «Asesor de ventas». */
   asesores: { id: string; nombre: string }[];
   asesorInicial: string;
+  /** Tipos que puede registrar quien está en sesión (un administrador de área, solo el suyo). */
+  tiposPermitidos: TipoCreditoNuevo[];
   /** Motivo por el que no se puede registrar (cliente bloqueado, mora…). */
   bloqueo?: string | null;
   unidades: Unidad[];
@@ -47,7 +49,8 @@ export function FormCredito(props: PropsFormCredito) {
   const feriados = useMemo(() => new Set(props.feriados), [props.feriados]);
   // "" = el asesor por defecto del cliente (cambia al elegir otro cliente).
   const [asesorId, setAsesorId] = useState("");
-  const [tipo, setTipo] = useState<TipoCreditoNuevo>(() => (unidades.some((u) => u.tipo === "vehiculo") ? "CREDITO_VEHICULAR" : "CREDITO_CELULAR"));
+  const [tipo, setTipo] = useState<TipoCreditoNuevo>(() =>
+    props.tiposPermitidos.length === 1 ? props.tiposPermitidos[0] : unidades.some((u) => u.tipo === "vehiculo") ? "CREDITO_VEHICULAR" : "CREDITO_CELULAR");
   const tasasTipo = tasas.filter((t) => t.servicio === tipo);
   const tasaInicial = tasasTipo[0];
 
@@ -181,8 +184,8 @@ export function FormCredito(props: PropsFormCredito) {
         <fieldset className="grid gap-3 rounded-2xl border border-line-soft bg-surface p-5 shadow-card">
           <legend className="sr-only">Producto</legend>
           <h2 className="text-lg">1 · ¿Qué se lleva?</h2>
-          <div role="radiogroup" aria-label="Tipo de crédito" className="grid grid-cols-2 gap-2">
-            {(["CREDITO_VEHICULAR", "CREDITO_CELULAR"] as const).map((t) => (
+          {props.tiposPermitidos.length > 1 && <div role="radiogroup" aria-label="Tipo de crédito" className="grid grid-cols-2 gap-2">
+            {props.tiposPermitidos.map((t) => (
               <button
                 key={t}
                 type="button"
@@ -197,7 +200,7 @@ export function FormCredito(props: PropsFormCredito) {
                 {t === "CREDITO_VEHICULAR" ? "🏍 Moto / motokar / torito" : "📱 Celular"}
               </button>
             ))}
-          </div>
+          </div>}
           <CampoSelect
             label="Unidad en stock"
             name="unidadId"
@@ -223,12 +226,12 @@ export function FormCredito(props: PropsFormCredito) {
           )}
           {planesUnidad.length === 0 && <input type="hidden" name="planId" value="" />}
           <CampoSelect
-            label="Asesor de ventas"
+            label="Responsable"
             name="_asesor"
             value={asesorId || props.asesorInicial}
             onChange={(e) => setAsesorId(e.target.value)}
-            opciones={props.asesores.length ? props.asesores.map((a) => ({ value: a.id, label: a.nombre })) : [{ value: "", label: "Sin asesores activos" }]}
-            hint={props.clienteId ? "Por defecto, quien registró al cliente." : undefined}
+            opciones={props.asesores.length ? props.asesores.map((a) => ({ value: a.id, label: a.nombre })) : [{ value: "", label: "Sin administradores activos" }]}
+            hint="Administrador del área a cargo de este crédito."
           />
           <CampoSelect
             label={`Garante${tipo === "CREDITO_VEHICULAR" && props.vehicularExigeGarante ? " (obligatorio)" : " (opcional)"}`}

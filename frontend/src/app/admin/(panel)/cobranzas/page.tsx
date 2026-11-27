@@ -3,6 +3,7 @@ import { BotonRecordatorio } from "@/components/admin/BotonRecordatorio";
 import { Encabezado, Panel, Tabla, Vacio } from "@/components/admin/ui";
 import { Badge } from "@/components/ui";
 import { ETIQUETA_SERVICIO } from "@/lib/admin/constantes";
+import { ETIQUETA_AREA, areaDe, tiposDe } from "@/lib/areas";
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
 import { ETIQUETA_METODO, TRAMOS_MORA, tramoMora, type MetodoPago, type TramoMora } from "@/lib/pagos";
@@ -37,13 +38,16 @@ interface PagoHoy {
 }
 
 export default async function CobranzasPage({ searchParams }: { searchParams: Promise<{ ver?: string; tramo?: string }> }) {
-  await requerirSesion();
+  const sesion = await requerirSesion();
+  // Cada administrador de área cobra solo lo suyo (préstamos, motos o celulares).
+  const tipos = tiposDe(sesion.rol);
+  const area = areaDe(sesion.rol);
   const { ver, tramo: tramoParam } = await searchParams;
   const pestana: Pestana = PESTANAS.some((p) => p.id === ver) ? (ver as Pestana) : "hoy";
   const tramo = TRAMOS_MORA.some((t) => t.id === tramoParam) ? (tramoParam as TramoMora) : null;
   const db = sql();
   const [{ hoy, creditos }, pagosHoy] = await Promise.all([
-    creditosPorCobrar(db),
+    creditosPorCobrar(db, { tipos }),
     db<PagoHoy[]>`
       select p.id, p.numero_recibo::text, cr.id as credito_id, cr.codigo, cl.id as cliente_id, cl.nombres || ' ' || cl.apellidos as cliente,
              p.monto::float8, p.metodo, nullif(trim(coalesce(u.nombres, '') || ' ' || coalesce(u.apellidos, '')), '') as registrado_por, p.created_at
@@ -51,7 +55,7 @@ export default async function CobranzasPage({ searchParams }: { searchParams: Pr
       join public.credito cr on cr.id = p.credito_id
       join public.cliente cl on cl.id = cr.cliente_id
       left join public.perfil_usuario u on u.id = p.registrado_por
-      where p.fecha_pago = public.hoy_lima() and not p.anulado
+      where p.fecha_pago = public.hoy_lima() and not p.anulado and cr.tipo::text = any(${tipos})
       order by p.created_at desc`,
   ]);
   const conteo = Object.fromEntries(PESTANAS.map((p) => [p.id, creditos.filter((c) => filtrar(c, p.id, hoy)).length])) as Record<Pestana, number>;
@@ -66,7 +70,7 @@ export default async function CobranzasPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <Encabezado titulo="Cobranzas">
+      <Encabezado titulo={area ? `Cobranzas · ${ETIQUETA_AREA[area]}` : "Cobranzas"}>
         {fechaLarga(hoy).replace(/^./, (l) => l.toUpperCase())} · Envía el recordatorio por WhatsApp al celular del cliente con el mensaje ya
         escrito y registra los pagos con «Cobrar». Vencido en cartera: <strong className="text-fg">{formatSoles(totalVencido, true)}</strong> ·
         cobrado hoy: <strong className="text-fg">{formatSoles(cobradoHoy, true)}</strong>.
