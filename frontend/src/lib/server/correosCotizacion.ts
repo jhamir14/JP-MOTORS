@@ -18,6 +18,8 @@ export interface DatosCotizacion {
   correo: string;
   producto: { nombre: string; slug: string; imagen?: string };
   resultado: ResultadoCotizacion;
+  /** WhatsApp del asesor del área (celulares o motos); si falta, el número general. */
+  whatsappAsesor?: string;
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -149,7 +151,7 @@ export function correoCotizacionCliente(d: DatosCotizacion, nota?: string): Corr
       intro: `Gracias por cotizar con nosotros. Un asesor revisará tu solicitud y te contactará por WhatsApp. Si tienes dudas, responde a este correo.${notaHtml}`,
       d,
       botones:
-        boton(whatsappLink(mensaje), "Continuar por WhatsApp", "#e7b24a", "#050e24") +
+        boton(whatsappLink(mensaje, d.whatsappAsesor), "Continuar por WhatsApp", "#e7b24a", "#050e24") +
         boton(`${base()}/catalogo/${d.producto.slug}`, "Ver el producto", "#0b1530", "#ffffff"),
       pie: avisoLegal,
     }),
@@ -159,7 +161,7 @@ export function correoCotizacionCliente(d: DatosCotizacion, nota?: string): Corr
       "",
       textoResumen(d),
       "",
-      `Continúa por WhatsApp: ${whatsappLink(mensaje)}`,
+      `Continúa por WhatsApp: ${whatsappLink(mensaje, d.whatsappAsesor)}`,
       "",
       avisoLegal,
     ].join("\n"),

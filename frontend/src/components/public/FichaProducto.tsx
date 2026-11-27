@@ -4,7 +4,7 @@ import { IconArrowRight, IconCheck, IconWhatsApp } from "@/components/icons";
 import { CATALOGOS, catalogoDeLinea, esVehiculo, hrefLinea, hrefProducto, lineaDe, resultadoPlan, type Producto } from "@/lib/catalogo";
 import { ETIQUETA_FRECUENCIA } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
-import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
+import { whatsappDeArea, whatsappLink, whatsappMessages } from "@/lib/whatsapp";
 import { ProductoCard } from "./ProductoCard";
 import { ProductoImagen, sobreNegro } from "./ProductoImagen";
 
@@ -106,7 +106,7 @@ export function FichaProducto({ producto, relacionados }: { producto: Producto; 
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a
-                  href={whatsappLink(vehiculo ? whatsappMessages.financiamiento(producto.nombre) : whatsappMessages.producto(producto.nombre))}
+                  href={whatsappLink(vehiculo ? whatsappMessages.financiamiento(producto.nombre) : whatsappMessages.producto(producto.nombre), whatsappDeArea(producto))}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-oro"

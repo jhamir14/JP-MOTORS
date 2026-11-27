@@ -6,6 +6,7 @@ import { obtenerCatalogo, obtenerTasasPublicas } from "@/lib/server/catalogo";
 import { dbConfigurada, sql } from "@/lib/server/db";
 import { ipDe, permitirIntentoCompartido } from "@/lib/server/limite";
 import { servicioDeProducto } from "@/lib/catalogo";
+import { whatsappDeArea } from "@/lib/whatsapp";
 import { erroresPorCampo } from "@/schemas/solicitudCredito";
 
 /**
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
     correo: f.correo,
     producto: { nombre: producto.nombre, slug: producto.slug, imagen: producto.imagenes[0]?.url },
     resultado,
+    whatsappAsesor: whatsappDeArea(producto),
   };
 
   const guardar = async () => {
