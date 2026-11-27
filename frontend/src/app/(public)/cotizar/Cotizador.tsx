@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { IconArrowRight, IconCheck, IconWhatsApp } from "@/components/icons";
+import { IconArrowRight, IconCheck, IconSearch, IconWhatsApp } from "@/components/icons";
 import { ProductoImagen, fotoSobreNegro } from "@/components/public/ProductoImagen";
-import { LINEAS, hrefLinea, lineaDe, type LineaId, type Producto, type TasaPublica } from "@/lib/catalogo";
+import { LINEAS, hrefLinea, lineaDe, normalizarTexto, type LineaId, type Producto, type TasaPublica } from "@/lib/catalogo";
 import { cn } from "@/lib/cn";
 import {
   cotizar,
@@ -40,6 +40,8 @@ export function Cotizador({ productos, tasas, slugInicial }: Props) {
   const primero = cotizables.find((p) => p.slug === slugInicial) ?? cotizables.find((p) => p.destacado) ?? cotizables[0];
   const [slug, setSlug] = useState(primero?.slug ?? "");
   const [linea, setLinea] = useState<LineaId>(primero ? lineaDe(primero).id : "motos");
+  const [busqueda, setBusqueda] = useState("");
+  const [marca, setMarca] = useState<string | null>(null);
   const producto = cotizables.find((p) => p.slug === slug) ?? primero;
   const reglas = useMemo(() => (producto ? reglasCotizacion(producto, tasas) : null), [producto, tasas]);
   const [sel, setSel] = useState<Seleccion | null>(() => (producto && reglas ? seleccionInicial(producto, reglas) : null));
@@ -147,7 +149,12 @@ export function Cotizador({ productos, tasas, slugInicial }: Props) {
     }
   };
 
-  const enLinea = cotizables.filter((p) => lineaDe(p).id === linea);
+  // Buscador: con texto busca en todas las líneas (marca, modelo o precio); sin texto, la línea elegida.
+  const termino = normalizarTexto(busqueda);
+  const marcasLinea = Array.from(new Set(cotizables.filter((p) => lineaDe(p).id === linea).map((p) => p.marca))).sort();
+  const enLinea = termino
+    ? cotizables.filter((p) => termino.split(/\s+/).every((t) => normalizarTexto(`${p.marca} ${p.nombre} ${p.modelo} ${p.precio}`).includes(t)))
+    : cotizables.filter((p) => lineaDe(p).id === linea && (!marca || p.marca === marca));
   const etq = ETIQUETA_FRECUENCIA[sel.frecuencia];
   const pctInicial = Math.round((sel.inicial / producto.precio) * 100);
   const rangoInicial = reglas.inicialMax > reglas.inicialMin;
@@ -165,11 +172,15 @@ export function Cotizador({ productos, tasas, slugInicial }: Props) {
                   key={l.id}
                   type="button"
                   role="tab"
-                  aria-selected={linea === l.id}
-                  onClick={() => setLinea(l.id)}
+                  aria-selected={linea === l.id && !termino}
+                  onClick={() => {
+                    setLinea(l.id);
+                    setMarca(null);
+                    setBusqueda("");
+                  }}
                   className={cn(
                     "rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition-colors",
-                    linea === l.id ? "bg-noche text-white" : "text-pizarra hover:text-tinta",
+                    linea === l.id && !termino ? "bg-noche text-white" : "text-pizarra hover:text-tinta",
                   )}
                 >
                   {l.nombre}
@@ -177,7 +188,63 @@ export function Cotizador({ productos, tasas, slugInicial }: Props) {
               ))}
             </div>
 
-            <ul className="-mx-1 mt-4 flex snap-x gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:thin]">
+            <div className="mt-4 flex flex-col gap-3">
+              <label className="relative block">
+                <span className="sr-only">Buscar modelo</span>
+                <IconSearch size={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-pizarra" />
+                <input
+                  type="text"
+                  inputMode="search"
+                  enterKeyHint="search"
+                  aria-label="Buscar modelo"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  onKeyDown={(e) => {
+                    // Enter elige el primer resultado.
+                    if (e.key === "Enter" && enLinea[0]) {
+                      e.preventDefault();
+                      elegir(enLinea[0]);
+                      setLinea(lineaDe(enLinea[0]).id);
+                      setBusqueda("");
+                    }
+                  }}
+                  placeholder="Busca tu modelo: iPhone 16, Galaxy A56, Honor…"
+                  autoComplete="off"
+                  className="w-full rounded-full border border-tinta/12 bg-white py-3 pr-10 pl-11 text-[0.95rem] text-tinta outline-none transition placeholder:text-pizarra/60 focus:border-oro focus:ring-4 focus:ring-oro/20"
+                />
+                {busqueda && (
+                  <button type="button" onClick={() => setBusqueda("")} aria-label="Borrar búsqueda"
+                    className="absolute top-1/2 right-3 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-pizarra hover:bg-niebla hover:text-tinta">
+                    ✕
+                  </button>
+                )}
+              </label>
+              {!termino && marcasLinea.length > 1 && (
+                <div aria-label="Filtrar por marca" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
+                  {[null, ...marcasLinea].map((m) => (
+                    <button
+                      key={m ?? "todas"}
+                      type="button"
+                      aria-pressed={marca === m}
+                      onClick={() => setMarca(m)}
+                      className={cn(
+                        "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors",
+                        marca === m ? "border-oro bg-oro/15 text-tinta" : "border-tinta/10 text-pizarra hover:border-tinta/25 hover:text-tinta",
+                      )}
+                    >
+                      {m ?? "Todas"}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {termino && (
+                <p className="text-xs text-pizarra" aria-live="polite">
+                  {enLinea.length ? `${enLinea.length} modelo${enLinea.length === 1 ? "" : "s"} · toca uno o pulsa Enter para elegir el primero` : "Ningún modelo coincide. Prueba con la marca o parte del nombre."}
+                </p>
+              )}
+            </div>
+
+            <ul className="-mx-1 mt-3 flex snap-x gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:thin]">
               {enLinea.map((p) => {
                 const activo = p.slug === producto.slug;
                 return (
@@ -185,7 +252,14 @@ export function Cotizador({ productos, tasas, slugInicial }: Props) {
                     <button
                       type="button"
                       aria-pressed={activo}
-                      onClick={() => elegir(p)}
+                      onClick={() => {
+                        elegir(p);
+                        if (termino) {
+                          setLinea(lineaDe(p).id);
+                          setBusqueda("");
+                          setMarca(null);
+                        }
+                      }}
                       className={cn(
                         "flex w-[9.5rem] flex-col overflow-hidden rounded-2xl border-2 bg-white text-left transition-[border-color,transform] duration-300 hover:-translate-y-0.5",
                         activo ? "border-oro shadow-[0_14px_30px_-18px_rgba(231,178,74,0.9)]" : "border-tinta/[0.07] hover:border-tinta/20",
