@@ -7,6 +7,7 @@ import { CapturarUbicacion } from "@/components/admin/Gps";
 import { ScoreCliente } from "@/components/admin/ScoreCliente";
 import { SubirDocumento } from "@/components/admin/SubirDocumento";
 import { BotonRecordatorio } from "@/components/admin/BotonRecordatorio";
+import { EnlaceWhatsApp } from "@/components/admin/EnlaceWhatsApp";
 import { CampoArea, CampoSelect, CampoTexto, Encabezado, Estado, Panel, Tabla, Vacio, fechaCorta } from "@/components/admin/ui";
 import { Badge, ButtonLink } from "@/components/ui";
 import { ETIQUETA_SERVICIO, legible } from "@/lib/admin/constantes";
@@ -207,7 +208,7 @@ export default async function FichaClientePage({
           <>
             {cliente.telefono && (
               <>
-                <a href={whatsappLink(`Hola ${cliente.nombres.split(" ")[0]}, te escribimos de Inversiones JP.`, `51${cliente.telefono}`)} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-whatsapp px-4 py-2.5 text-sm font-semibold text-white">WhatsApp</a>
+                <EnlaceWhatsApp href={whatsappLink(`Hola ${cliente.nombres.split(" ")[0]}, te escribimos de Inversiones JP.`, `51${cliente.telefono}`)} className="rounded-xl bg-whatsapp px-4 py-2.5 text-sm font-semibold text-white">WhatsApp</EnlaceWhatsApp>
                 <a href={`tel:+51${cliente.telefono}`} className="rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold hover:border-brand">Llamar</a>
               </>
             )}

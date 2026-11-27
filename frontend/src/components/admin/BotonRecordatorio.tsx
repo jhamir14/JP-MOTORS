@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { useWhatsAppNormal } from "./EnlaceWhatsApp";
 
 /**
  * Abre WhatsApp con el recordatorio de pago ya escrito para el celular del cliente
- * y deja constancia en el panel (quién lo envió y cuándo).
+ * y deja constancia en el panel (quién lo envió y cuándo). En celulares con WhatsApp y WhatsApp Business
+ * se abre siempre el WhatsApp normal.
  */
 export function BotonRecordatorio({
   href,
@@ -22,6 +24,7 @@ export function BotonRecordatorio({
   className?: string;
 }) {
   const [enviado, setEnviado] = useState(false);
+  const wa = useWhatsAppNormal(href);
   const texto = tipo === "MORA" ? "Recordar pago vencido" : tipo === "VENCE_HOY" ? "Recordar cuota de hoy" : "Enviar recordatorio";
   const fecha = ultimo
     ? new Date(ultimo.fecha).toLocaleString("es-PE", { timeZone: "America/Lima", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
@@ -29,11 +32,10 @@ export function BotonRecordatorio({
 
   return (
     <div className={cn("grid justify-items-start gap-1", className)}>
-      {href ? (
+      {wa.href ? (
         <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={wa.href}
+          {...(wa.nuevaPestana ? { target: "_blank", rel: "noopener noreferrer" } : {})}
           onClick={() => {
             setEnviado(true);
             void registrar(creditoId, tipo);

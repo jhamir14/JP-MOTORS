@@ -4,7 +4,7 @@ import { FormCredito } from "@/components/admin/FormCredito";
 import { FormPrestamo } from "@/components/admin/FormPrestamo";
 import { ScoreCliente } from "@/components/admin/ScoreCliente";
 import { Badge } from "@/components/ui";
-import { areaDe } from "@/lib/areas";
+import { areaDe, tiposDe } from "@/lib/areas";
 import { ROLES_CREDITOS } from "@/lib/creditos";
 import { ETIQUETA_ESTADO_CLIENTE, faltantesCliente, type DatosKyc, type EstadoCliente } from "@/lib/clientes";
 import { ETIQUETA_ROL, requerirSesion } from "@/lib/server/auth";
@@ -16,7 +16,7 @@ import { evaluarCliente, describirBeneficio } from "@/lib/scoring";
 import { configBeneficios, perfilParaCredito, perfilScore } from "@/lib/server/scoring";
 import { crearCredito, crearPrestamo } from "../actions";
 import { BuscadorCliente } from "../BuscadorCliente";
-import { PestanasTipo } from "../PestanasTipo";
+import { PestanasTipo, tipoDeVista, vistaDeParam, vistaDeTipo, type Vista } from "../PestanasTipo";
 
 export const metadata = { title: "Nuevo crédito" };
 
@@ -31,7 +31,9 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
   const sesion = await requerirSesion(...ROLES_CREDITOS);
   const sp = await searchParams;
   const area = areaDe(sesion.rol);
-  const prestamo = area ? area === "PRESTAMO_EFECTIVO" : sp.tipo === "prestamo";
+  const vista: Vista = area ? vistaDeTipo(area) : (vistaDeParam(sp.tipo) ?? "motos");
+  const prestamo = vista === "prestamo";
+  const tipoProducto = tipoDeVista(vista);
   const db = sql();
   const clienteId = /^[0-9a-f-]{36}$/.test(sp.cliente ?? "") ? sp.cliente! : null;
 
@@ -42,7 +44,7 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
     db<{ id: string; nombre: string; rol: keyof typeof ETIQUETA_ROL }[]>`
       select p.id, p.nombres || ' ' || p.apellidos as nombre, p.rol
       from public.perfil_usuario p join auth.users u on u.id = p.id and u.activo
-      where p.activo and p.rol::text = any(${area ? ["SUPERADMIN", sesion.rol] : prestamo ? ["SUPERADMIN", "ADMIN_CREDITOS"] : ["SUPERADMIN", "ADMIN_MOTOS", "ADMIN_CELULARES", "ASESOR_VENTAS"]})
+      where p.activo and p.rol::text = any(${area ? ["SUPERADMIN", sesion.rol] : prestamo ? ["SUPERADMIN", "ADMIN_CREDITOS"] : ["SUPERADMIN", vista === "motos" ? "ADMIN_MOTOS" : "ADMIN_CELULARES", "ASESOR_VENTAS"]})
       order by (p.rol = 'SUPERADMIN'), p.rol, p.nombres, p.apellidos`,
     clienteId
       ? db<ClienteAlta[]>`
@@ -136,23 +138,24 @@ export default async function NuevoCreditoPage({ searchParams }: { searchParams:
 
   return (
     <>
-      <Link href={prestamo ? "/admin/creditos?tipo=prestamo" : "/admin/creditos"} className="text-sm font-medium text-muted hover:text-brand">
-        ← {prestamo ? "Préstamos" : "Créditos"}
+      <Link href={`/admin/creditos?tipo=${vista}`} className="text-sm font-medium text-muted hover:text-brand">
+        ← {prestamo ? "Préstamos" : vista === "motos" ? "Créditos de motos" : "Créditos de celulares"}
       </Link>
-      <Encabezado titulo={prestamo ? "Nuevo préstamo de dinero" : "Nuevo crédito"}>
+      <Encabezado titulo={prestamo ? "Nuevo préstamo de dinero" : vista === "motos" ? "Nuevo crédito de moto" : "Nuevo crédito de celular"}>
         Todo en una sola pantalla: busca al cliente, completa {prestamo ? "el monto y las cuotas" : "la unidad, el precio y las cuotas"} y confirma.
       </Encabezado>
-      {!area && <PestanasTipo activo={prestamo ? "prestamo" : "credito"} base="/admin/creditos/nuevo" cliente={cliente?.id} />}
+      <PestanasTipo activo={vista} base="/admin/creditos/nuevo" cliente={cliente?.id} visibles={tiposDe(sesion.rol)} />
       {panelCliente}
       {prestamo ? (
         <FormPrestamo action={crearPrestamo} tasas={opciones.tasas.filter((t) => t.servicio === "PRESTAMO_EFECTIVO")} {...comunes} />
       ) : (
         <FormCredito
           action={crearCredito}
-          unidades={opciones.unidades.filter((u) => !area || u.tipo === (area === "CREDITO_VEHICULAR" ? "vehiculo" : "celular"))}
+          key={tipoProducto}
+          unidades={opciones.unidades.filter((u) => u.tipo === (tipoProducto === "CREDITO_VEHICULAR" ? "vehiculo" : "celular"))}
           planes={opciones.planes}
           tasas={opciones.tasas.filter((t) => t.servicio !== "PRESTAMO_EFECTIVO")}
-          tiposPermitidos={area === "CREDITO_VEHICULAR" || area === "CREDITO_CELULAR" ? [area] : ["CREDITO_VEHICULAR", "CREDITO_CELULAR"]}
+          tiposPermitidos={[tipoProducto as "CREDITO_VEHICULAR" | "CREDITO_CELULAR"]}
           vehicularExigeGarante={config.vehicularExigeGarante}
           beneficio={evaluacion?.nivel ?? null}
           puntaje={perfil?.puntaje ?? null}
