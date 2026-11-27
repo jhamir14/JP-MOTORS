@@ -16,7 +16,7 @@ import {
 } from "@/lib/cotizacion";
 import { ETIQUETA_FRECUENCIA } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
-import { whatsappLink } from "@/lib/whatsapp";
+import { whatsappDeArea, whatsappLink } from "@/lib/whatsapp";
 
 interface Props {
   productos: Producto[];
@@ -406,7 +406,7 @@ export function Cotizador({ productos, tasas, slugInicial }: Props) {
                     Un asesor te escribirá por WhatsApp.
                     {envio.copiaEnviada ? ` También te enviamos una copia a ${envio.correo}.` : ""} Si quieres avanzar ahora, escríbenos:
                   </p>
-                  <a href={whatsappLink(envio.mensaje)} target="_blank" rel="noopener noreferrer" className="btn-oro mt-6 w-full sm:w-auto">
+                  <a href={whatsappLink(envio.mensaje, whatsappDeArea(producto))} target="_blank" rel="noopener noreferrer" className="btn-oro mt-6 w-full sm:w-auto">
                     <IconWhatsApp size={18} /> Continuar por WhatsApp
                   </a>
                   <div className="mt-4 flex flex-col items-center gap-2 text-sm sm:flex-row sm:justify-center sm:gap-5">
@@ -475,7 +475,7 @@ export function Cotizador({ productos, tasas, slugInicial }: Props) {
                   <p className="mt-3 text-center text-xs text-pizarra">
                     ¿Prefieres hablar ya?{" "}
                     <a
-                      href={resultado ? whatsappLink(mensajeWhatsAppCotizacion(producto.nombre, resultado)) : whatsappLink("Hola")}
+                      href={whatsappLink(resultado ? mensajeWhatsAppCotizacion(producto.nombre, resultado) : "Hola, quisiera cotizar un producto de Inversiones JP.", whatsappDeArea(producto))}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="font-semibold text-tinta underline underline-offset-2"

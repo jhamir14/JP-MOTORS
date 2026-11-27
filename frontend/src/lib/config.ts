@@ -19,6 +19,14 @@ export const siteConfig = {
   locale: "es_PE",
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "51902423015",
   telefonoVisible: "902 423 015",
+  /**
+   * WhatsApp del asesor de cada área: las cotizaciones y consultas de un producto llegan a quien lo atiende.
+   * Motos, motokar y toritos → 902 423 015 · Celulares → 920 694 641.
+   */
+  whatsappAreas: {
+    CREDITO_VEHICULAR: process.env.NEXT_PUBLIC_WHATSAPP_MOTOS || "51902423015",
+    CREDITO_CELULAR: process.env.NEXT_PUBLIC_WHATSAPP_CELULARES || "51920694641",
+  },
   horario: "Lun. a sáb. · 9:00 a. m. – 7:00 p. m.",
   gaId: process.env.NEXT_PUBLIC_GA_ID ?? "G-C6RTDH3SXY",
   /** Redes sociales oficiales (pie de página y datos estructurados). */

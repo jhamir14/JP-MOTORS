@@ -13,6 +13,7 @@ import { correoConfigurado, enviarCorreo } from "@/lib/server/correo";
 import { correoCotizacionCliente } from "@/lib/server/correosCotizacion";
 import { sql } from "@/lib/server/db";
 import type { Frecuencia } from "@/lib/finance";
+import { whatsappDeServicio } from "@/lib/whatsapp";
 
 const schema = z.object({
   id: z.string().uuid(),
@@ -74,8 +75,8 @@ export async function enviarCotizacionPorCorreo(_prev: EstadoAccion, fd: FormDat
   if (!correoConfigurado()) return fallo("El envío de correos no está configurado (falta SMTP_PASSWORD en Vercel).");
   const { id, nota } = parsed.data;
 
-  const [s] = await sql()<{ nombres: string; celular: string; email: string | null; producto_interes: string | null; monto_solicitado: number | null; cuota_inicial: number | null; datos_extra: Record<string, unknown> }[]>`
-    select nombres, celular, email::text, producto_interes, monto_solicitado::float8, cuota_inicial::float8, datos_extra
+  const [s] = await sql()<{ servicio: string; nombres: string; celular: string; email: string | null; producto_interes: string | null; monto_solicitado: number | null; cuota_inicial: number | null; datos_extra: Record<string, unknown> }[]>`
+    select servicio::text, nombres, celular, email::text, producto_interes, monto_solicitado::float8, cuota_inicial::float8, datos_extra
     from public.solicitud_credito where id = ${id} and ${filtroArea(sql(), sesion)}`;
   if (!s) return fallo("No encontramos la solicitud.");
   if (!s.email) return fallo("Esta solicitud no tiene correo. Escríbele por WhatsApp.");
@@ -95,6 +96,7 @@ export async function enviarCotizacionPorCorreo(_prev: EstadoAccion, fd: FormDat
           celular: s.celular,
           correo: s.email,
           producto: { nombre: producto?.nombre ?? s.producto_interes ?? "Producto", slug, imagen: producto?.imagenes[0]?.url },
+          whatsappAsesor: whatsappDeServicio(s.servicio),
           resultado: {
             frecuencia,
             numeroCuotas,

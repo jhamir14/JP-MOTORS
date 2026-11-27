@@ -6,6 +6,18 @@ export function whatsappLink(message: string, phone: string = siteConfig.whatsap
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
 
+/** Número de WhatsApp del asesor del área de un producto (celulares o motos/motokar/toritos). */
+export function whatsappDeArea(producto: { categoria: string }): string {
+  return producto.categoria === "CELULAR" ? siteConfig.whatsappAreas.CREDITO_CELULAR : siteConfig.whatsappAreas.CREDITO_VEHICULAR;
+}
+
+/** Número del asesor según el servicio de una solicitud (CREDITO_CELULAR, CREDITO_VEHICULAR…); el general si no es de productos. */
+export function whatsappDeServicio(servicio: string | null | undefined): string {
+  if (servicio === "CREDITO_CELULAR") return siteConfig.whatsappAreas.CREDITO_CELULAR;
+  if (servicio === "CREDITO_VEHICULAR") return siteConfig.whatsappAreas.CREDITO_VEHICULAR;
+  return siteConfig.whatsappNumber;
+}
+
 export const whatsappMessages = {
   general: () => "Hola, quisiera información sobre las motos, motokar, toritos y celulares de Inversiones JP.",
   producto: (nombre: string) => `Hola, vi el ${nombre} en el catálogo de Inversiones JP y quisiera más información.`,
