@@ -5,6 +5,7 @@ import { inputClasses } from "@/components/ui/Field";
 import { tiposDe } from "@/lib/areas";
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
+import { puedeVerSeccion } from "@/lib/permisos";
 import { ETIQUETA_METODO, METODOS_PAGO, resumenCaja, type MetodoPago } from "@/lib/pagos";
 import { requerirSesion } from "@/lib/server/auth";
 import { hoyLima } from "@/lib/server/cobranza";
@@ -58,7 +59,7 @@ export default async function PagosPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <Encabezado titulo="Pagos" acciones={<Link href="/admin/caja" className="rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold hover:border-brand">Cierre de caja</Link>}>
+      <Encabezado titulo="Pagos" acciones={puedeVerSeccion(sesion.rol, "caja") ? <Link href="/admin/caja" className="rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold hover:border-brand">Cierre de caja</Link> : undefined}>
         Pagos registrados {desde === hasta ? `el ${desde.split("-").reverse().join("/")}` : `del ${desde.split("-").reverse().join("/")} al ${hasta.split("-").reverse().join("/")}`}.
         Para registrar uno, entra al crédito o a Cobranzas.
       </Encabezado>
