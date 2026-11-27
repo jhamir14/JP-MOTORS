@@ -11,10 +11,13 @@ import {
   TIPOS_VEHICULO,
 } from "@/lib/admin/constantes";
 import { esImeiValido, esPlacaValida, esVinValido } from "@/lib/validaciones";
+import { inventariosDe } from "@/lib/areas";
 import { comoUsuario, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 
-const ROLES = ["SUPERADMIN", "ADMIN_CREDITOS", "ASESOR_VENTAS"] as const;
+/** Inventario: superadmin y los administradores de motos y de celulares (cada uno, solo el suyo). */
+const ROLES = ["SUPERADMIN", "ADMIN_MOTOS", "ADMIN_CELULARES", "ASESOR_VENTAS"] as const;
+const FUERA_DE_AREA = "Este inventario no es de tu área.";
 
 const opcional = (max: number) => z.string().trim().max(max).transform((v) => v || null);
 const precioOpcional = z
@@ -60,6 +63,7 @@ const vehiculoSchema = z
 
 export async function ingresarVehiculo(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   const sesion = await requerirSesion(...ROLES);
+  if (!inventariosDe(sesion.rol).includes("vehiculos")) return fallo(FUERA_DE_AREA);
   const parsed = vehiculoSchema.safeParse(datosDe(fd));
   if (!parsed.success) return fallo("Revisa los campos marcados.", erroresZod(parsed.error));
   const d = parsed.data;
@@ -109,6 +113,7 @@ const celularSchema = z.object({
 
 export async function ingresarCelular(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   const sesion = await requerirSesion(...ROLES);
+  if (!inventariosDe(sesion.rol).includes("celulares")) return fallo(FUERA_DE_AREA);
   const parsed = celularSchema.safeParse(datosDe(fd));
   if (!parsed.success) return fallo("Revisa los campos marcados.", erroresZod(parsed.error));
   const d = parsed.data;
@@ -148,6 +153,7 @@ export async function cambiarEstadoUnidad(_prev: EstadoAccion, fd: FormData): Pr
   const parsed = estadoSchema.safeParse(datosDe(fd));
   if (!parsed.success) return fallo("Estado no válido.");
   const { id, tipo, estado } = parsed.data;
+  if (!inventariosDe(sesion.rol).includes(tipo === "vehiculo" ? "vehiculos" : "celulares")) return fallo(FUERA_DE_AREA);
   try {
     const r = await comoUsuario(sesion, (tx) =>
       tipo === "vehiculo"

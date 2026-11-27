@@ -704,7 +704,7 @@ export const DOCUMENTOS_CREDITO = ["contrato", "pagare", "cronograma"] as const;
 export type DocumentoCredito = (typeof DOCUMENTOS_CREDITO)[number];
 
 /** Contrato y pagaré tienen datos personales completos: solo los emiten quienes venden o administran créditos. */
-export const ROLES_DOCUMENTOS_LEGALES = ["SUPERADMIN", "ADMIN_CREDITOS", "ASESOR_VENTAS"] as const;
+export const ROLES_DOCUMENTOS_LEGALES = ["SUPERADMIN", "ADMIN_CREDITOS", "ADMIN_MOTOS", "ADMIN_CELULARES", "ASESOR_VENTAS"] as const;
 
 export const TIPOS_DOCUMENTO_FIRMADO = ["CONTRATO_FIRMADO", "PAGARE_FIRMADO", "CRONOGRAMA_FIRMADO", "ACTA_ENTREGA", "OTRO"] as const;
 export const ETIQUETA_DOCUMENTO_FIRMADO: Record<(typeof TIPOS_DOCUMENTO_FIRMADO)[number], string> = {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { creditoEnArea } from "@/lib/server/areas";
 import type { ReactNode } from "react";
 import { AdminForm, BotonEnviar } from "@/components/admin/AdminForm";
 import { BotonImprimir } from "@/components/admin/BotonImprimir";
@@ -52,6 +53,8 @@ export default async function CreditoPage({ params, searchParams }: { params: Pr
   const { id } = await params;
   const sp = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
+  // Cada administrador de área solo abre lo suyo.
+  if (!(await creditoEnArea(sesion, id))) notFound();
   const db = sql();
   const nombre = (t: string) => db.unsafe(`nullif(trim(coalesce(${t}.nombres, '') || ' ' || coalesce(${t}.apellidos, '')), '')`);
 

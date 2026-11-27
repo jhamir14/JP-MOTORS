@@ -1,5 +1,6 @@
 import "server-only";
 import type postgres from "postgres";
+import { TIPOS_CREDITO } from "@/lib/areas";
 
 export interface Pendientes {
   solicitudes: number;
@@ -12,20 +13,24 @@ export interface Pendientes {
   hoy: string;
 }
 
-/** Lo pendiente del día (campana de la barra superior, insignias del menú y avisos push). */
-export async function leerPendientes(db: postgres.Sql | postgres.TransactionSql): Promise<Pendientes> {
+/**
+ * Lo pendiente del día (campana de la barra superior, insignias del menú y avisos push).
+ * Con `tipos`, solo cuenta los créditos y solicitudes de esas áreas (src/lib/areas.ts).
+ */
+export async function leerPendientes(db: postgres.Sql | postgres.TransactionSql, tipos: readonly string[] = TIPOS_CREDITO): Promise<Pendientes> {
+  const t = [...tipos];
   const [p] = await db<Pendientes[]>`
-    select (select count(*) from public.solicitud_credito where estado = 'NUEVA')::int as solicitudes,
+    select (select count(*) from public.solicitud_credito where estado = 'NUEVA' and (servicio::text = any(${t}) or (servicio = 'OTRO' and ${t.length > 1})))::int as solicitudes,
            to_char((now() at time zone 'America/Lima')::date, 'YYYY-MM-DD') as hoy,
            (select count(distinct cu.credito_id) from public.cuota cu join public.credito cr on cr.id = cu.credito_id
-            where cr.estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO') and cu.estado <> 'PAGADA'
+            where cr.estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO') and cu.estado <> 'PAGADA' and cr.tipo::text = any(${t})
               and cu.monto_cuota + cu.mora - cu.monto_pagado > 0
               and cu.fecha_vencimiento = (now() at time zone 'America/Lima')::date
               and not exists (select 1 from public.cuota v where v.credito_id = cu.credito_id and v.estado <> 'PAGADA'
                               and v.monto_cuota + v.mora - v.monto_pagado > 0
                               and v.fecha_vencimiento < (now() at time zone 'America/Lima')::date))::int as vencen_hoy,
            (select count(distinct cu.credito_id) from public.cuota cu join public.credito cr on cr.id = cu.credito_id
-            where cr.estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO') and cu.estado <> 'PAGADA'
+            where cr.estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO') and cu.estado <> 'PAGADA' and cr.tipo::text = any(${t})
               and cu.monto_cuota + cu.mora - cu.monto_pagado > 0
               and cu.fecha_vencimiento < (now() at time zone 'America/Lima')::date)::int as mora,
            (select count(*) from public.reclamo where estado <> 'RESPONDIDO')::int as reclamos`;

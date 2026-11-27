@@ -6,11 +6,24 @@ import { datosDe, erroresZod, exito, fallo, mensajeErrorBD, type EstadoAccion } 
 import { CATEGORIAS } from "@/lib/catalogo";
 import { PREFIJO_PLAN_JP, cotizarCelularJP, gamaCelular, planJP } from "@/lib/celularesJP";
 import { FRECUENCIAS, TIPOS_CALCULO, calcularCredito } from "@/lib/finance";
+import { categoriasDe } from "@/lib/areas";
+import { productoEnArea } from "@/lib/server/areas";
 import { comoUsuario, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { TIPOS_IMAGEN, detectarTipo } from "@/lib/server/archivos";
 
-const ROLES_CATALOGO = ["SUPERADMIN", "ADMIN_CREDITOS", "ASESOR_VENTAS"] as const;
+/** Catálogo: superadmin y los administradores de motos y de celulares (cada uno, solo sus categorías). */
+const ROLES_CATALOGO = ["SUPERADMIN", "ADMIN_MOTOS", "ADMIN_CELULARES", "ASESOR_VENTAS"] as const;
+const FUERA_DE_AREA = "Este producto no es de tu área.";
+
+/** Producto al que pertenece una imagen o un plan (para comprobar el área antes de tocarlo). */
+async function productoDe(tabla: "imagen_producto" | "plan_credito", id: string): Promise<string | null> {
+  const db = sql();
+  const [f] = await (tabla === "imagen_producto"
+    ? db<{ producto_id: string }[]>`select producto_id from public.imagen_producto where id = ${id}`
+    : db<{ producto_id: string }[]>`select producto_id from public.plan_credito where id = ${id}`);
+  return f?.producto_id ?? null;
+}
 
 /** Tras cualquier cambio del catálogo se regeneran las páginas públicas y el panel. */
 function refrescar(productoId?: string) {
@@ -61,6 +74,8 @@ export async function guardarProducto(_prev: EstadoAccion, fd: FormData): Promis
   const parsed = productoSchema.safeParse(datosDe(fd));
   if (!parsed.success) return fallo("Revisa los campos marcados.", erroresZod(parsed.error));
   const d = parsed.data;
+  if (!categoriasDe(sesion.rol).includes(d.categoria) || (d.id && !(await productoEnArea(sesion, d.id))))
+    return fallo(FUERA_DE_AREA, { categoria: "Elige una categoría de tu área" });
   const specs = parsearSpecs(d.specs);
   if (typeof specs === "string") return fallo("Revisa las especificaciones.", { specs });
   const etiquetas = Array.from(new Set(d.etiquetas.split(",").map((e) => e.trim()).filter(Boolean))).slice(0, 10);
@@ -117,6 +132,7 @@ export async function cambiarPublicacion(fd: FormData) {
   const sesion = await requerirSesion(...ROLES_CATALOGO);
   const id = z.string().uuid().parse(fd.get("id"));
   const publicado = fd.get("publicado") === "true";
+  if (!(await productoEnArea(sesion, id))) return;
   await comoUsuario(sesion, (tx) => tx`update public.producto_catalogo set publicado = ${publicado} where id = ${id}`);
   refrescar(id);
 }
@@ -168,6 +184,7 @@ export async function subirImagenes(_prev: EstadoAccion, fd: FormData): Promise<
   const sesion = await requerirSesion(...ROLES_CATALOGO);
   const productoId = z.string().uuid().safeParse(fd.get("productoId"));
   if (!productoId.success) return fallo("Producto no válido.");
+  if (!(await productoEnArea(sesion, productoId.data))) return fallo(FUERA_DE_AREA);
   const leidas = await leerImagenes(fd);
   if ("error" in leidas) return leidas.error;
   const { listos } = leidas;
@@ -186,6 +203,8 @@ export async function subirImagenes(_prev: EstadoAccion, fd: FormData): Promise<
 export async function eliminarImagen(fd: FormData) {
   const sesion = await requerirSesion(...ROLES_CATALOGO);
   const id = z.string().uuid().parse(fd.get("id"));
+  const dueno = await productoDe("imagen_producto", id);
+  if (!dueno || !(await productoEnArea(sesion, dueno))) return;
   let productoId: string | undefined;
   await comoUsuario(sesion, async (tx) => {
     const [img] = await tx<{ producto_id: string; url: string; es_portada: boolean }[]>`
@@ -206,6 +225,8 @@ export async function eliminarImagen(fd: FormData) {
 export async function marcarPortada(fd: FormData) {
   const sesion = await requerirSesion(...ROLES_CATALOGO);
   const id = z.string().uuid().parse(fd.get("id"));
+  const dueno = await productoDe("imagen_producto", id);
+  if (!dueno || !(await productoEnArea(sesion, dueno))) return;
   let productoId: string | undefined;
   await comoUsuario(sesion, async (tx) => {
     const [img] = await tx<{ producto_id: string }[]>`select producto_id from public.imagen_producto where id = ${id}`;
@@ -248,6 +269,7 @@ export async function aplicarPlanJP(_prev: EstadoAccion, fd: FormData): Promise<
   const [producto] = await sql()<{ precio: number; categoria: string }[]>`
     select precio_contado::float8 as precio, categoria::text from public.producto_catalogo where id = ${d.productoId}`;
   if (!producto) return fallo("Producto no encontrado.");
+  if (!categoriasDe(sesion.rol).includes(producto.categoria)) return fallo(FUERA_DE_AREA);
   if (producto.categoria !== "CELULAR") return fallo("La metodología JP es solo para celulares.");
   if (d.inicial >= producto.precio) return fallo("La inicial debe ser menor que el precio.", { inicial: "Menor que el precio" });
   const c = cotizarCelularJP(producto.precio, d.inicial, d.semanas);
@@ -294,6 +316,7 @@ export async function guardarPlan(_prev: EstadoAccion, fd: FormData): Promise<Es
   const parsed = planSchema.safeParse(datosDe(fd));
   if (!parsed.success) return fallo("Revisa los datos del plan.", erroresZod(parsed.error));
   const d = parsed.data;
+  if (!(await productoEnArea(sesion, d.productoId))) return fallo(FUERA_DE_AREA);
 
   const [producto] = await sql()<{ precio: number }[]>`select precio_contado::float8 as precio from public.producto_catalogo where id = ${d.productoId}`;
   if (!producto) return fallo("Producto no encontrado.");
@@ -351,6 +374,8 @@ export async function guardarPlan(_prev: EstadoAccion, fd: FormData): Promise<Es
 export async function eliminarPlan(fd: FormData) {
   const sesion = await requerirSesion(...ROLES_CATALOGO);
   const id = z.string().uuid().parse(fd.get("id"));
+  const dueno = await productoDe("plan_credito", id);
+  if (!dueno || !(await productoEnArea(sesion, dueno))) return;
   let productoId: string | undefined;
   await comoUsuario(sesion, async (tx) => {
     const [p] = await tx<{ producto_id: string }[]>`delete from public.plan_credito where id = ${id} returning producto_id`;

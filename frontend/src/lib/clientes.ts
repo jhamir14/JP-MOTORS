@@ -1,3 +1,4 @@
+import { ADMINS_AREA, type Rol } from "@/lib/roles";
 /**
  * Reglas de clientes y garantes (KYC) compartidas por el panel, el servidor y los tests.
  * Sin dependencias de servidor: se puede importar desde componentes cliente.
@@ -182,14 +183,14 @@ export function faltantesCliente(c: DatosKyc, _documentos: readonly string[] = [
 // -----------------------------------------------------------------------------
 // Permisos por rol (las políticas RLS de la base aplican lo mismo)
 // -----------------------------------------------------------------------------
-export const ROLES_EDITAN_KYC = ["SUPERADMIN", "ADMIN_CREDITOS", "ASESOR_VENTAS"] as const;
-export type RolPanel = "SUPERADMIN" | "ADMIN_CREDITOS" | "ASESOR_VENTAS" | "COBRADOR";
+export const ROLES_EDITAN_KYC = ["SUPERADMIN", "ADMIN_CREDITOS", "ADMIN_MOTOS", "ADMIN_CELULARES", "ASESOR_VENTAS"] as const;
+export type RolPanel = Rol;
 
 /** Crear/editar clientes y garantes, subir documentos y registrar la ubicación. El COBRADOR solo consulta. */
 export const puedeEditarKyc = (rol: RolPanel) => (ROLES_EDITAN_KYC as readonly string[]).includes(rol);
 
 /** Bloqueo legal del cliente: solo administración. */
-export const puedeBloquearCliente = (rol: RolPanel) => rol === "SUPERADMIN" || rol === "ADMIN_CREDITOS";
+export const puedeBloquearCliente = (rol: RolPanel) => rol === "SUPERADMIN" || (ADMINS_AREA as readonly string[]).includes(rol);
 
 /** El COBRADOR solo ve la foto de la fachada (para ubicar el domicilio); el DNI y los recibos, no. */
 export const puedeVerDocumento = (rol: RolPanel, tipo: TipoDocumentoKyc) => rol !== "COBRADOR" || tipo === "FACHADA";

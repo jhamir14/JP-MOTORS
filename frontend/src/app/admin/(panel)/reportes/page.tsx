@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Barra, Encabezado, Kpi, Panel, Tabla, Vacio } from "@/components/admin/ui";
 import { inputClasses } from "@/components/ui/Field";
 import { ETIQUETA_SERVICIO } from "@/lib/admin/constantes";
+import { areaDe } from "@/lib/areas";
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
 import { ETIQUETA_METODO, type MetodoPago } from "@/lib/pagos";
@@ -39,7 +40,8 @@ const fecha = (s: string) => s.split("-").reverse().join("/");
 const tipoCorto = (t: string) => ETIQUETA_SERVICIO[t as keyof typeof ETIQUETA_SERVICIO]?.replace(" (sistema anterior)", "") ?? t;
 
 export default async function ReportesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  await requerirSeccion("reportes");
+  const sesion = await requerirSeccion("reportes");
+  const area = areaDe(sesion.rol);
   const sp = await searchParams;
   const db = sql();
   const hoy = await hoyLima(db);
@@ -53,6 +55,8 @@ export default async function ReportesPage({ searchParams }: { searchParams: Pro
   }
   const ver: TipoReporte = (TIPOS_REPORTE as readonly string[]).includes(String(sp.ver)) ? (sp.ver as TipoReporte) : "colocaciones";
   const { filtros, avisos } = parsearFiltros(sp, hoy);
+  // Cada administrador de área ve solo los reportes de su tipo de crédito.
+  if (area) filtros.tipo = area;
   const [filas, opciones, base] = await Promise.all([
     filasReporte(db, ver, filtros),
     opcionesFiltros(db),
@@ -101,9 +105,9 @@ export default async function ReportesPage({ searchParams }: { searchParams: Pro
           <input type="date" name="hasta" defaultValue={filtros.hasta} disabled={!usaRango(ver)} className={ctl} />
         </label>
         <label className="text-xs font-semibold text-muted">Tipo de crédito
-          <select name="tipo" defaultValue={filtros.tipo ?? ""} className={cn(ctl, "cursor-pointer")}>
-            <option value="">Todos</option>
-            {TIPOS_CREDITO_REPORTE.map((t) => <option key={t} value={t}>{tipoCorto(t)}</option>)}
+          <select name="tipo" defaultValue={filtros.tipo ?? ""} disabled={!!area} className={cn(ctl, "cursor-pointer")}>
+            {!area && <option value="">Todos</option>}
+            {TIPOS_CREDITO_REPORTE.filter((t) => !area || t === area).map((t) => <option key={t} value={t}>{tipoCorto(t)}</option>)}
           </select>
         </label>
         <label className="text-xs font-semibold text-muted">Asesor

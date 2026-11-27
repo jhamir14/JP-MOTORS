@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { AdminForm, BotonEnviar, ErrorCampo } from "@/components/admin/AdminForm";
 import { Encabezado, Panel } from "@/components/admin/ui";
 import { Badge } from "@/components/ui";
-import { ETIQUETA_CATEGORIA, hrefProducto } from "@/lib/catalogo";
+import { CATEGORIAS, ETIQUETA_CATEGORIA, hrefProducto } from "@/lib/catalogo";
 import { ETIQUETA_FRECUENCIA, calcularCredito, type Frecuencia, type TipoCalculo } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
+import { categoriasDe } from "@/lib/areas";
+import { productoEnArea } from "@/lib/server/areas";
 import { requerirSeccion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { CampoTexto } from "@/components/admin/ui";
@@ -17,10 +19,11 @@ import { FormPlan, type PlanEditable } from "./FormPlan";
 export const metadata = { title: "Editar producto" };
 
 export default async function EditarProductoPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ creado?: string }> }) {
-  await requerirSeccion("catalogo");
+  const sesion = await requerirSeccion("catalogo");
   const { id } = await params;
   const { creado } = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
+  if (!(await productoEnArea(sesion, id))) notFound();
   const db = sql();
 
   const [[producto], imagenes, planes, [stock]] = await Promise.all([
@@ -73,7 +76,7 @@ export default async function EditarProductoPage({ params, searchParams }: { par
 
       <div className="grid gap-6">
         <Panel titulo="Datos del producto">
-          <FormProducto producto={producto} />
+          <FormProducto producto={producto} categorias={CATEGORIAS.filter((c) => categoriasDe(sesion.rol).includes(c))} />
         </Panel>
 
         <Panel titulo={`Fotos (${imagenes.length})`}>

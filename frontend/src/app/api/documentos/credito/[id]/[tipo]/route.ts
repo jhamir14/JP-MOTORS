@@ -1,3 +1,4 @@
+import { creditoEnArea } from "@/lib/server/areas";
 import { contratoDe, cronograma, pagare, ROLES_DOCUMENTOS_LEGALES, DOCUMENTOS_CREDITO, type DocumentoCredito } from "@/lib/documentos";
 import { renderizarPdf } from "@/lib/pdf/render";
 import { obtenerSesion, puede } from "@/lib/server/auth";
@@ -19,7 +20,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const { id, tipo } = await params;
   if (!dbConfigurada || !UUID_RE.test(id) || !(DOCUMENTOS_CREDITO as readonly string[]).includes(tipo)) return noEncontrado();
   const sesion = await obtenerSesion();
-  if (!sesion) return noEncontrado();
+  if (!sesion || !(await creditoEnArea(sesion, id))) return noEncontrado();
   const t = tipo as DocumentoCredito;
   if (t !== "cronograma" && !puede(sesion, ...ROLES_DOCUMENTOS_LEGALES)) return noEncontrado();
 

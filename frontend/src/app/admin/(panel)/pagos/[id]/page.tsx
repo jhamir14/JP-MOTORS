@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { pagoEnArea } from "@/lib/server/areas";
 import { AdminForm, BotonEnviar } from "@/components/admin/AdminForm";
 import { BotonImprimir } from "@/components/admin/BotonImprimir";
 import { CampoArea, Encabezado, Panel, Tabla, fechaCorta } from "@/components/admin/ui";
@@ -31,6 +32,8 @@ export default async function PagoPage({ params, searchParams }: { params: Promi
   const { id } = await params;
   const sp = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
+  // Cada administrador de área solo abre lo suyo.
+  if (!(await pagoEnArea(sesion, id))) notFound();
   const db = sql();
   const nombre = (t: string) => db.unsafe(`nullif(trim(coalesce(${t}.nombres, '') || ' ' || coalesce(${t}.apellidos, '')), '')`);
   const [p] = await db<Pago[]>`

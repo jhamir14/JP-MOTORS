@@ -15,6 +15,8 @@ import {
   validarPago,
 } from "@/lib/pagos";
 import { detectarTipo } from "@/lib/server/archivos";
+import { puedeVerTipo } from "@/lib/areas";
+import { creditoEnArea } from "@/lib/server/areas";
 import { comoUsuario, requerirSesion } from "@/lib/server/auth";
 import { hoyLima } from "@/lib/server/cobranza";
 import { sql } from "@/lib/server/db";
@@ -82,8 +84,8 @@ export async function registrarPago(_prev: EstadoAccion, fd: FormData): Promise<
     resultado = await comoUsuario(sesion, async (tx) => {
       // Un pago a la vez por crédito: evita que dos cobradores apliquen sobre el mismo saldo.
       await tx`select pg_advisory_xact_lock(hashtext(${"pago:" + d.creditoId}))`;
-      const [cr] = await tx<{ estado: string }[]>`select estado from public.credito where id = ${d.creditoId}`;
-      if (!cr) return { error: fallo("El crédito no existe.") };
+      const [cr] = await tx<{ estado: string; tipo: string }[]>`select estado, tipo::text from public.credito where id = ${d.creditoId}`;
+      if (!cr || !puedeVerTipo(sesion.rol, cr.tipo)) return { error: fallo("El crédito no existe o no es de tu área.") };
       if (!["VIGENTE", "EN_MORA", "APROBADO", "REFINANCIADO"].includes(cr.estado))
         return { error: fallo(`Este crédito no admite pagos (estado: ${cr.estado.toLowerCase().replace(/_/g, " ")}).`) };
 
@@ -133,7 +135,7 @@ export async function anularPago(_prev: EstadoAccion, fd: FormData): Promise<Est
   try {
     const r = await comoUsuario(sesion, async (tx) => {
       const [pago] = await tx<{ anulado: boolean; credito_id: string }[]>`select anulado, credito_id from public.pago where id = ${p.data.pagoId}`;
-      if (!pago) return "El pago no existe.";
+      if (!pago || !(await creditoEnArea(sesion, pago.credito_id, tx))) return "El pago no existe.";
       if (pago.anulado) return "El pago ya estaba anulado.";
       await tx`select pg_advisory_xact_lock(hashtext(${"pago:" + pago.credito_id}))`;
       await tx`
@@ -181,7 +183,7 @@ export async function cerrarCaja(_prev: EstadoAccion, fd: FormData): Promise<Est
 
 /** Reabre una caja cerrada (solo admins) para que el usuario registre más pagos ese día. */
 export async function reabrirCaja(fd: FormData): Promise<void> {
-  const sesion = await requerirSesion(...ROLES_ANULAN_PAGOS);
+  const sesion = await requerirSesion("SUPERADMIN");
   const id = uuid.safeParse(fd.get("cierreId"));
   if (!id.success) return;
   try {
@@ -208,6 +210,7 @@ export async function registrarEventoBloqueo(_prev: EstadoAccion, fd: FormData):
     for (const i of p.error.issues) errores[String(i.path[0])] ??= i.message;
     return fallo("Revisa los campos marcados.", errores);
   }
+  if (!(await creditoEnArea(sesion, p.data.creditoId))) return fallo("El crédito no existe o no es de tu área.");
   try {
     await comoUsuario(sesion, (tx) => tx`
       insert into public.evento_bloqueo (credito_id, accion, motivo, realizado_por)

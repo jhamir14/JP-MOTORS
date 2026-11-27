@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AdminForm, BotonEnviar } from "@/components/admin/AdminForm";
 import { CampoArea, CampoTexto, Encabezado, Panel, Tabla, Vacio, fechaCorta } from "@/components/admin/ui";
 import { Badge } from "@/components/ui";
+import { areaDe, tiposDe } from "@/lib/areas";
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
 import { ETIQUETA_METODO, puedeAnularPagos, resumenCaja, type MetodoPago } from "@/lib/pagos";
@@ -19,7 +20,9 @@ interface Cierre {
 
 export default async function CajaPage({ searchParams }: { searchParams: Promise<{ fecha?: string }> }) {
   const sesion = await requerirSeccion("caja");
-  const admin = puedeAnularPagos(sesion.rol);
+  // Las cajas de todo el personal las revisa quien no tiene área (superadmin); cada administrador de área ve la suya.
+  const admin = puedeAnularPagos(sesion.rol) && !areaDe(sesion.rol);
+  const tipos = tiposDe(sesion.rol);
   const sp = await searchParams;
   const db = sql();
   const hoy = await hoyLima(db);
@@ -43,7 +46,8 @@ export default async function CajaPage({ searchParams }: { searchParams: Promise
                  coalesce(sum(p.monto) filter (where p.metodo = 'EFECTIVO'), 0)::float8 as efectivo,
                  coalesce(sum(p.monto) filter (where p.metodo <> 'EFECTIVO'), 0)::float8 as digital, count(*)::int as cantidad
           from public.pago p join public.perfil_usuario u on u.id = p.registrado_por
-          where p.fecha_pago = ${fecha} and not p.anulado
+          join public.credito cr on cr.id = p.credito_id
+          where p.fecha_pago = ${fecha} and not p.anulado and cr.tipo::text = any(${tipos})
           group by p.registrado_por, u.nombres, u.apellidos order by usuario`
       : Promise.resolve([]),
   ]);

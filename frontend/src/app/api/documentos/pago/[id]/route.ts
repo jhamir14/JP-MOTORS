@@ -1,3 +1,4 @@
+import { pagoEnArea } from "@/lib/server/areas";
 import { recibo } from "@/lib/documentos";
 import { renderizarPdf } from "@/lib/pdf/render";
 import { obtenerSesion } from "@/lib/server/auth";
@@ -12,7 +13,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const { id } = await params;
   if (!dbConfigurada || !UUID_RE.test(id)) return noEncontrado();
   const sesion = await obtenerSesion();
-  if (!sesion) return noEncontrado();
+  if (!sesion || !(await pagoEnArea(sesion, id))) return noEncontrado();
   const db = sql();
   const [datos, empresa] = await Promise.all([datosRecibo({ id }, db), datosEmpresa(db)]);
   if (!datos) return noEncontrado();

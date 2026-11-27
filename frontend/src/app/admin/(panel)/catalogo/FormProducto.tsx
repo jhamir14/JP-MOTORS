@@ -19,7 +19,8 @@ export interface ProductoEditable {
   orden: number;
 }
 
-export function FormProducto({ producto }: { producto?: ProductoEditable }) {
+/** `categorias`: las que puede elegir quien edita (cada administrador, solo las de su área). */
+export function FormProducto({ producto, categorias = CATEGORIAS }: { producto?: ProductoEditable; categorias?: readonly CategoriaProducto[] }) {
   const specs = producto ? Object.entries(producto.specs).map(([k, v]) => `${k}: ${v}`).join("\n") : "";
   return (
     <AdminForm action={guardarProducto} className="grid gap-4 md:grid-cols-2">
@@ -27,8 +28,8 @@ export function FormProducto({ producto }: { producto?: ProductoEditable }) {
       <CampoSelect
         label="Categoría"
         name="categoria"
-        defaultValue={producto?.categoria ?? "MOTO_LINEAL"}
-        opciones={CATEGORIAS.map((c) => ({ value: c, label: ETIQUETA_CATEGORIA[c] }))}
+        defaultValue={producto?.categoria ?? categorias[0] ?? "MOTO_LINEAL"}
+        opciones={categorias.map((c) => ({ value: c, label: ETIQUETA_CATEGORIA[c] }))}
       />
       <CampoTexto label="Marca" name="marca" defaultValue={producto?.marca} placeholder="Honda, Bajaj, Samsung…" required />
       <CampoTexto label="Modelo" name="modelo" defaultValue={producto?.modelo} placeholder="CB190R" required />

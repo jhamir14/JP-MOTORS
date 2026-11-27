@@ -24,7 +24,7 @@ export const ETIQUETA_METODO: Record<MetodoPago, string> = {
 export const requiereOperacion = (m: MetodoPago) => m !== "EFECTIVO" && m !== "OTRO";
 
 /** Roles que anulan pagos y reabren cajas (igual que las políticas RLS). */
-export const ROLES_ANULAN_PAGOS = ["SUPERADMIN", "ADMIN_CREDITOS"] as const;
+export const ROLES_ANULAN_PAGOS = ["SUPERADMIN", "ADMIN_CREDITOS", "ADMIN_MOTOS", "ADMIN_CELULARES"] as const;
 export const puedeAnularPagos = (rol: string) => (ROLES_ANULAN_PAGOS as readonly string[]).includes(rol);
 
 export const MIN_MOTIVO_ANULACION_PAGO = 10;
@@ -250,4 +250,4 @@ export const ACCIONES_BLOQUEO = {
     { value: "RESTABLECER_GPS", label: "Restablecer GPS" },
   ],
 } as const;
-export const ROLES_BLOQUEO = ["SUPERADMIN", "ADMIN_CREDITOS", "COBRADOR"] as const;
+export const ROLES_BLOQUEO = ["SUPERADMIN", "ADMIN_CREDITOS", "ADMIN_MOTOS", "ADMIN_CELULARES", "COBRADOR"] as const;

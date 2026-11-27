@@ -15,7 +15,7 @@ export const TIPOS_CREDITO_ALTA = [...TIPOS_CREDITO_NUEVO, "PRESTAMO_EFECTIVO"] 
 export type TipoCreditoAlta = (typeof TIPOS_CREDITO_ALTA)[number];
 
 /** Roles que registran y anulan créditos (igual que las políticas RLS de `credito` y `cuota`). */
-export const ROLES_CREDITOS = ["SUPERADMIN", "ADMIN_CREDITOS"] as const;
+export const ROLES_CREDITOS = ["SUPERADMIN", "ADMIN_CREDITOS", "ADMIN_MOTOS", "ADMIN_CELULARES"] as const;
 export const puedeGestionarCreditos = (rol: string) => (ROLES_CREDITOS as readonly string[]).includes(rol);
 
 /** Estados en los que el crédito sigue vivo (se cobra). */

@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { datosDe, erroresZod, exito, fallo, mensajeErrorBD, type EstadoAccion } from "@/lib/admin/accion";
+import { ROLES_ASIGNABLES } from "@/lib/roles";
 import { ROLES, comoUsuario, requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
 import { hashPassword, validarPassword } from "@/lib/server/password";
@@ -16,7 +17,7 @@ const nuevoSchema = z.object({
   nombres: z.string().trim().min(2, "Ingresa los nombres").max(60),
   apellidos: z.string().trim().max(60),
   telefono: z.string().trim().max(20),
-  rol: z.enum(ROLES),
+  rol: z.enum(ROLES_ASIGNABLES),
   password: z.string(),
 });
 

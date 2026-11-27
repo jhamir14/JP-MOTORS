@@ -5,7 +5,7 @@
  * el inicio del panel y la exportación (/api/reportes/[tipo]).
  */
 
-export const ROLES_REPORTES = ["SUPERADMIN", "ADMIN_CREDITOS"] as const;
+export const ROLES_REPORTES = ["SUPERADMIN", "ADMIN_CREDITOS", "ADMIN_MOTOS", "ADMIN_CELULARES"] as const;
 
 export const TIPOS_REPORTE = ["colocaciones", "cobranzas", "mora", "cancelados"] as const;
 export type TipoReporte = (typeof TIPOS_REPORTE)[number];

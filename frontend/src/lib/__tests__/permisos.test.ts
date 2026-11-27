@@ -8,15 +8,23 @@ import { ROLES } from "../roles";
 describe("matriz de permisos del panel", () => {
   it("el superadmin ve todo; todos ven lo básico de cobranza", () => {
     expect(seccionesDe("SUPERADMIN")).toEqual(Object.keys(SECCIONES));
-    for (const rol of ROLES) for (const s of ["inicio", "clientes", "creditos", "cobranzas", "pagos"] as const) expect(puedeVerSeccion(rol, s)).toBe(true);
+    for (const rol of ROLES) for (const s of ["inicio", "clientes", "creditos", "cobranzas", "pagos", "cuenta"] as const) expect(puedeVerSeccion(rol, s)).toBe(true);
   });
 
-  it("el administrador de créditos no ve caja, tasas, reclamos ni solicitudes web", () => {
-    for (const s of ["caja", "tasas", "reclamos", "solicitudes"] as const) expect(puedeVerSeccion("ADMIN_CREDITOS", s)).toBe(false);
+  it("el administrador de créditos (préstamos) no ve caja, tasas, reclamos, catálogo ni inventario", () => {
+    for (const s of ["caja", "tasas", "reclamos", "catalogo", "inventario"] as const) expect(puedeVerSeccion("ADMIN_CREDITOS", s)).toBe(false);
+    expect(puedeVerSeccion("ADMIN_CREDITOS", "solicitudes")).toBe(true);
+  });
+
+  it("los administradores de motos y celulares ven su catálogo e inventario, no la configuración general", () => {
+    for (const rol of ["ADMIN_MOTOS", "ADMIN_CELULARES"] as const) {
+      for (const s of ["catalogo", "inventario", "reportes", "solicitudes", "caja"] as const) expect(puedeVerSeccion(rol, s)).toBe(true);
+      for (const s of ["tasas", "reclamos", "personal", "sistema"] as const) expect(puedeVerSeccion(rol, s)).toBe(false);
+    }
   });
 
   it("el cobrador no ve ventas, configuración, reportes ni administración", () => {
-    expect(seccionesDe("COBRADOR")).toEqual(["inicio", "clientes", "creditos", "cobranzas", "pagos", "caja"]);
+    expect(seccionesDe("COBRADOR")).toEqual(["inicio", "clientes", "creditos", "cobranzas", "pagos", "caja", "cuenta"]);
   });
 
   it("el asesor no ve reportes financieros, personal ni sistema", () => {
