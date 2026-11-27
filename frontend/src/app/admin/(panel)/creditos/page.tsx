@@ -9,7 +9,7 @@ import { ETIQUETA_FRECUENCIA, type Frecuencia } from "@/lib/finance";
 import { formatSoles } from "@/lib/format";
 import { requerirSesion } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
-import { PestanasTipo } from "./PestanasTipo";
+import { PestanasTipo, tipoDeVista, vistaDeParam, vistaDeTipo, type Vista } from "./PestanasTipo";
 
 export const metadata = { title: "Créditos" };
 
@@ -31,13 +31,14 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
   const sesion = await requerirSesion();
   const sp = await searchParams;
   const estado = FILTROS.some((f) => f.valor === sp.estado) ? sp.estado! : "activos";
-  // Dos pestañas: créditos de productos (motos, motokar, toritos y celulares) y préstamos de dinero.
-  // Cada administrador de área ve solo su tipo de crédito (src/lib/areas.ts).
+  // Tres pestañas: motos, celulares y préstamos de dinero.
+  // Cada administrador de área ve solo la suya (src/lib/areas.ts).
   const area = areaDe(sesion.rol);
   const tipos = tiposDe(sesion.rol);
-  const vista = area ? (area === "PRESTAMO_EFECTIVO" ? "prestamo" : "credito") : sp.tipo === "prestamo" || sp.tipo === "PRESTAMO_EFECTIVO" ? "prestamo" : "credito";
-  const tipo = area && area !== "PRESTAMO_EFECTIVO" ? area : vista === "credito" && (sp.tipo === "CREDITO_VEHICULAR" || sp.tipo === "CREDITO_CELULAR") ? sp.tipo : null;
+  const vista: Vista = area ? vistaDeTipo(area) : (vistaDeParam(sp.tipo) ?? "motos");
+  const tipo = tipoDeVista(vista);
   const esPrestamo = vista === "prestamo";
+  const nombre = vista === "motos" ? "crédito de moto" : vista === "celulares" ? "crédito de celular" : "préstamo";
   const q = (sp.q ?? "").trim().slice(0, 60);
   const pagina = Math.max(1, Number(sp.pagina) || 1);
   const db = sql();
@@ -62,8 +63,7 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
       left join public.unidad_vehiculo uv on uv.id = cr.unidad_vehiculo_id
       left join public.unidad_celular uc on uc.id = cr.unidad_celular_id
       where ${filtroEstado}
-        and (case when ${esPrestamo} then cr.tipo = 'PRESTAMO_EFECTIVO' else cr.tipo <> 'PRESTAMO_EFECTIVO' end)
-        and (${tipo}::text is null or cr.tipo::text = ${tipo})
+        and cr.tipo::text = ${tipo}
         and cr.tipo::text = any(${tipos})
         and (${q} = '' or cr.codigo ilike ${patron} or (cl.nombres || ' ' || cl.apellidos) ilike ${patron} or cl.numero_documento ilike ${patron})
       order by cr.fecha_desembolso desc, cr.created_at desc
@@ -76,16 +76,16 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
              count(*) filter (where cr.estado <> 'ANULADO' and date_trunc('month', cr.fecha_desembolso) = date_trunc('month', (now() at time zone 'America/Lima')::date))::int as creditos_mes
       from public.credito cr
       left join lateral (select sum(least(cu.monto_pagado, cu.monto_cuota)) as pagado from public.cuota cu where cu.credito_id = cr.id) p on true
-      where case when ${esPrestamo} then cr.tipo = 'PRESTAMO_EFECTIVO' else cr.tipo <> 'PRESTAMO_EFECTIVO' end
-        and cr.tipo::text = any(${tipos})`,
-    db<{ credito: number; prestamo: number }[]>`
-      select count(*) filter (where tipo <> 'PRESTAMO_EFECTIVO' and estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO'))::int as credito,
-             count(*) filter (where tipo = 'PRESTAMO_EFECTIVO' and estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO'))::int as prestamo
-      from public.credito where tipo::text = any(${tipos})`,
+      where cr.tipo::text = ${tipo} and cr.tipo::text = any(${tipos})`,
+    db<Record<Vista, number>[]>`
+      select count(*) filter (where tipo = 'CREDITO_VEHICULAR')::int as motos,
+             count(*) filter (where tipo = 'CREDITO_CELULAR')::int as celulares,
+             count(*) filter (where tipo = 'PRESTAMO_EFECTIVO')::int as prestamo
+      from public.credito where tipo::text = any(${tipos}) and estado in ('VIGENTE', 'EN_MORA', 'APROBADO', 'REFINANCIADO')`,
   ]);
   const total = filas[0]?.total ?? 0;
   const qs = (cambios: Record<string, string | null>) => {
-    const p = new URLSearchParams({ estado, ...(esPrestamo ? { tipo: "prestamo" } : tipo && !area ? { tipo } : {}), ...(q ? { q } : {}) });
+    const p = new URLSearchParams({ estado, tipo: vista, ...(q ? { q } : {}) });
     for (const [k, v] of Object.entries(cambios)) {
       if (v == null) p.delete(k);
       else p.set(k, v);
@@ -99,21 +99,17 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
         <p role="status" className="mb-5 rounded-xl bg-accent-soft px-4 py-3 text-sm font-medium text-accent">Eliminado definitivamente, con su cronograma y pagos.</p>
       )}
       <Encabezado
-        titulo={esPrestamo ? "Préstamos de dinero" : area === "CREDITO_VEHICULAR" ? "Créditos de motos" : area === "CREDITO_CELULAR" ? "Créditos de celulares" : "Créditos"}
+        titulo={esPrestamo ? "Préstamos de dinero" : vista === "motos" ? "Créditos de motos" : "Créditos de celulares"}
         acciones={puedeGestionarCreditos(sesion.rol) && (
-          <div className="flex flex-wrap gap-2">
-            {!(area === "PRESTAMO_EFECTIVO") && <ButtonLink href="/admin/creditos/nuevo" variant={esPrestamo ? "outline" : "brand"} size="sm">+ Nuevo crédito</ButtonLink>}
-            {(!area || area === "PRESTAMO_EFECTIVO") && <ButtonLink href="/admin/creditos/nuevo?tipo=prestamo" variant={esPrestamo ? "brand" : "outline"} size="sm">+ Nuevo préstamo</ButtonLink>}
-          </div>
+          <ButtonLink href={`/admin/creditos/nuevo?tipo=${vista}`} variant="brand" size="sm">+ Nuevo {nombre}</ButtonLink>
         )}
       >
         {esPrestamo ? "Dinero prestado a clientes, con sus cuotas y su saldo."
-          : area === "CREDITO_VEHICULAR" ? "Financiamientos de motos, motokar y toritos con su cronograma."
-          : area === "CREDITO_CELULAR" ? "Financiamientos de celulares con su cronograma."
-          : "Financiamientos de motos, motokar, toritos y celulares con su cronograma."}
+          : vista === "motos" ? "Financiamientos de motos, motokar y toritos con su cronograma."
+          : "Financiamientos de celulares con su cronograma."}
       </Encabezado>
 
-      {!area && <PestanasTipo activo={vista} base="/admin/creditos" conteos={conteos} />}
+      <PestanasTipo activo={vista} base="/admin/creditos" conteos={conteos} visibles={tipos} />
 
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi k={esPrestamo ? "Préstamos activos" : "Créditos activos"} v={String(resumen.activos)} />
@@ -133,17 +129,7 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
         </nav>
         <form className="flex flex-wrap gap-2 md:flex-nowrap" role="search">
           <input type="hidden" name="estado" value={estado} />
-          {esPrestamo ? (
-            <input type="hidden" name="tipo" value="prestamo" />
-          ) : area ? (
-            null
-          ) : (
-            <select name="tipo" defaultValue={tipo ?? ""} aria-label="Tipo" className="w-full rounded-xl border border-line bg-surface px-2 py-2 text-sm md:w-auto">
-              <option value="">Motos y celulares</option>
-              <option value="CREDITO_VEHICULAR">Solo vehículos</option>
-              <option value="CREDITO_CELULAR">Solo celulares</option>
-            </select>
-          )}
+          <input type="hidden" name="tipo" value={vista} />
           <input name="q" defaultValue={q} placeholder="Código, cliente o DNI" aria-label="Buscar" className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm md:w-56 md:flex-none" />
           <button type="submit" className="cursor-pointer rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white">Buscar</button>
         </form>

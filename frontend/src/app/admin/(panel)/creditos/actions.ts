@@ -344,5 +344,6 @@ export async function eliminarCredito(_prev: EstadoAccion, fd: FormData): Promis
     return fallo(mensajeErrorBD(e));
   }
   revalidatePath("/admin", "layout");
-  redirect(`/admin/creditos?${cr.tipo === "PRESTAMO_EFECTIVO" ? "tipo=prestamo&" : ""}eliminado=1`);
+  const vista = cr.tipo === "PRESTAMO_EFECTIVO" ? "prestamo" : cr.tipo === "CREDITO_CELULAR" ? "celulares" : "motos";
+  redirect(`/admin/creditos?tipo=${vista}&eliminado=1`);
 }

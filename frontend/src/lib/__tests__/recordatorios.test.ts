@@ -63,3 +63,20 @@ describe("recordatorios de pago", () => {
     expect(fechaLarga("2026-12-25")).toMatch(/25 de diciembre/);
   });
 });
+
+describe("WhatsApp normal (no Business)", () => {
+  const wa = "https://wa.me/51987654321?text=Hola%20%C3%B1and%C3%BA";
+  it("Android: intent al paquete com.whatsapp con wa.me de respaldo", async () => {
+    const { enlaceWhatsAppNormal } = await import("../whatsapp");
+    const u = enlaceWhatsAppNormal(wa, "android");
+    expect(u.startsWith("intent://send/?phone=51987654321&text=Hola%20%C3%B1and%C3%BA#Intent;scheme=whatsapp;package=com.whatsapp;")).toBe(true);
+    expect(u).toContain(`S.browser_fallback_url=${encodeURIComponent(wa)};end`);
+  });
+  it("iPhone: esquema whatsapp://; computadora: wa.me sin cambios", async () => {
+    const { enlaceWhatsAppNormal, plataformaDe } = await import("../whatsapp");
+    expect(enlaceWhatsAppNormal(wa, "ios")).toBe("whatsapp://send?phone=51987654321&text=Hola%20%C3%B1and%C3%BA");
+    expect(enlaceWhatsAppNormal(wa, "escritorio")).toBe(wa);
+    expect(plataformaDe("Mozilla/5.0 (Linux; Android 14; SM-A546E)")).toBe("android");
+    expect(plataformaDe("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)")).toBe("ios");
+  });
+});

@@ -3,6 +3,7 @@ import { AdminForm, BotonEnviar } from "@/components/admin/AdminForm";
 import { CampoArea, CampoSelect, Encabezado, Estado, Vacio, fechaCorta } from "@/components/admin/ui";
 import { cn } from "@/lib/cn";
 import { formatSoles } from "@/lib/format";
+import { EnlaceWhatsApp } from "@/components/admin/EnlaceWhatsApp";
 import { whatsappLink } from "@/lib/whatsapp";
 import { areaDe, tiposDe } from "@/lib/areas";
 import { requerirSeccion } from "@/lib/server/auth";
@@ -128,19 +129,17 @@ export default async function SolicitudesPage({ searchParams }: { searchParams: 
                       </div>
                     ))}
                     <div className="col-span-2 flex flex-wrap gap-2 pt-1">
-                      <a
+                      <EnlaceWhatsApp
                         href={whatsappLink(
                           cot
                             ? `Hola ${s.nombres.split(" ")[0]}, te escribimos de Inversiones JP por tu cotización del ${s.producto_interes}: cuota de ${formatSoles(cot.cuota, true)} ${cot.etiqueta.adjetivo} en ${cot.numeroCuotas} ${cot.etiqueta.plural}${s.cuota_inicial ? ` con inicial de ${formatSoles(s.cuota_inicial)}` : " sin inicial"}. ¿Te ayudamos con los requisitos?`
                             : `Hola ${s.nombres}, te escribimos de Inversiones JP por tu solicitud de ${SERVICIO[s.servicio].toLowerCase()}.`,
                           `51${s.celular}`,
                         )}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         className="rounded-lg bg-whatsapp px-3 py-1.5 text-xs font-semibold text-white"
                       >
                         Escribir por WhatsApp
-                      </a>
+                      </EnlaceWhatsApp>
                       <a href={`tel:+51${s.celular}`} className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold">Llamar</a>
                       {s.cliente_id ? (
                         <Link href={`/admin/clientes/${s.cliente_id}`} className="rounded-lg bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent">Ver ficha del cliente →</Link>

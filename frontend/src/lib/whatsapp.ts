@@ -22,3 +22,32 @@ export const whatsappMessages = {
       "¿Podrían evaluarme?",
     ].join("\n"),
 };
+
+export type Plataforma = "android" | "ios" | "escritorio";
+
+export function plataformaDe(userAgent: string): Plataforma {
+  if (/Android/i.test(userAgent)) return "android";
+  if (/iPhone|iPad|iPod/i.test(userAgent)) return "ios";
+  return "escritorio";
+}
+
+/**
+ * Convierte un enlace wa.me en uno que abre el WhatsApp NORMAL (no WhatsApp Business) cuando el celular tiene ambos:
+ *   · Android: intent dirigido al paquete com.whatsapp; si no está instalado, el navegador sigue al wa.me original.
+ *   · iPhone: esquema whatsapp:// de la app normal.
+ *   · Computadora: wa.me de siempre (WhatsApp Web o de escritorio).
+ */
+export function enlaceWhatsAppNormal(waMe: string, plataforma: Plataforma): string {
+  let url: URL;
+  try {
+    url = new URL(waMe);
+  } catch {
+    return waMe;
+  }
+  if (url.hostname !== "wa.me" || plataforma === "escritorio") return waMe;
+  const telefono = url.pathname.replace(/\D/g, "");
+  const texto = url.searchParams.get("text") ?? "";
+  const consulta = `phone=${telefono}${texto ? `&text=${encodeURIComponent(texto)}` : ""}`;
+  if (plataforma === "ios") return `whatsapp://send?${consulta}`;
+  return `intent://send/?${consulta}#Intent;scheme=whatsapp;package=com.whatsapp;S.browser_fallback_url=${encodeURIComponent(waMe)};end`;
+}
