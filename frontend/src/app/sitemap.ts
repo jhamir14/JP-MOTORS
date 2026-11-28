@@ -19,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/libro-reclamaciones`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${base}/terminos`, changeFrequency: "yearly", priority: 0.2 },
     { url: `${base}/privacidad`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${base}/mis-datos`, changeFrequency: "yearly", priority: 0.2 },
   ];
   const productos = (await obtenerCatalogo()).map((p) => ({
     url: `${base}${hrefProducto(p)}`,

@@ -87,7 +87,7 @@ export default async function SistemaPage() {
               Últimas migraciones registradas: {migraciones.map((m) => m.nombre).join(", ")}.
             </p>
           )}
-          {!faseNueve && <p className="mt-3 text-xs text-danger">Aplica las migraciones pendientes (ver docs/FASE_9_PRODUCCION.md).</p>}
+          {!faseNueve && <p className="mt-3 text-xs text-danger">Aplica las migraciones pendientes (ver la sección «Base de datos» del README).</p>}
         </Panel>
 
         <Panel titulo="Respaldo y límites">

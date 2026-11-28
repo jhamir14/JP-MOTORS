@@ -15,7 +15,7 @@ const correo = <a href={`mailto:${siteConfig.emailContacto}`} className="font-se
 
 export default function PrivacidadPage() {
   return (
-    <PaginaLegal titulo="Política de privacidad y protección de datos personales" actualizado="25 de noviembre de 2026">
+    <PaginaLegal titulo="Política de privacidad y protección de datos personales" actualizado="28 de noviembre de 2026">
       <p>
         Esta política explica cómo {siteConfig.legalName} (nombre comercial «{siteConfig.name}»), con RUC {siteConfig.ruc} y domicilio en{" "}
         {siteConfig.address.lines.join(", ")}, trata los datos personales de quienes usan este sitio web, nos escriben por WhatsApp o
@@ -41,7 +41,7 @@ export default function PrivacidadPage() {
           <strong>Datos del bien financiado:</strong> número de motor, chasis, placa y datos del GPS del vehículo, o IMEI y plataforma de
           bloqueo del celular.
         </li>
-        <li><strong>Navegación:</strong> datos estadísticos de uso del sitio mediante Google Analytics (ver punto 9).</li>
+        <li><strong>Navegación:</strong> solo si aceptas las cookies, datos estadísticos de uso del sitio mediante Google Analytics (ver punto 9).</li>
       </ul>
       <p>No solicitamos datos sensibles distintos de los necesarios para evaluar y administrar el financiamiento.</p>
 
@@ -64,7 +64,7 @@ export default function PrivacidadPage() {
 
       <h2>4. Base legal</h2>
       <p>
-        Tratamos tus datos con tu consentimiento (que otorgas al enviar una solicitud o firmar el contrato), porque son necesarios para
+        Tratamos tus datos con tu consentimiento (que otorgas al marcar la casilla de autorización de cada formulario, al aceptar las cookies o al firmar el contrato), porque son necesarios para
         ejecutar el contrato de financiamiento y para cumplir obligaciones legales. Si no nos entregas los datos obligatorios no podremos
         evaluar tu solicitud.
       </p>
@@ -97,9 +97,11 @@ export default function PrivacidadPage() {
         esos documentos y cada cambio en tu ficha queda registrado (quién y cuándo).
       </p>
 
-      <h2>8. Tus derechos</h2>
+      <h2 id="derechos">8. Tus derechos y cómo pedir que borremos tus datos</h2>
       <p>
-        Puedes ejercer tus derechos de información, acceso, rectificación, cancelación, oposición y portabilidad, así como revocar tu
+        La forma más simple de pedir que eliminemos tus datos es la página{" "}
+        <Link href="/mis-datos" className="font-semibold text-brand">Eliminar o consultar mis datos</Link>, que te arma el mensaje por
+        correo o WhatsApp. También puedes ejercer tus derechos de información, acceso, rectificación, cancelación, oposición y portabilidad, así como revocar tu
         consentimiento, escribiendo a {correo} con una copia de tu documento de identidad y el detalle de tu pedido. Te responderemos dentro
         de los plazos que fija la ley. La cancelación no procede respecto de los datos que debamos conservar por una obligación legal o
         mientras exista un crédito vigente.
@@ -109,11 +111,25 @@ export default function PrivacidadPage() {
         Justicia y Derechos Humanos.
       </p>
 
-      <h2>9. Cookies y analítica</h2>
+      <h2 id="cookies">9. Cookies y analítica</h2>
       <p>
         Usamos Google Analytics para conocer de forma estadística cómo se usa el sitio (páginas visitadas, dispositivo, ciudad aproximada).
-        No usamos esa información para identificarte. Puedes bloquear las cookies desde la configuración de tu navegador.
+        No usamos esa información para identificarte ni la usamos para publicidad.
       </p>
+      <ul>
+        <li>
+          <strong>Solo con tu permiso:</strong> Google Analytics no se carga hasta que pulsas «Aceptar» en el aviso de cookies. Si lo
+          rechazas, la web funciona igual y no se instala ninguna cookie de analítica.
+        </li>
+        <li>
+          <strong>Cookies que instala si aceptas:</strong> <code>_ga</code> y <code>_ga_*</code> (Google), que duran hasta 2 años.
+        </li>
+        <li>
+          <strong>Tu decisión</strong> se guarda en tu navegador. Puedes cambiarla cuando quieras desde «Configurar cookies», al pie de
+          cada página; si retiras el permiso, borramos esas cookies.
+        </li>
+        <li>No usamos cookies de publicidad ni el Pixel de Meta.</li>
+      </ul>
 
       <h2>10. Menores de edad</h2>
       <p>Nuestros productos son solo para mayores de 18 años. No recopilamos a sabiendas datos de menores.</p>

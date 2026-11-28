@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { IconClock, IconFacebook, IconInstagram, IconMapPin, IconTikTok, IconWhatsApp } from "@/components/icons";
 import { Logo } from "@/components/Logo";
+import { BotonConfigurarCookies } from "@/components/ConsentimientoCookies";
 import { LINEAS, hrefLinea } from "@/lib/catalogo";
 import { siteConfig } from "@/lib/config";
 import { whatsappLink, whatsappMessages } from "@/lib/whatsapp";
@@ -11,6 +12,7 @@ const legales = [
   { href: "/privacidad", label: "Política de privacidad" },
   { href: "/terminos", label: "Términos y condiciones" },
   { href: "/libro-reclamaciones", label: "Libro de Reclamaciones" },
+  { href: "/mis-datos", label: "Eliminar mis datos" },
 ];
 
 export default function Footer() {
@@ -99,6 +101,9 @@ export default function Footer() {
                 <Link href={l.href} className="transition-colors hover:text-white">{l.label}</Link>
               </li>
             ))}
+            <li>
+              <BotonConfigurarCookies className="cursor-pointer transition-colors hover:text-white" />
+            </li>
           </ul>
         </div>
       </div>

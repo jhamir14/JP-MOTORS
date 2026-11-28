@@ -1,7 +1,7 @@
 /**
  * Fase 9 · Matriz de permisos del panel por sección (una sola fuente de verdad).
- * La usan el menú (oculta lo que el rol no puede abrir) y cada página (requerirSeccion), y se documenta en
- * docs/FASE_9_PRODUCCION.md. Las ACCIONES (crear, anular, editar) tienen además sus propios roles
+ * La usan el menú (oculta lo que el rol no puede abrir) y cada página (requerirSeccion); el resumen está en el
+ * README. Las ACCIONES (crear, anular, editar) tienen además sus propios roles
  * (ROLES_CREDITOS, ROLES_ANULAN_PAGOS, ROLES_EDITAN_KYC…) y la base aplica RLS: esto es la primera capa.
  */
 import { ADMINS_AREA, ROLES, type Rol } from "@/lib/roles";
