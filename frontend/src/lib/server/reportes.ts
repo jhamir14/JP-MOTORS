@@ -13,7 +13,7 @@ export async function reportesDisponibles(db: Db): Promise<boolean> {
 }
 
 export const AVISO_MIGRACION =
-  "Falta aplicar en la base de datos la migración de la Fase 8 (database/migrations/20261203000100_fase8_reportes.sql). Ver docs/FASE_9_PRODUCCION.md.";
+  "Falta aplicar en la base de datos la migración de la Fase 8 (database/migrations/20261203000100_fase8_reportes.sql). Ver la sección «Base de datos» del README.";
 
 /** Tope de filas en pantalla y en la exportación (protege a la base y al navegador). */
 export const MAX_FILAS_REPORTE = 20_000;

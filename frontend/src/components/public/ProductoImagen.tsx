@@ -8,8 +8,7 @@ import { PhoneMock } from "./PhoneMock";
  * Si un contenedor de la foto se transforma o anima, ese contenedor también debe llevar `mix-blend-lighten`
  * (un `transform` o `filter` aísla la composición y el negro volvería a verse).
  */
-export const sobreNegro = (url: string) =>
-  (url.startsWith("/motos/") && !url.startsWith("/motos/modelos/")) || url.startsWith("/escenas/celulares-estudio");
+export const sobreNegro = (url: string) => url.startsWith("/motos/") && !url.startsWith("/motos/modelos/");
 
 /**
  * Foto principal del producto sobre la placa oscura. Las fotos subidas desde el panel se muestran tal cual.
