@@ -5,8 +5,8 @@
  * (bloques de texto, tablas y firmas) que luego `lib/pdf/render.ts` dibuja en PDF.
  * Así los tests verifican qué datos se vuelcan en cada documento sin tener que leer un PDF.
  *
- * Los textos legales son un MODELO REFERENCIAL hasta que un abogado los valide
- * (`configuracion.documentos_validados`); mientras tanto cada documento lo indica.
+ * Los documentos no imprimen ningún aviso de «modelo referencial»; `configuracion.documentos_validados`
+ * queda solo como registro interno de que un abogado revisó los textos.
  */
 import { ETIQUETA_FRECUENCIA, type Frecuencia } from "./finance";
 
@@ -290,11 +290,6 @@ const tasaTexto = (d: Pick<DatosCredito, "tasaPorcentaje" | "tipoCalculo" | "fre
   return d.tipoCalculo === "FLAT" ? `${t} sobre el monto financiado por todo el plazo (interés flat)` : `${t} por ${ETIQUETA_FRECUENCIA[d.frecuencia].singular} (cuota fija, sistema francés)`;
 };
 
-const avisoReferencial = (e: DatosEmpresa): Bloque[] =>
-  e.validados
-    ? []
-    : [{ t: "aviso", texto: "Modelo referencial pendiente de validación legal. Revisar con un abogado antes de su firma." }];
-
 const pieEmpresa = (e: DatosEmpresa) => `${e.razonSocial} · RUC ${e.ruc} · ${e.telefono}`;
 
 function datosEmpresaTexto(e: DatosEmpresa): string {
@@ -454,7 +449,6 @@ export function contratoVehicular(e: DatosEmpresa, d: DatosCredito): Documento {
     bloques: [
       { t: "titulo", texto: "Contrato de compraventa a plazos con reserva de propiedad" },
       { t: "parrafo", texto: `Crédito vehicular **${d.codigo}** · ${fechaEnLetras(d.fechaDesembolso)}`, alinear: "centro", tamano: 9 },
-      ...avisoReferencial(e),
       resumenCondiciones(d),
       ...numerar(clausulas),
       cierre(e, d),
@@ -495,7 +489,6 @@ export function contratoCelular(e: DatosEmpresa, d: DatosCredito): Documento {
     bloques: [
       { t: "titulo", texto: "Contrato de compraventa a plazos de equipo celular con cláusula de bloqueo" },
       { t: "parrafo", texto: `Crédito celular **${d.codigo}** · ${fechaEnLetras(d.fechaDesembolso)}`, alinear: "centro", tamano: 9 },
-      ...avisoReferencial(e),
       resumenCondiciones(d),
       ...numerar(clausulas),
       cierre(e, d),
@@ -529,7 +522,6 @@ export function contratoMutuo(e: DatosEmpresa, d: DatosCredito): Documento {
     bloques: [
       { t: "titulo", texto: "Contrato de mutuo dinerario" },
       { t: "parrafo", texto: `Préstamo **${d.codigo}** · ${fechaEnLetras(d.fechaDesembolso)}`, alinear: "centro", tamano: 9 },
-      ...avisoReferencial(e),
       ...numerar(clausulas),
       cierre(e, d),
       firmasContrato(e, d),
@@ -558,7 +550,6 @@ export function pagare(e: DatosEmpresa, d: DatosCredito): Documento {
     pie: pieEmpresa(e),
     bloques: [
       { t: "titulo", texto: "Pagaré" },
-      ...avisoReferencial(e),
       { t: "datos", columnas: 2, filas: [
         ["N.° de pagaré", d.codigo],
         ["Importe", soles(d.montoTotalPagar)],

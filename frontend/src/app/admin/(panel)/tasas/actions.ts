@@ -124,7 +124,7 @@ export async function guardarDatosDocumentos(_prev: EstadoAccion, fd: FormData):
     return fallo(mensajeErrorBD(e));
   }
   revalidatePath("/admin/tasas");
-  return exito(validados ? "Datos guardados. Los documentos ya no muestran el aviso de modelo referencial." : "Datos guardados. Se usan en los próximos documentos que se generen.");
+  return exito("Datos guardados. Se usan en los próximos documentos que se generen.");
 }
 
 const porcentaje = (campo: string, max: number) =>
