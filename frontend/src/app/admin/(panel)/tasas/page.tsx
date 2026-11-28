@@ -231,7 +231,7 @@ export default async function TasasPage() {
                 label="Un abogado validó los textos de los contratos, la cláusula de bloqueo y el pagaré"
                 name="validados"
                 defaultChecked={empresa.validados}
-                hint="Mientras no se marque, cada documento indica que es un modelo referencial pendiente de validación legal."
+                hint="Solo es un registro interno: los documentos ya no muestran ningún aviso de modelo referencial."
               />
             </div>
             <BotonEnviar size="sm" className="justify-self-start">Guardar datos</BotonEnviar>

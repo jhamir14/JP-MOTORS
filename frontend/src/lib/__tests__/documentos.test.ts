@@ -221,8 +221,8 @@ describe("contrato vehicular", () => {
     expect(firmas && firmas.t === "firmas" && firmas.firmas[1].huella).toBe(true);
   });
 
-  it("muestra el aviso de modelo referencial solo mientras no esté validado", () => {
-    expect(t).toMatch(/pendiente de validación legal/);
+  it("no muestra el aviso de modelo referencial, esté o no validado", () => {
+    expect(t).not.toMatch(/pendiente de validación legal/);
     expect(texto(contratoVehicular({ ...empresa, validados: true }, vehicular))).not.toMatch(/pendiente de validación legal/);
   });
 
